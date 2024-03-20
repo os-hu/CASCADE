@@ -8,6 +8,9 @@
 venv/
 ENV/
 
+api_keys/*
+!api_keys/README.md
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
