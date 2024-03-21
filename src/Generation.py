@@ -1,4 +1,5 @@
-import Code_Generator, Test_Generator
+from src.abstract_classes.Code_Generator import Code_Generator
+from src.abstract_classes.Test_Generator import Test_Generator
 
 class Generation:
     """

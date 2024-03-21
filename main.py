@@ -7,6 +7,7 @@ if __name__ == '__main__':
 
     pipeline = Pipeline_Factory(filePath).build(pipelineName)
 
+    print(pipeline.setup)
 
 
 

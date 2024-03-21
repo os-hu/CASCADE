@@ -1,9 +1,13 @@
 from src.Pipeline import Pipeline
 from src.Generation import Generation
 
-import sys, json, os, importlib
+import sys
+import json
+import os
+import importlib
 
-class Pipeline_Factory():
+
+class Pipeline_Factory:
     """
     TODO
     """
@@ -32,7 +36,8 @@ class Pipeline_Factory():
             print(f"no setup files could be extracted for path: {folder_path}")
             sys.exit(-1)
 
-    def load_class(self, class_name, module_path, args):
+    @staticmethod
+    def load_class(class_name, module_path, *args):
         """
         Dynamically loads a class and instantiates it with given arguments.
 
@@ -75,44 +80,33 @@ class Pipeline_Factory():
         else:
             setup = self.all_setups[pipelineName]
 
-
-        # TODO most of these are missing there positinal arguments
-
         name = setup["Extraction"]
-        path = "implementations.extraction." + name
-        extraction = self.load_class(name, path,[])
-
-
-
+        path = "src.implementations.extraction." + name
+        extraction = self.load_class(name, path)
 
         name = setup["Code_Generator"]
-        path = "implementations.generation.code_generator." + name
-        code_generator = self.load_class(name, path, [])
+        path = "src.implementations.generation.code_generator." + name
+        code_generator = self.load_class(name, path)
 
         name = setup["Test_Generator"]
-        path = "implementations.generation.test_generator." + name
-        test_generator = self.load_class(name, path, [])
+        path = "src.implementations.generation.test_generator." + name
+        test_generator = self.load_class(name, path)
 
-
-
-
-
-        generation = Generation()
+        generation = Generation(code_generator, test_generator)
 
         name = setup["Executor"]
-        path = "implementations.analysis.analysis_executor." + name
-        analysis_executor = self.load_class(name, path, [])
+        path = "src.implementations.analysis.analysis_executor." + name
+        analysis_executor = self.load_class(name, path)
 
         name = setup["Visualizer"]
-        path = "implementations.analysis.analysis_visualizer." + name
-        analysis_visualizer = self.load_class(name, path, [])
+        path = "src.implementations.analysis.analysis_visualizer." + name
+        analysis_visualizer = self.load_class(name, path)
 
         name = setup["Analysis"]
-        path = "implementations.analysis." + name
-        analysis = self.load_class(name, path, [generation, analysis_executor, analysis_executor])
+        path = "src.implementations.analysis." + name
+        analysis = self.load_class(name, path, generation, analysis_visualizer, analysis_executor)
 
-
-        pipeline = Pipeline(extraction, analysis)
+        pipeline = Pipeline(extraction, analysis, setup)
 
         return pipeline
 
