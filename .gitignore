@@ -1,5 +1,13 @@
 .idea/
 
+
+
+api_keys/*
+!api_keys/README.md
+
+
+
+
 # dotenv
 .env
 
@@ -8,8 +16,7 @@
 venv/
 ENV/
 
-api_keys/*
-!api_keys/README.md
+
 
 # Installer logs
 pip-log.txt

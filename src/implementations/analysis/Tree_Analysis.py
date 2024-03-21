@@ -1,4 +1,4 @@
-import Analysis
+from src.abstract_classes import Analysis
 
 
 class Tree_Analysis(Analysis):

@@ -1,4 +1,4 @@
-import Analysis
+from src.abstract_classes.Analysis import Analysis
 class Full_Analysis(Analysis):
     """
     TODO
@@ -11,4 +11,3 @@ class Full_Analysis(Analysis):
         """
         pass
 
-    

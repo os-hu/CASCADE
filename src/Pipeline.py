@@ -1,5 +1,5 @@
-from Extraction import Extraction
-from Analysis import Analysis
+from src.abstract_classes.Extraction import Extraction
+from src.abstract_classes.Analysis import Analysis
 
 class Pipeline():
     def __init__(self, extraction: Extraction, analysis: Analysis):
@@ -11,7 +11,7 @@ class Pipeline():
         self.extraction = extraction
         self.analysis = analysis
 
-    def run(self, input_path, output_path=None):
+    def execute(self, input_path, output_path):
         """
         TODO
         :return:
@@ -19,5 +19,6 @@ class Pipeline():
         data = self.extraction.extract(input_path)
         results = self.analysis.analyse(data)
 
-        # TODO save results to output path   if it is not None
+
+        # TODO save results to output path
         print(results, output_path)
