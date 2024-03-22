@@ -12,12 +12,5 @@ class Human_Eval_Basic_Extraction(Extraction):
         """
         TODO
         """
-
-
-        #this is a test --------------
-        print("worked" + input_path)
-        sys.exit(2)
-        #test end --------------------
-
         pass
 

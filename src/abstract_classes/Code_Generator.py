@@ -7,6 +7,7 @@ class Code_Generator(ABC):
     pass
 
 
+    @abstractmethod
     def generate(self):
         """
         TODO

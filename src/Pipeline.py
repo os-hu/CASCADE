@@ -12,13 +12,16 @@ class Pipeline():
         self.analysis = analysis
         self.setup = setup
 
+
     def execute(self, input_path, output_path):
         """
-        TODO
+        executes the thing
         :return:
         """
+
         data = self.extraction.extract(input_path, output_path)
         results = self.analysis.analyse(data)
+
 
 
         # TODO save results to output path

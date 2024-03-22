@@ -1,8 +1,11 @@
 from src.Pipeline import Pipeline
 from src.Generation import Generation
 
+from src import Utils
+
 import sys
-import json
+
+
 import os
 import importlib
 
@@ -23,21 +26,29 @@ class Pipeline_Factory:
             file_path = os.path.join(folder_path, filename)
 
             if os.path.isfile(file_path):
-                with open(file_path, 'r') as file:
-                    data = json.load(file)
+                data = Utils.load_json_from_path(file_path)
 
-                # remove the ending of the filename  if there is any
+                # remove the ending of the filename  if there is one
                 name = filename.rsplit('.', 1)[0]
 
-                self.all_setups[name] = data
+                # TODO check for format and errors etc.
+                # there are two types of entries   with and without parameters.
+                setup = {}
+                for key, value in data.items():
+                    if isinstance(value, str):
+                        setup[key] = {"name": value, "kwargs": {}}
+                    else:
+                        setup[key] = value
+                #print(setup)
+                self.all_setups[name] = setup
 
-        print(self.all_setups)
+        #print(self.all_setups)
         if self.all_setups == {}:
             print(f"no setup files could be extracted for path: {folder_path}")
             sys.exit(-1)
 
     @staticmethod
-    def load_class(class_name, module_path, *args):
+    def load_class(class_name, module_path, args, kwargs):
         """
         Dynamically loads a class and instantiates it with given arguments.
 
@@ -57,7 +68,7 @@ class Pipeline_Factory:
             cls = getattr(module, class_name)
 
             # Instantiate the class with the provided arguments
-            instance = cls(*args)
+            instance = cls(*args, **kwargs)
 
             return instance
         except ModuleNotFoundError as e:
@@ -80,31 +91,37 @@ class Pipeline_Factory:
         else:
             setup = self.all_setups[pipelineName]
 
-        name = setup["Extraction"]
+        name = setup["Extraction"]["name"]
         path = "src.implementations.extraction." + name
-        extraction = self.load_class(name, path)
+        kwargs_ = setup["Extraction"]["kwargs"]
+        extraction = self.load_class(name, path, [], kwargs_)
 
-        name = setup["Code_Generator"]
+        name = setup["Code_Generator"]["name"]
         path = "src.implementations.generation.code_generator." + name
-        code_generator = self.load_class(name, path)
+        kwargs_ = setup["Code_Generator"]["kwargs"]
+        code_generator = self.load_class(name, path, [], kwargs_)
 
-        name = setup["Test_Generator"]
+        name = setup["Test_Generator"]["name"]
         path = "src.implementations.generation.test_generator." + name
-        test_generator = self.load_class(name, path)
+        kwargs_ = setup["Test_Generator"]["kwargs"]
+        test_generator = self.load_class(name, path, [], kwargs_)
 
         generation = Generation(code_generator, test_generator)
 
-        name = setup["Executor"]
+        name = setup["Executor"]["name"]
         path = "src.implementations.analysis.analysis_executor." + name
-        analysis_executor = self.load_class(name, path)
+        kwargs_ = setup["Executor"]["kwargs"]
+        analysis_executor = self.load_class(name, path, [], kwargs_)
 
-        name = setup["Visualizer"]
+        name = setup["Visualizer"]["name"]
         path = "src.implementations.analysis.analysis_visualizer." + name
-        analysis_visualizer = self.load_class(name, path)
+        kwargs_ = setup["Visualizer"]["kwargs"]
+        analysis_visualizer = self.load_class(name, path, [], kwargs_)
 
-        name = setup["Analysis"]
+        name = setup["Analysis"]["name"]
         path = "src.implementations.analysis." + name
-        analysis = self.load_class(name, path, generation, analysis_visualizer, analysis_executor)
+        kwargs_ = setup["Analysis"]["kwargs"]
+        analysis = self.load_class(name, path, [generation, analysis_visualizer, analysis_executor], kwargs_)
 
         pipeline = Pipeline(extraction, analysis, setup)
 

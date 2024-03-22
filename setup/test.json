@@ -1,8 +1,0 @@
-{
-   "Extraction"    : "1",
-   "Code_Generator": "2",
-   "Test_Generator": "3",
-   "Analysis"      : "4",
-   "Executor"      : "5",
-   "Visualizer"    : "6"
-}
