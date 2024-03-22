@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 
+
 class Extraction(ABC):
     @abstractmethod
-    def extract(self, input_path, output_path):
+    def extract(self, input_path, output_path) -> dict:
         """
         This is the main method of the Extraction module.
         It gets an input path which could be for a root directory of an entire project or a dataset file or a jar.
@@ -48,7 +49,6 @@ class Extraction(ABC):
 
         You can use the implementation 'json_Extraction' and its extract() method to check whether
         the file already exists in the output path and just load this one instead.
-
 
         The output
 
