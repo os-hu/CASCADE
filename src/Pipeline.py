@@ -4,9 +4,12 @@ from src.abstract_classes.Analysis import Analysis
 class Pipeline():
     def __init__(self, extraction: Extraction, analysis: Analysis, setup: dict):
         """
-         the main pipeline object. calls extract analyse and generator in an appropriate manner.
+         The main pipeline object. Calls "extract" and "analyse" in an appropriate manner.
          is usually build through Pipeline_Factory
-
+         :param extraction: the specific instantiated Extraction object that is used for extraction
+         :param analysis: the specific instantiated analysis object
+         :param setup: a dictionary that contains the names of the specific instances used
+         for extraction, analysis and the objects inside of them,
         """
         self.extraction = extraction
         self.analysis = analysis
@@ -15,8 +18,13 @@ class Pipeline():
 
     def execute(self, input_path, output_path):
         """
-        executes the thing
-        :return:
+       This executes the entire pipline. First extract() from the extraction object is called.
+       The output of that is passed to the analysis object. and analyse is executed.
+
+       These specific objects handle what the specific operations do and any things like temporary or
+       intermediate saving, which type of analyses should be done and the generator that the analysis uses.
+        The visualizer of the analysis object handles whether any output/results are printed
+        or just saved to the output_path.
         """
 
         data = self.extraction.extract(input_path, output_path)
@@ -24,5 +32,6 @@ class Pipeline():
 
 
 
-        # TODO save results to output path
-        print(results, output_path)
+        # TODO save results to output path   or handle that in the analysis?    doc cutrently states that the visualizer handles that.
+        #  Should the output path be given to the analysis as well?
+        print(results)

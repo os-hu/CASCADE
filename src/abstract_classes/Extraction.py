@@ -20,7 +20,7 @@ class Extraction(ABC):
             signature : {
                 name : the simple name of the function
                 returns : return type of the function,
-                params : parameters including types if existent as a string ,
+                params : parameters, including types -- if existent -- as one string ,
                 modifier : ,
                 annotations: ,
                 generics :
@@ -31,7 +31,7 @@ class Extraction(ABC):
                 doc : ,
                 imports : ,
                 other_methods : ,
-                variables : glbal variables of the class that could be used by the function,
+                variables : global variables of the class that could be used by the function under test,
                 generics :
                 }
             code : the body of the function
