@@ -1,9 +1,12 @@
-from typing import Dict
+from typing import Dict, List
+from enum import Enum
 
-class RequirementsMismatchExcption(Exception):
+
+class RequirementsMismatchException(Exception):
     pass
 
-class Requirements():
+
+class Requirements:
     i = 0
     """
     A utility class which enables adding and checking requirements for Pipelines.
@@ -11,18 +14,15 @@ class Requirements():
     The class contains two subclasses for enum values which are used in the functions.
     """
 
-
-    class Level(enum):
+    class Level(Enum):
         MANDATORY = 1
         OPTIONAL = 2
 
-
-    class Kind(enum):
+    class Kind(Enum):
         PROVIDED = 1
         EXPECTED = 2
 
-
-    def __init__(self, kind: Requirements.Kind, name: str="ANONYMOUS-"):
+    def __init__(self, kind: "Requirements.Kind", name: str = "ANONYMOUS-"):
         """
         The constructor for a requirements object.
         
@@ -33,11 +33,11 @@ class Requirements():
         self.kind = kind
         self.reqs: Dict[str, Requirements.Level] = dict()
         if name == "ANONYMOUS-":
-            name = name + str(i)
+            name = name + str(Requirements.i)
         self.name = name
+        Requirements.i += 1
 
-
-    def addRequirement(self, name: str, level: Requirements.Level=Requirements.Level.MANDATORY):
+    def add_requirement(self, name: str, level: "Requirements.Level" = Level.MANDATORY):
         """
         A function to add requiremnts to this requirement object.
 
@@ -56,13 +56,12 @@ class Requirements():
             level: The level the requirement has, is it mandatory or optional (defaults to mandatory)
 
         :return
-            This object, so requirements can be daisy chained
+            This object, so requirements can be daisy-chained
         """
         self.reqs[name] = level
         return self
 
-
-    def fulfills(self, other: Requirements):
+    def fulfills(self, other: "Requirements"):
         """
         Checks if the provided requirements fulfill the expected requirements.
 
@@ -79,7 +78,10 @@ class Requirements():
             True if all requirements expected are fulfilled
         """
         if other.kind == self.kind:
-            raise RequirementsMismatchException("Both Requirements were of kind " + ("provided" if self.kind == Requirements.Kind.PROVIDED else "expected") + ", you probably wanted to use self.merge() instead!")
+            raise RequirementsMismatchException("Both Requirements were of kind "
+                                                + ("provided" if self.kind == Requirements.Kind.PROVIDED
+                                                   else "expected")
+                                                + ", you probably wanted to use self.merge() instead!")
         if self.kind == Requirements.Kind.EXPECTED:
             return other.fulfills(self)
         
@@ -94,14 +96,13 @@ class Requirements():
                     if other.reqs[key] != self.reqs[key]:
                         warnings.append(key)
                 else:
-                        errors.append(key)
-        print(self.name + ": " +str(warnings))
+                    errors.append(key)
+        print(self.name + ": Keys " + str(warnings) + " were optionally provided but are mandatory")
         if errors:
             raise RequirementsMismatchException(str(errors))
         return not errors
-    
 
-    def verify(self, data: dict):
+    def verify(self, data: List[dict]):
         """
         Checks if the data seems to fulfill the requirements.
 
@@ -116,33 +117,26 @@ class Requirements():
         :return
             True if all mandatory requirements are fulfilled (e.g., the key exists)
         """
-        errors = []
+        errors = set()
         if "all" in self.reqs:
             print(self.name + ": Explicitly cannot verify if 'all' requirements are fulfilled.")
             return True
         for key in self.reqs:
             components = key.split(".")
-            value = data
-            for component in components:
-                if component in value:
-                    value = value[component]
-                elif self.reqs[key] == Requirements.Level.MANDATORY:
-                    errors.append(key)
+            for entry in data:
+                value = entry
+                for component in components:
+                    if component in value:
+                        value = value[component]
+                    elif self.reqs[key] == Requirements.Level.MANDATORY:
+                        errors.add(key)
         if errors:
-            raise RequirementsMismatchException("Keys " + str(errors) + " were mandatory, but are missing.")
+            raise RequirementsMismatchException("Keys " + str(errors) + " were mandatory, but are (sometimes) missing.")
         return True
 
-
-    def merge(self, other: Requirements):
+    def merge(self, other: "Requirements"):
         """
         Merges two requiremnts.
-
-        For ~Requirements.Kind.PROVIDED:
-            Takes all the requirements of both objects returns the less strict one if both share it (~Requirements.Kind.OPTIONAL)
-        
-
-        For ~Requirements.Kind.EXPECTED
-            Takes all the requirements of both objects, returns the more strict one if both share it (~Requirements.Kind.MANDATORY)
 
         :param
             other: The requirements to merge with
@@ -154,25 +148,23 @@ class Requirements():
             Returns a NEW Requirements object containing the merge result
         """
         if other.kind != self.kind:
-            raise RequirementsMismatchException("Both Requirements were of different kinds, you probably wanted to use self.fulfills() instead!")
+            raise RequirementsMismatchException("Both Requirements were of different kinds"
+                                                + ", you probably wanted to use self.fulfills() instead!")
 
         r = Requirements(self.kind, "merged-" + self.name + "-" + other.name)
         # Iterate over symmetric difference and add all keys
-        for key in self.reqs.keys ^ other.reqs.keys:
+        for key in self.reqs.keys() ^ other.reqs.keys():
             if key in self.reqs:
-                r.addRequirement(key, self.reqs[key])
+                r.add_requirement(key, self.reqs[key])
             else:
-                r.addRequirement(key, other.reqs[key])
+                r.add_requirement(key, other.reqs[key])
         
         # Iterate over intersection and add key according to kind
-        for key in self.reqs.keys & other.reqs.keys:
+        for key in self.reqs.keys() & other.reqs.keys():
             if self.reqs[key] != other.reqs[key]:
-                if self.kind == Requirements.Kind.PROVIDED 
-                    level = Requirements.Level.OPTIONAL 
-                else:
-                    level = Requirements.Level.MANDATORY
-            else
+                level = Requirements.Level.MANDATORY
+            else:
                 level = self.reqs[key]
-            r.addRequirement(key, level)
+            r.add_requirement(key, level)
 
         return r
