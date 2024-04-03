@@ -2,10 +2,11 @@ from src.abstract_classes.Extraction import Extraction
 from typing import List, Dict, Optional
 from src.Utils import load_json_from_path
 import os
+import json
 
 class Json_Extraction(Extraction):
     """
-    TODO
+    This is a basic extraction module
     """
     def extract(self, input_path, output_path) -> List[Dict[str, any]]:
         """
@@ -14,20 +15,30 @@ class Json_Extraction(Extraction):
 
         If not it checks if the input path points to a json file and extracts this.
 
-        if neither it returns an empty list
+        if neither it returns an empty list.
 
         :param input_path:
         :param output_path:
         :return:
         """
         # Check if the output file exists
-        # TODO Check if this path contains a extraced.kjson file  and read it
+        # TODO Check if this path contains an "extracted.json" file and read it in.
         if os.path.exists(output_path):
             return load_json_from_path(output_path)
 
         # Check if the input path points to a JSON file
-        elif os.path.splitext(input_path)[1] == '.json':
-            return load_json_from_path(input_path)
+        else:
+            ending = os.path.splitext(input_path)[1]
+            if ending == ".json":
+                return load_json_from_path(input_path)
+            # the standrad human eval file has this ending and is technically not a legit json format
+            # but each line is a json entry (not comma seperated like a list would be)
+            if ending == ".jsonl":
+                data = []
+                with open(input_path, 'r') as file:
+                    for line in file:
+                        data.append(json.loads(line))
+                return data
 
         # Return an empty list if neither condition is met
         return []
