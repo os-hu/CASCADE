@@ -41,8 +41,6 @@ class test_HE_Extraction(unittest.TestCase):
         data = extractor.extract("test_resources/humanevaltest/HumanEval.jsonl.gz", "")
         self.assertEqual(164 , len(data))
 
-
-
     def test_Test_extraction(self):
         extractor = Human_Eval_Basic_Extraction()
         data = extractor.extract("test_resources/humanevaltest/HumanEval.jsonl.gz", "")

@@ -122,6 +122,8 @@ class Human_Eval_Basic_Extraction(Extraction):
         # TODO should this first part go into the Utils load_json function?
         if print_mode: print(f"starting to extract from: {input_path}")
 
+
+
         # check if the path is to a file or to a folder
         if os.path.isdir(input_path):
             # List all files in the directory
@@ -160,11 +162,7 @@ class Human_Eval_Basic_Extraction(Extraction):
 
         if print_mode: print(f"extracted {len(raw_data)} entries")
 
-        # save the extracted dictionaries
-        # TODO check the output_path if it is ok.
-        #output_file_path = output_path + "/basic_extracted.json"
-        #Utils.save_dicts_list_to_json(data, output_file_path, create_folder=True, override=True)
-        #if printmode: print(f"saved to: {output_file_path}")
+
 
         # handling and extracting.
         data = []
@@ -248,6 +246,25 @@ class Human_Eval_Basic_Extraction(Extraction):
             results["tests"] = raw_tests_unittest.replace("def check(candidate)" , f"def test_{func_name}").replace("candidate" , func_name)
 
             data.append(results)
+
+        if print_mode: print(f"formated {len(data)} entries")
+
+        if output_path is not None and output_path != "":
+            try :
+                # save the extracted data
+                # TODO check if the output_path is ok.
+                output_file_path = output_path + "/HumanEval_extracted.json"
+                Utils.save_dicts_list_to_json(data, output_file_path, create_folder=True, override=True)
+                if print_mode: print(f"saved data to: {output_file_path}")
+            except:
+                if print_mode: print(f"failed to save to: {output_file_path}")
+                try:
+                    # TODO save it to a temp file folder
+                    # name it temp1. if it does already exist temp2 etc.
+                    pass
+                except:
+                    pass
+
 
         return data
 
