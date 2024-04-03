@@ -16,57 +16,71 @@ class Human_Eval_Basic_Extraction(Extraction):
     def __init__(self):
         pass
 
-    class AssertVisitor(ast.NodeVisitor):
-        """
-        the ast class that is needed to extract the asserts statements in the humaneval dataset and transform them into unitteststyle
-        """
-        all_replacements = []
+    class AssertTransformer_old(ast.NodeTransformer):
+        #This is pretty simple and works well except for 7 examples....
         def visit_Assert(self, node):
-            # This method is called for every assert statement in the AST
-            msg = self.get_assert_message(node)
-            suggested_replacement = self.suggest_unittest_assert(node)
+            """
+            Transform assert statements into corresponding unittest style assertions.
+            e.g. Transform `assert a == b` into `self.assertEqual(a, b)`
+            """
+            if isinstance(node.test, ast.Compare) and isinstance(node.test.ops[0], ast.Eq):
+                left = node.test.left
+                comparators = node.test.comparators[0]
+                # Creating the corresponding unittest method call node
+                return ast.Expr(value=ast.Call(func=ast.Attribute(value=ast.Name(id='self', ctx=ast.Load()),
+                                                                  attr='assertEqual', ctx=ast.Load()),
+                                               args=[left, comparators],
+                                               keywords=[]))
 
-            #print(f"Found an assert statement: {ast.unparse(node)}\n Suggested replacement: {suggested_replacement}")
+            # return original node if no transformation
+            return node
 
-            replacement = suggested_replacement[:-1] + f", msg=({msg}))" if msg else suggested_replacement
-            self.all_replacements.append((ast.unparse(node), replacement))
+    class AssertTransformer(ast.NodeTransformer):
+        """
+        this class is used to visit asserts in the test methods and convert them into correspodnign unittest classes.
 
-        def get_assert_message(self, node):
-            # Extracts the message from the assert, if present
-            return ast.unparse(node.msg) if node.msg else None
+        it was partially written with the help of chatGPT
 
-        def suggest_unittest_assert(self, node):
-            # Generates a possible unittest equivalent of the assert statement
-            # Handle the case where the test involves a comparison
-            if isinstance(node.test, ast.Compare):
-                left = ast.unparse(node.test.left)
-                right = ast.unparse(node.test.comparators[0])
+        """
+        def visit_Assert(self, node):
+            # Handle floating-point comparisons: assert abs(expr1 - expr2) < delta
+            if isinstance(node.test, ast.Compare) and len(node.test.ops) == 1 and isinstance(node.test.ops[0], ast.Lt):
+                call_func = node.test.left.func
+                if ((isinstance(call_func, ast.Name) and call_func.id == 'abs') or
+                        (isinstance(call_func, ast.Attribute) and call_func.attr == 'abs')):
+                    left = node.test.left.args[0]  # The expression inside abs()
+                    right = node.test.comparators[0]  # The right-hand side of the '<' comparison
+                    # Create the assertAlmostEqual call
+                    return ast.Expr(value=ast.Call(
+                        func=ast.Attribute(value=ast.Name(id='self', ctx=ast.Load()),
+                                           attr='assertAlmostEqual', ctx=ast.Load()),
+                        args=[left, right],
+                        keywords=[ast.keyword(arg='delta', value=right)]
+                    ))
 
-                if len(node.test.ops) == 1:
-                    if isinstance(node.test.ops[0], ast.Eq):
-                        return f"self.assertEqual({left}, {right})"
-                    elif isinstance(node.test.ops[0], ast.NotEq):
-                        return f"self.assertNotEqual({left}, {right})"
-                    elif isinstance(node.test.ops[0], ast.Lt):
-                        return f"self.assertLess({left}, {right})"
-                    elif isinstance(node.test.ops[0], ast.LtE):
-                        return f"self.assertLessEqual({left}, {right})"
-                    elif isinstance(node.test.ops[0], ast.Gt):
-                        return f"self.assertGreater({left}, {right})"
-                    elif isinstance(node.test.ops[0], ast.GtE):
-                        return f"self.assertGreaterEqual({left}, {right})"
+            # Handle 'assert expression'
+            if not isinstance(node.test, ast.UnaryOp):
+                return ast.Expr(value=ast.Call(
+                    func=ast.Attribute(value=ast.Name(id='self', ctx=ast.Load()),
+                                       attr='assertTrue', ctx=ast.Load()),
+                    args=[node.test],
+                    keywords=[]
+                ))
 
-            # Handle calls to abs() and math.fabs() for "close enough" comparisons
-            if (isinstance(node.test, ast.Call) and
-                    ((isinstance(node.test.func, ast.Name) and node.test.func.id == 'abs') or
-                     (isinstance(node.test.func, ast.Attribute) and node.test.func.attr == 'fabs'))):
-                # Assuming there's a comparison against a small value to signify "almost equal"
-                if len(node.test.args) == 1:
-                    arg = ast.unparse(node.test.args[0])
-                    return f"self.assertAlmostEqual({arg}, 0, delta=1e-6)"
+            # Handle 'assert not expression'
+            if isinstance(node.test, ast.UnaryOp) and isinstance(node.test.op, ast.Not):
+                return ast.Expr(value=ast.Call(
+                    func=ast.Attribute(value=ast.Name(id='self', ctx=ast.Load()),
+                                       attr='assertFalse', ctx=ast.Load()),
+                    args=[node.test.operand],
+                    keywords=[]
+                ))
 
-            # Default case for truth value testing
-            return f"self.assertTrue({ast.unparse(node.test)})"
+            return node
+
+
+
+
 
 
 
@@ -154,25 +168,14 @@ class Human_Eval_Basic_Extraction(Extraction):
 
         # handling and extracting.
         data = []
+
         for entry in raw_data:
             # ['task_id', 'prompt', 'entry_point', 'canonical_solution', 'test'])
             temp = {}
-            # id
             temp["id"] = entry["task_id"]
-            prompt = entry["prompt"]
-
             func_name = entry["entry_point"]
 
-            complete_code = entry["prompt"] + entry["canonical_solution"]
-
-            tree = ast.parse(complete_code)
-
             # the dict to be extracted
-            # TODO         results = {
-            #                 "code": "",
-            #                 "tests": "",
-            #                 "test_imports": "",
-            #             }
             results = {
                 "doc": "",
                 "id": int(entry["task_id"][10:]),
@@ -186,12 +189,14 @@ class Human_Eval_Basic_Extraction(Extraction):
                     "imports": [],
                     "other_methods": []
                 },
-                "code": "",
+                "code": entry["canonical_solution"],    # TODO so far this is only the canonical solution.  do we want it to be more than that?
                 "called_functions": "",
                 "tests": "",
-                "test_imports": "",
                 "testrunner":  "unittest"
             }
+
+            complete_code = entry["prompt"] + entry["canonical_solution"]
+            tree = ast.parse(complete_code)
 
             # collect ALL imports that could be needed for any part of the code
             for node in ast.walk(tree):
@@ -235,33 +240,14 @@ class Human_Eval_Basic_Extraction(Extraction):
 
 
             raw_test = entry["test"]#.replace("candidate" , func_name)
-
-            # Parse the tests into an AST
-            parsed_code = ast.parse(entry["test"])
-
-            # Parse the given source code into an AST
+            # Parse the source code into an AST
             tree = ast.parse(raw_test)
-            # Create an instance of our visitor and walk the AST
-            visitor = self.AssertVisitor()
-            visitor.visit(tree)
-            for replacement in visitor.all_replacements:
-                raw_test = raw_test.replace(*replacement)
 
-            print("-----------")
-            print(raw_test)
-            #print(visitor.all_replacements)
-            #print("----------")
+            # transofrm asset statements
+            raw_tests_unittest = ast.unparse(self.AssertTransformer().visit(tree))
+            results["tests"] = raw_tests_unittest.replace("def check(candidate)" , f"def test_{func_name}").replace("candidate" , func_name)
 
+            data.append(results)
 
-            # results["tests"] =
-            #tests = base_tests.format(name=func_name, test_method="hi")
-            #print(tests)
-            #print("---------------------")
+        return data
 
-            # for the tests. do ast walk  check if the fucntion is called  "check"
-            # then parse the content of that fucntion  somehow.....
-            #check for imports?
-
-
-
-        #sys.exit(1)

@@ -38,12 +38,19 @@ class test_HE_Extraction(unittest.TestCase):
 
     def test_extraction(self):
         extractor = Human_Eval_Basic_Extraction()
-        extractor.extract("./test_resources/humanevaltest/single_test/humanevaltest.jsonl", "")
+        data = extractor.extract("test_resources/humanevaltest/HumanEval.jsonl.gz", "")
+        self.assertEqual(164 , len(data))
+
 
 
     def test_Test_extraction(self):
         extractor = Human_Eval_Basic_Extraction()
-        data = extractor.extract("./test_resources/humanevaltest/single_test/humanevaltest.jsonl", "")
+        data = extractor.extract("test_resources/humanevaltest/HumanEval.jsonl.gz", "")
+        count = 0
+        for d in data:
+            if "assert " in d["tests"]:
+                count += 1
+        self.assertEqual(0, count)
 
 
 
