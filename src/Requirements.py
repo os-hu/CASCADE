@@ -38,7 +38,7 @@ class Requirements:
 
     def add_requirement(self, name: str, level: "Requirements.Level" = Level.MANDATORY):
         """
-        A function to add requiremnts to this requirement object.
+        A function to add requirements to this requirement object.
 
         To specify an optional requirement for:
         [
@@ -127,7 +127,7 @@ class Requirements:
 
     def merge(self, other: "Requirements"):
         """
-        Merges two requiremnts.
+        Merges two requirements.
 
         :param other: The requirements to merge with
 
