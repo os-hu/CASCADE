@@ -22,9 +22,9 @@ class Json_Extraction(Extraction):
         :return:
         """
         # Check if the output file exists
-        # TODO Check if this path contains an "extracted.json" file and read it in.
         if os.path.exists(output_path):
-            return load_json_from_path(output_path)
+            if "extracted.json" in os.listdir(output_path):
+                return load_json_from_path(os.path.join(output_path, "extracted.json"))
 
         # Check if the input path points to a JSON file
         else:
