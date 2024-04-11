@@ -26,9 +26,8 @@ class Requirements:
         """
         The constructor for a requirements object.
         
-        :param
-            kind: The ~Requirements.Kind of the requirements
-            name: A name which can be set to make warning diagnostics simpler to understand
+        :param kind: The :class:`Requirements.Kind` of the requirements
+        :param name: A name which can be set to make warning diagnostics simpler to understand
         """
         self.kind = kind
         self.reqs: Dict[str, Requirements.Level] = dict()
@@ -49,14 +48,12 @@ class Requirements:
                 }
             }
         ]
-        One has to use addRequirement("signature.name", Requiremnts.Level.OPTIONAL)
+        One has to use addRequirement("signature.name", :class:`Requirements.Level`.OPTIONAL)
 
-        :param
-            name: The name of the requirement, if necessary hierarchically separated by dots
-            level: The level the requirement has, is it mandatory or optional (defaults to mandatory)
+        :param name: The name of the requirement, if necessary hierarchically separated by dots
+        :param level: The level the requirement has, is it mandatory or optional (defaults to mandatory)
 
-        :return
-            This object, so requirements can be daisy-chained
+        :return: This object, so requirements can be daisy-chained
         """
         self.reqs[name] = level
         return self
@@ -67,15 +64,12 @@ class Requirements:
 
         Prints a list of warnings for requirement level mismatches    
 
-        :param
-            other: The requirements to compare against
+        :param other: The requirements to compare against
 
-        :raise 
-            RequirementsMismatchException: If both requirements are of the same ~Requirements.Kind
-            RequirementsMismatchException: If any ~Requirements.Level.MANDATORY requirements were not fulfilled
+        :raise RequirementsMismatchException: If both requirements are of the same :class:`Requirements.Kind`
+            OR If any :class:`Requirements.Level`.MANDATORY requirements were not fulfilled
 
-        :return
-            True if all requirements expected are fulfilled
+        :return: True if all requirements expected are fulfilled
         """
         if other.kind == self.kind:
             raise RequirementsMismatchException("Both Requirements were of kind "
@@ -108,14 +102,11 @@ class Requirements:
 
         If the requirements contain 'all', they will NOT be verified
 
-        :param
-            data: The dictionary on which the requiremnts are supposed to hold
+        :param data: The dictionary on which the requirements are supposed to hold
         
-        :raise
-            RequirementsMismatchException: If any ~Requirements.Level.MANDATORY requirements were not fulfilled
+        :raise RequirementsMismatchException: If any :class:`Requirements.Level`.MANDATORY requirements were not fulfilled
 
-        :return
-            True if all mandatory requirements are fulfilled (e.g., the key exists)
+        :return: True if all mandatory requirements are fulfilled (e.g., the key exists)
         """
         errors = set()
         if "all" in self.reqs:
@@ -138,14 +129,11 @@ class Requirements:
         """
         Merges two requiremnts.
 
-        :param
-            other: The requirements to merge with
+        :param other: The requirements to merge with
 
-        :raise 
-            RequirementsMismatchException: If both requirements are of a different ~Requirements.Kind
+        :raise RequirementsMismatchException: If both requirements are of a different :class:`Requirements.Kind`
 
-        :return
-            Returns a NEW Requirements object containing the merge result
+        :return: Returns a NEW Requirements object containing the merge result
         """
         if other.kind != self.kind:
             raise RequirementsMismatchException("Both Requirements were of different kinds"
