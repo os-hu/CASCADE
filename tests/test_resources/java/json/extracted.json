@@ -1,0 +1,51 @@
+[
+  {
+    "doc": "/**\n *        The very important doStuff function that as it says does stuff\n */\n",
+    "signature": {
+      "name": "testDoStuff",
+      "returns": "void",
+      "params": "(int x, float test)",
+      "modifier": "public",
+      "annotations": "[]",
+      "generics": "[]"
+    },
+    "language": "Java",
+    "parent": {
+      "name": "TestClassTest",
+      "doc": "/**\n * A class to test the extraction\n */\n",
+      "imports": "[import java.util.List;\n]",
+      "other_methods": "[]",
+      "variables": "[volatile private int a;]",
+      "generics": "[]"
+    },
+    "code": "{\n    return;\n}",
+    "code_file_path": "/home/jan/work/CASCADE/tests/test_resources/java/in/test/TestClassTest.java",
+    "called_functions": "[]"
+  },
+  {
+    "doc": "/**\n *        The very important doStuff function that as it says does stuff\n */\n",
+    "signature": {
+      "name": "doStuff",
+      "returns": "void",
+      "params": "(int x, float test)",
+      "modifier": "public",
+      "annotations": "[]",
+      "generics": "[]"
+    },
+    "language": "Java",
+    "parent": {
+      "name": "TestClass",
+      "doc": "/**\n * A class to test the extraction\n */\n",
+      "imports": "[import java.util.List;\n]",
+      "other_methods": "[]",
+      "variables": "[volatile private int a;]",
+      "generics": "[]"
+    },
+    "code": "{\n    return;\n}",
+    "code_file_path": "/home/jan/work/CASCADE/tests/test_resources/java/in/src/TestClass.java",
+    "tests": "import java.util.List;\n\n/**\n * A class to test the extraction\n */\npublic class TestClassTest {\n\n    volatile private int a;\n\n    /**\n     *        The very important doStuff function that as it says does stuff\n     */\n    public void testDoStuff(int x, float test) {\n        return;\n    }\n}\n",
+    "test_imports": "[import java.util.List;\n]",
+    "test_file_path": "/home/jan/work/CASCADE/tests/test_resources/java/in/test/TestClassTest.java",
+    "called_functions": "[]"
+  }
+]
