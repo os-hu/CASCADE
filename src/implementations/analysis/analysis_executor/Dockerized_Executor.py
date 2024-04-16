@@ -19,7 +19,7 @@ class Dockerized_Executor(Analysis_Executor):
     This executor only works if context contains: image, directory, command, eval_function and eval_command
     
     image - image is the docker image to run
-    directory - the prepared directory which contains everything to execute the test case
+    directory - the prepared directory which contains everything to execute the test case, it will be copied into /root/
     command - the command which executes the actual test case
     eval_command - a command which returns information on the executed test cases
     eval_function - a function which parses the output of the eval_command into succeeded, failed, errored
@@ -42,7 +42,7 @@ class Dockerized_Executor(Analysis_Executor):
         return container
 
     def run(self, container: Container, context: dict):
-        container.exec_run("cd ~; " + context["command"])
+        container.exec_run('bash -c - "cd ~; ' + context["command"] + '"')
 
     def eval(self, container: Container, context: dict):
         return context["eval_function"](container.exec_run('bash -c - "cd ~; ' + context["eval_command"] + '"').output)
