@@ -1,17 +1,10 @@
-import gzip
-import json
+import unittest
+import src.Basic_Calc
 
-data = []
-file_path = "./tests/test_resources/humanevaltest/HumanEval.jsonl.gz"
+class test_Basic_Calc(unittest.TestCase):
 
-with gzip.open(file_path, "rt") as file:
-    for line in file:
-        data.append(json.loads(line))
+    def test_sumgood(self):
+        self.assertEqual((3+3), src.Basic_Calc.sum(3, 3))
+    def test_sumbad(self):
+        self.assertNotEquals(55, src.Basic_Calc.sum(50, 5))
 
-
-for d in data:
-    if "import" in d["test"]:
-        print(d["task_id"])
-        print(d["test"].replace("\n" , ""))
-
-print(data[8]["test"])

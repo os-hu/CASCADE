@@ -11,7 +11,7 @@ class test_Docker_Execution(unittest.TestCase):
         context = dict()
         context["image"] = "ubuntu"
         context["directory"] = path
-        context["command"] = "cd dockertest; bash test.sh"
+        context["command"] = "echo hi; ls; bash test.sh"
         context["eval_command"] = "echo 1 2 3"
         context["eval_function"] = lambda x: [[str(e, "utf-8")] for e in x.split()]
 

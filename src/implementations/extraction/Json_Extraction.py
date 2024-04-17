@@ -31,8 +31,8 @@ class Json_Extraction(Extraction):
             ending = os.path.splitext(input_path)[1]
             if ending == ".json":
                 return load_json_from_path(input_path)
-            # the standrad human eval file has this ending and is technically not a legit json format
-            # but each line is a json entry (not comma seperated like a list would be)
+            # the standard human eval file has this ending and is technically not a legit json format
+            # but each line is a json entry (not comma seperated like a json list would be)
             if ending == ".jsonl":
                 data = []
                 with open(input_path, 'r') as file:
