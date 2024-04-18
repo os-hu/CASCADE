@@ -1,7 +1,7 @@
 import ast
 
 from src.abstract_classes.Analysis_Executor import Analysis_Executor, succeeded, failed, errored
-from src.implementations.analysis.analysis_executor.Dockerized_Executor import Dockerized_Executor
+from src.Dockerized_Wrapper import Dockerized_Wrapper
 import os
 import tempfile
 import shutil
@@ -37,7 +37,7 @@ class Unittest_Executor(Analysis_Executor):
                 file.write(context[tests])
 
 
-            dock_ex = Dockerized_Executor(debug=False)
+            dock_ex = Dockerized_Wrapper(debug=False)
 
             dock_context = {
                 "image" : "python",

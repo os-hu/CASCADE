@@ -6,10 +6,10 @@ import io
 
 from docker.models.containers import Container
 
-from src.abstract_classes.Analysis_Executor import Analysis_Executor, succeeded, failed, errored
+from src.abstract_classes.Analysis_Executor import succeeded, failed, errored
 
 
-class Dockerized_Executor(Analysis_Executor):
+class Dockerized_Wrapper():
     """
     This executor creates a docker container for the prepared tests directory, copies the directory into the docker,
     executes the test command, then executes an evaluation command, and lastly kills and removes the container.
@@ -32,7 +32,7 @@ class Dockerized_Executor(Analysis_Executor):
         self.debug=debug
         pass
 
-    def execute(self, code: str, tests: str, context: dict) -> (succeeded, failed, errored):
+    def execute(self, context: dict) -> (succeeded, failed, errored):
         container = self.setup(context)
         self.run(container, context)
         succeeded, failed, errored = self.eval(container, context)

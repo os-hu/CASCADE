@@ -1,21 +1,21 @@
 import unittest
 import os
 
-from src.implementations.analysis.analysis_executor.Dockerized_Executor import Dockerized_Executor
+from src.Dockerized_Wrapper import Dockerized_Wrapper
 
-class test_Docker_Execution(unittest.TestCase):
+class test_Docker_Wrapper(unittest.TestCase):
 
     def test_execute(self):
-        executor = Dockerized_Executor()
+        wrapper = Dockerized_Wrapper()
         path = os.path.abspath(os.path.join(".", "test_resources", "dockertest"))
         context = dict()
         context["image"] = "ubuntu"
         context["directory"] = path
         context["command"] = "echo hi; ls; bash test.sh"
         context["eval_command"] = "echo 1 2 3"
-        context["eval_function"] = lambda x: [[str(e, "utf-8")] for e in x.split()]
+        context["eval_function"] = lambda x: [[e] for e in x.split()]
 
-        result = executor.execute("", "", context)
+        result = wrapper.execute(context)
         succeeded, failed, errored = result
 
         self.assertEqual(succeeded, ["1"])
