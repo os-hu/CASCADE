@@ -20,7 +20,7 @@ class test_Pipeline_Factory(unittest.TestCase):
 
         self.assertEqual(str(type(pipeline.extraction)),
                              "<class 'src.implementations.extraction.Human_Eval_Basic_Extraction.Human_Eval_Basic_Extraction'>")
-        self.assertEqual(pipeline.analysis.generator.code_generator.tries , 3)
+        self.assertEqual(pipeline.analysis.generator.code_generator.max_attempts , 3)
 
         # TODO finish this test
 

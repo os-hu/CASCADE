@@ -1,10 +1,33 @@
+
+
+
+
+
+
+
+
+
+
+
+
 import unittest
-import src.Basic_Calc
 
-class test_Basic_Calc(unittest.TestCase):
+class test_func(unittest.TestCase):
+    METADATA = {}
 
-    def test_sumgood(self):
-        self.assertEqual((3+3), src.Basic_Calc.sum(3, 3))
-    def test_sumbad(self):
-        self.assertNotEquals(55, src.Basic_Calc.sum(50, 5))
+    def test_find_zero(self):
+        import math
+        import random
+        rng = random.Random(42)
+        import copy
+        for _ in range(100):
+            ncoeff = 2 * rng.randint(1, 4)
+            coeffs = []
+            for _ in range(ncoeff):
+                coeff = rng.randint(-10, 10)
+                if coeff == 0:
+                    coeff = 1
+                coeffs.append(coeff)
+            solution = find_zero(copy.deepcopy(coeffs))
+            self.assertTrue(math.fabs(poly(coeffs, solution)) < 0.0001)
 
