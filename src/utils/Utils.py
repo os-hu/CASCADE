@@ -42,7 +42,7 @@ def save_dicts_list_to_json(data: List[Dict[str, Any]], file_path: str, create_f
             with open(file_path, 'w') as file:
                 json.dump(data, file, indent=4)
 
-        # if not create it if allowed
+        # if not, create it if allowed
         else:
             if create_folder:
                 # print(f"create specified file {file_path} and folder {os.path.dirname(file_path)}")

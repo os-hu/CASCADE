@@ -1,6 +1,6 @@
 from src.abstract_classes.Extraction import Extraction
-from typing import List, Dict, Optional
-from src.Utils import load_json_from_path
+from typing import List, Dict
+from utils.Utils import load_json_from_path
 import os
 import json
 

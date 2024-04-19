@@ -1,8 +1,6 @@
-import ast
-import sys
-
 from src.abstract_classes.Analysis_Executor import Analysis_Executor, succeeded, failed, errored
 from src.implementations.analysis.analysis_executor.Unittest_Executor import Unittest_Executor
+from src.utils.Python_Utils import build_signature
 
 import os
 import tempfile
@@ -16,30 +14,18 @@ class HumanEval_Executor(Analysis_Executor):
 
 
     def build_code_file(self, context) -> str:
-        imports = "\n".join(context["parent"]["imports"])
-        imports = imports + "\n"
-        imports = imports + "\n".join(context["parent"]["other_methods"])
-
-        name = context["signature"]["name"]
-        para = context["signature"]["params"]
-
-        if len(para) > 1:
-            param_string = ", ".join(para)
-        else:
-            param_string = para[0] if len(para) == 1 else ""
-
-        returns = context["signature"]["returns"]
-        signature = f"def {name}({param_string})" + (" -> " + returns if returns else "") + ":"
-
-        doc = f"\"\"\"\n{context['doc']}\n\"\"\""
-        doc = "\n".join("    "+line for line in doc.splitlines())
+        """
+        TODO this
+        :param context:
+        :return:
+        """
+        sig_and_doc = build_signature(context, doc=True)
 
         body = context["code"]
-
-        full_func = "\n".join([imports, "\n" , signature, doc, "", body])
+        full_func = sig_and_doc + "\n" + body
 
         if self.debug:
-            print("build function: " , full_func)
+            print("build function: ", full_func)
 
         return full_func
 
