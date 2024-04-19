@@ -1,6 +1,6 @@
 {
    "Extraction"    : { "name": "Human_Eval_Basic_Extraction",  "kwargs" : {}},
-   "Code_Generator": { "name": "GPT35_Code_Generator",         "kwargs" : {"tries":3}},
+   "Code_Generator": { "name": "GPT35_Code_Generator",         "kwargs" : {"max_attempts":3}},
    "Test_Generator": { "name": "GPT35_Test_Generator",         "kwargs" : {}},
    "Analysis"      : { "name": "Full_Analysis",                "kwargs" : {}},
    "Executor"      : { "name": "Unittest_Executor",            "kwargs" : {}},

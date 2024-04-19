@@ -33,10 +33,13 @@ class Dockerized_Wrapper():
         pass
 
     def execute(self, context: dict) -> (succeeded, failed, errored):
-        container = self.setup(context)
-        self.run(container, context)
-        succeeded, failed, errored = self.eval(container, context)
-        self.kill(container)
+        try:
+            container = self.setup(context)
+            self.run(container, context)
+            succeeded, failed, errored = self.eval(container, context)
+        finally:
+            self.kill(container)
+
         return succeeded, failed, errored
 
     def setup(self, context: dict):

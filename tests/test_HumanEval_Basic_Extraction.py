@@ -1,5 +1,5 @@
 import unittest
-from src.implementations.extraction.Human_Eval_Basic_Extraction import Human_Eval_Basic_Extraction
+from src.implementations.extraction.HumanEval_Basic_Extraction import HumanEval_Basic_Extraction
 
 class test_HE_Extraction(unittest.TestCase):
     """
@@ -7,7 +7,7 @@ class test_HE_Extraction(unittest.TestCase):
     TODO fill this
     """
     def test_errors(self):
-        extractor = Human_Eval_Basic_Extraction()
+        extractor = HumanEval_Basic_Extraction()
         # test wrong path
         with self.assertRaises(FileNotFoundError):
            extractor.extract("./test_resources/humanevaltest/nonexistentpath", "")
@@ -25,24 +25,24 @@ class test_HE_Extraction(unittest.TestCase):
             extractor.extract("./test_resources/humanevaltest/nonexistentpath", "")
 
     def test_gz_extraction(self):
-        extractor = Human_Eval_Basic_Extraction()
+        extractor = HumanEval_Basic_Extraction()
         extractor.extract("./test_resources/humanevaltest/HumanEval.jsonl.gz", "")
 
     def test_jsonl_extraction(self):
-        extractor = Human_Eval_Basic_Extraction()
+        extractor = HumanEval_Basic_Extraction()
         extractor.extract("./test_resources/humanevaltest/single_test/humanevaltest.jsonl", "")
 
     def test_folder_extraction(self):
-        extractor = Human_Eval_Basic_Extraction()
+        extractor = HumanEval_Basic_Extraction()
         extractor.extract("./test_resources/humanevaltest/single_test/", "")
 
     def test_extraction(self):
-        extractor = Human_Eval_Basic_Extraction()
+        extractor = HumanEval_Basic_Extraction()
         data = extractor.extract("test_resources/humanevaltest/HumanEval.jsonl.gz", "")
         self.assertEqual(164 , len(data))
 
     def test_Test_extraction(self):
-        extractor = Human_Eval_Basic_Extraction()
+        extractor = HumanEval_Basic_Extraction()
         data = extractor.extract("test_resources/humanevaltest/HumanEval.jsonl.gz", "")
         count = 0
         for d in data:
@@ -51,6 +51,3 @@ class test_HE_Extraction(unittest.TestCase):
         self.assertEqual(0, count)
 
 
-
-if __name__ == '__main__':
-    unittest.main()

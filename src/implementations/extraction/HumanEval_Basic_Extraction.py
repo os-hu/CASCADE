@@ -7,7 +7,7 @@ import re
 import ast
 
 from src.abstract_classes.Extraction import Extraction
-class Human_Eval_Basic_Extraction(Extraction):
+class HumanEval_Basic_Extraction(Extraction):
     """
     An implementation of the abstract "Extraction" class.
     This is designed to extract the Basic 164 functions from the HumanEval dataset provided in its basic json format.
@@ -213,6 +213,8 @@ class Human_Eval_Basic_Extraction(Extraction):
                             param_name = str(param.arg)
                             if param.annotation:
                                 param = f"{param_name}: {ast.unparse(param.annotation).strip()}"
+                            else:
+                                param = param_name
                             results["signature"]["params"].append(param)
 
                         # Return Type
@@ -227,7 +229,8 @@ class Human_Eval_Basic_Extraction(Extraction):
                         #p#rint("-----------")
 
                     else:
-                        results["parent"]["other_methods"] = ast.unparse(node)
+                        # TODO Parse these into usable functions each as a dict
+                        results["parent"]["other_methods"].append(ast.unparse(node))
 
             # test. TODO for now i will just put all asserts into one testcase.
             # TODO do we need that last part?
@@ -241,9 +244,13 @@ class Human_Eval_Basic_Extraction(Extraction):
             # Parse the source code into an AST
             tree = ast.parse(raw_test)
 
-            # transofrm asset statements
+            # transform asset statements
             raw_tests_unittest = ast.unparse(self.AssertTransformer().visit(tree))
-            results["tests"] = raw_tests_unittest.replace("def check(candidate)" , f"def test_{func_name}").replace("candidate" , func_name)
+
+            unindented_tests = raw_tests_unittest.replace("def check(candidate)" , f"def test_{func_name}(self)").replace("candidate" , func_name)
+            indented_tests = "\n".join("    " + line for line in unindented_tests.splitlines())
+
+            results["tests"] = f"import unittest\nfrom func import *\n\nclass test_func(unittest.TestCase):\n{indented_tests}"
 
             data.append(results)
 

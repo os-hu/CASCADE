@@ -13,18 +13,18 @@ class Generation:
         self.code_generator = code_generator
         self.test_generator = test_generator
 
-    def generate_code(self, basic_prompt):
+    def generate_code(self, context):
         """
         TODO
         """
-        code = self.code_generator.generate(basic_prompt)
+        code = self.code_generator.generate(context)
 
         return code
 
-    def generate_tests(self, basic_prompt):
+    def generate_tests(self, context):
         """
         TODO
         """
-        tests = self.test_generator.generate(basic_prompt)
+        tests = self.test_generator.generate(context)
 
         return tests
