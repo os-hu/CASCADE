@@ -2,7 +2,7 @@ import sys
 import os
 import gzip
 import json
-from src import Utils
+from src import utils
 import re
 import ast
 
@@ -261,7 +261,7 @@ class HumanEval_Basic_Extraction(Extraction):
                 # save the extracted data
                 # TODO check if the output_path is ok.
                 output_file_path = output_path + "/HumanEval_extracted.json"
-                Utils.save_dicts_list_to_json(data, output_file_path, create_folder=True, override=True)
+                utils.save_dicts_list_to_json(data, output_file_path, create_folder=True, override=True)
                 if print_mode: print(f"saved data to: {output_file_path}")
             except:
                 if print_mode: print(f"failed to save to: {output_file_path}")

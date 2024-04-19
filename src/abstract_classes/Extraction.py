@@ -15,33 +15,33 @@ class Extraction(ABC):
 
         The expected output format for one function is
         {
-            root_path : path to the root of the project that is to be extracted,
-            doc :
-            id :
-            signature : {
-                name : the simple name of the function
-                returns : return type of the function,
-                params : parameters, including types -- if existent -- as one string ,
-                modifier : ,
-                annotations: ,
-                generics :
+            "root_path" : str - # path to the root of the project that is to be extracted,
+            "doc" : str  #
+            "id" : str or int - # depending on the usecase
+            "signature" : {
+                "name" : str - the simple name of the function
+                "returns" : str - return type of the function,
+                "params" : list of str    -  parameters, including types -- if existent -- each as a string ,
+                "modifier" : list of str  - ,
+                "annotations": list of str ,
+                "generics" list of str :
                 }
-            language : e.g. python or java
-            parent : {
-                name : ,
-                doc : ,
-                imports : ,
-                other_methods : ,
-                variables : global variables of the class that could be used by the function under test,
-                generics :
+            "language" : str   - #e.g. python or java
+            "parent" : {
+                "name" : str,
+                "doc" : str,
+                "imports" : list of str,
+                "other_methods" : list of dict    this dict should contain {doc:str, signature:dict, code:str},
+                "variables" : list of str   - global variables of the class that could be used by the function under test,
+                "generics" : list of str
                 }
-            code : the body of the function
-            code_file_path :
-            called_functions :
-            tests :  TODO ???
-            test_imports :
-            test_file_path :
-            testrunner:  e.g. unnittest, junit,
+            "code" : str    -the body of the function
+            "code_file_path" : str   -  relative to root
+            "called_functions" : list of str   names of functions
+            "tests" :  str    complete content of a test_ file
+            "test_imports" : list of str
+            "test_file_path" : str   -  relative to root
+            "testrunner": str  e.g. unnittest, junit,
         }
 
 

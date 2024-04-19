@@ -1,7 +1,7 @@
 import unittest
-from src.Utils import load_json_from_path
-from src.Utils import save_dicts_list_to_json
-import os
+from utils.Utils import load_json_from_path
+from utils.Utils import save_dicts_list_to_json
+
 
 class test_Utils(unittest.TestCase):
     """
