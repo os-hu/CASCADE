@@ -2,8 +2,8 @@
 
 
 
-api_keys/*
-!api_keys/README.md
+tests/test_resources/api_keys/*
+!tests/test_resources/api_keys/README.md
 tests/test_resources/temp/*
 
 

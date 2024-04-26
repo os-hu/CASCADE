@@ -4,11 +4,9 @@ class Code_Generator(ABC):
     """
     TODO
     """
-    pass
-
 
     @abstractmethod
-    def generate(self):
+    def generate(self, context, output_path):
         """
         TODO
         """

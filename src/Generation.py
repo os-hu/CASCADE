@@ -13,18 +13,20 @@ class Generation:
         self.code_generator = code_generator
         self.test_generator = test_generator
 
-    def generate_code(self, context):
+    def generate_code(self, context, output_path):
         """
         TODO
         """
-        code = self.code_generator.generate(context)
+        code, response = self.code_generator.generate(context, output_path)
 
-        return code
+        return code, response
 
-    def generate_tests(self, context):
+
+
+    def generate_tests(self, context, output_path):
         """
         TODO
         """
-        tests = self.test_generator.generate(context)
+        tests, response = self.test_generator.generate(context, output_path)
 
-        return tests
+        return tests, response

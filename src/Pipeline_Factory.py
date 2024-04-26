@@ -1,7 +1,7 @@
 from src.Pipeline import Pipeline
 from src.Generation import Generation
 
-from src import Utils
+from src import utils
 
 import sys
 
@@ -26,7 +26,7 @@ class Pipeline_Factory:
             file_path = os.path.join(folder_path, filename)
 
             if os.path.isfile(file_path):
-                data = Utils.load_json_from_path(file_path)
+                data = utils.load_json_from_path(file_path)
 
                 # remove the ending of the filename  if there is one
                 name = filename.rsplit('.', 1)[0]

@@ -3,7 +3,7 @@
 
 def build_signature(context, doc=False):
     imports = "\n".join(context["parent"]["imports"])
-    imports = imports + "\n"
+    #imports = imports + "\n"
     imports = imports + "\n".join(context["parent"]["other_methods"])
 
     name = context["signature"]["name"]
@@ -20,4 +20,4 @@ def build_signature(context, doc=False):
     doc = f"\"\"\"\n{context['doc']}\n\"\"\""
     doc = "\n".join("    " + line for line in doc.splitlines())
 
-    return "\n".join([imports, "\n", signature, doc])
+    return "\n".join([imports, signature, doc])

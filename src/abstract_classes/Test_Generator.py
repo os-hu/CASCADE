@@ -4,9 +4,9 @@ class Test_Generator(ABC):
     """
     TODO
     """
-    pass
 
-    def generate(self):
+    @abstractmethod
+    def generate(self, context, output_path):
         """
         TODO
         """

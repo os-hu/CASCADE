@@ -2,7 +2,7 @@ import sys
 import os
 import gzip
 import json
-from src import utils
+from src.utils.Utils import *
 import re
 import ast
 
@@ -233,7 +233,7 @@ class HumanEval_Basic_Extraction(Extraction):
                         results["parent"]["other_methods"].append(ast.unparse(node))
 
             # test. TODO for now i will just put all asserts into one testcase.
-            # TODO do we need that last part?
+            # TODO do we need that last 'unittest main' part?
             base_tests = "import unittest\n\nclass test_{name}(unittest.TestCase):\n  def test_1(self):\n{test_method}\n\nif __name__ == '__main__':\n    unittest.main()"
 
 
@@ -256,22 +256,23 @@ class HumanEval_Basic_Extraction(Extraction):
 
         if print_mode: print(f"formated {len(data)} entries")
 
-        if output_path is not None and output_path != "":
-            try :
-                # save the extracted data
-                # TODO check if the output_path is ok.
-                output_file_path = output_path + "/HumanEval_extracted.json"
-                utils.save_dicts_list_to_json(data, output_file_path, create_folder=True, override=True)
-                if print_mode: print(f"saved data to: {output_file_path}")
-            except:
-                if print_mode: print(f"failed to save to: {output_file_path}")
-                try:
-                    # TODO save it to a temp file folder
-                    # name it temp1. if it does already exist temp2 etc.
-                    pass
-                except:
-                    pass
+        if output_path is None or output_path == "":
+            output_path = "."
 
+        try :
+            # save the extracted data
+            # TODO check if the output_path is ok.
+            output_file_path = output_path + "/HumanEval_extracted.json"
+            save_dicts_list_to_json(data, output_file_path, create_folder=True, override=True)
+            if print_mode: print(f"saved data to: {output_file_path}")
+        except:
+            if print_mode: print(f"failed to save to: {output_file_path}")
+            try:
+                # TODO save it to a temp file folder
+                # name it temp1. if it does already exist temp2 etc.
+                pass
+            except:
+                pass
 
         return data
 

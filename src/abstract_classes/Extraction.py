@@ -31,13 +31,13 @@ class Extraction(ABC):
                 "name" : str,
                 "doc" : str,
                 "imports" : list of str,
-                "other_methods" : list of dict    this dict should contain {doc:str, signature:dict, code:str},
+                "other_methods" : list of dict    these dicts should contain {doc:str, signature:dict, code:str},
                 "variables" : list of str   - global variables of the class that could be used by the function under test,
                 "generics" : list of str
                 }
             "code" : str    -the body of the function
             "code_file_path" : str   -  relative to root
-            "called_functions" : list of str   names of functions
+            "called_functions" : list of str   full function call of the functions that are called insdie of origianl 'code'
             "tests" :  str    complete content of a test_ file
             "test_imports" : list of str
             "test_file_path" : str   -  relative to root
