@@ -1,7 +1,7 @@
 from openai import OpenAI
 import time
 
-from generation.executor.PromptExecutor import PromptExecutor
+from src.generation.executor.PromptExecutor import PromptExecutor
 
 
 class GPT35CompletionExecutor(PromptExecutor):

@@ -1,4 +1,4 @@
-from generation.Generator import Generator
+from src.generation.Generator import Generator
 from src.generation.executor.GPT35CompletionExecutor import GPT35CompletionExecutor
 from src.utils.PythonUtils import build_signature
 
