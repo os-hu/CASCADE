@@ -1,6 +1,6 @@
 import ast
 
-from analysis.executor.AnalysisExecutor import AnalysisExecutor, succeeded, failed, errored
+from src.analysis.executor.AnalysisExecutor import AnalysisExecutor, succeeded, failed, errored
 from src.utils.DockerizedWrapper import DockerizedWrapper
 import os
 import tempfile

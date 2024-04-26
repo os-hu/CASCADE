@@ -4,7 +4,7 @@ import io
 
 from docker.models.containers import Container
 
-from analysis.executor.AnalysisExecutor import succeeded, failed, errored
+from src.analysis.executor.AnalysisExecutor import succeeded, failed, errored
 
 
 class DockerizedWrapper():

@@ -1,4 +1,4 @@
-from generation.NoGenerator import NoGenerator
+from src.generation.NoGenerator import NoGenerator
 from src.Pipeline import Pipeline
 from src.generation.Generation import Generation
 from src.filters.Filter import Filter

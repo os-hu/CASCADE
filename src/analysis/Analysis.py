@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
-from generation.Generation import Generation
-from analysis.executor.AnalysisExecutor import AnalysisExecutor
-from analysis.visualizer.AnalysisVisualizer import AnalysisVisualizer
+from src.generation.Generation import Generation
+from src.analysis.executor.AnalysisExecutor import AnalysisExecutor
+from src.analysis.visualizer.AnalysisVisualizer import AnalysisVisualizer
 
 
 class Analysis(ABC):

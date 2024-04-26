@@ -1,7 +1,7 @@
 import gzip
 from src.utils.Utils import *
 import ast
-from extraction.Extraction import Extraction
+from src.extraction.Extraction import Extraction
 
 
 class HumanEvalExtraction(Extraction):

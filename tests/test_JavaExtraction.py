@@ -7,7 +7,7 @@ class test_JavaExtraction(unittest.TestCase):
     def test_source_extract(self):
         extract = JavaExtraction()
         path = os.path.join(".", "resources", "java")
-        extracted = extract.extract(os.path.join(path, "in"), os.path.join(path, "out"))
+        extracted = extract.extract(os.path.join(path, "in"), os.path.abspath(os.path.join(path, "out")))
         expected = [
             {
                 "root_path": "./resources/java/in",

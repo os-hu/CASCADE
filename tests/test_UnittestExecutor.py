@@ -1,9 +1,9 @@
 import unittest
-from analysis.executor.UnittestExecutor import UnittestExecutor
+from src.analysis.executor.UnittestExecutor import UnittestExecutor
 
 class test_UnittestExecutor(unittest.TestCase):
     context = {
-        "root_path" : "/home/kiecketo/PycharmProjects/CASCADE/tests/resources/python/Test_Project",
+        "root_path" : "./resources/python/Test_Project",
         "doc": "not relevant",
         "signature": {
             "name": "sum",
@@ -36,7 +36,7 @@ class test_UnittestExecutor(unittest.TestCase):
     def setUp(self):
         # TODO pfad relativ machen
         with open(
-                "/resources/python/Test_Project/test/test_Basic_Calc.py",
+                "./resources/python/Test_Project/test/test_Basic_Calc.py",
                 "r") as file:
             self.context["tests"] = file.read()
 

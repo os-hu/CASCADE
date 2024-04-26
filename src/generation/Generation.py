@@ -1,4 +1,4 @@
-from generation.Generator import Generator
+from src.generation.Generator import Generator
 
 
 class Generation:

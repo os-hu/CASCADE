@@ -1,5 +1,5 @@
-from extraction.Extraction import Extraction
-from extraction.JsonExtraction import JsonExtraction
+from src.extraction.Extraction import Extraction
+from src.extraction.JsonExtraction import JsonExtraction
 from typing import List, Dict
 import subprocess
 import os

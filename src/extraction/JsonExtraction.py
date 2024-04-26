@@ -1,4 +1,4 @@
-from extraction.Extraction import Extraction
+from src.extraction.Extraction import Extraction
 from typing import List, Dict
 from src.utils.Utils import load_json_from_path
 import os

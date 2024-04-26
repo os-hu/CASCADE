@@ -2,7 +2,7 @@ import ast
 import json
 import subprocess
 
-from analysis.executor.AnalysisExecutor import AnalysisExecutor, succeeded, failed, errored
+from src.analysis.executor.AnalysisExecutor import AnalysisExecutor, succeeded, failed, errored
 from src.utils.DockerizedWrapper import DockerizedWrapper
 
 import os
