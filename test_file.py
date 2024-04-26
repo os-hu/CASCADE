@@ -1,14 +1,9 @@
 
-from src.implementations.generation.code_generator.GPT35_Code_Generator import GPT35_Code_Generator
-from src.implementations.generation.test_generator.GPT35_Test_Generator import GPT35_Test_Generator
-from src.implementations.generation.prompt_executor.GPT35Completion_Prompt_Executor import GPT35Completion_Prompt_Executor
-from src.Generation import Generation
+from generation.code.GPT35CodeGenerator import Gpt35CodeGenerator
+from generation.test.GPT35TestGenerator import Gpt35TestGenerator
+from generation.Generation import Generation
 
-from src.implementations.extraction.HumanEval_Basic_Extraction import HumanEval_Basic_Extraction
-
-from tqdm import tqdm
-
-
+from extraction.HumanEvalExtraction import HumanEvalExtraction
 
 in_path = "/home/kiecketo/PycharmProjects/CASCADE/tests/test_resources/humanevaltest/single_test/humanevaltest.jsonl"
 
@@ -18,14 +13,14 @@ api_key_path = "/test_resources/api_keys/openai_key"
 
 
 
-extractor = HumanEval_Basic_Extraction()
+extractor = HumanEvalExtraction()
 extr = extractor.extract(in_path, out_path, print_mode=True)
 
 print(f"extracted{len(extr)}" )
 
 
-code_generator = GPT35_Code_Generator(api_key_path)
-test_generator = GPT35_Test_Generator(api_key_path)
+code_generator = Gpt35CodeGenerator(api_key_path)
+test_generator = Gpt35TestGenerator(api_key_path)
 generator = Generation(code_generator, test_generator)
 
 
@@ -47,10 +42,10 @@ import unittest
 
 class test_Class(unittest.TestCase):"""
 
-from src.implementations.generation.prompt_executor.GPT35Completion_Prompt_Executor import GPT35Completion_Prompt_Executor
+from src.implementations.generation.executor.GPT35Completion_Prompt_Executor import GPT35Completion_Prompt_Executor
 
 executor = GPT35Completion_Prompt_Executor(api_key_path)
-res = executor.generate(prompt)
+res = executor.execute(prompt)
 print(res)
 
 

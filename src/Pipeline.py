@@ -1,8 +1,9 @@
-from src.abstract_classes.Extraction import Extraction
-from src.abstract_classes.Analysis import Analysis
+from src.extraction.Extraction import Extraction
+from src.filters.Filter import Filter
+from src.analysis.Analysis import Analysis
 
 class Pipeline():
-    def __init__(self, extraction: Extraction, analysis: Analysis, setup: dict):
+    def __init__(self, extraction: Extraction, filter: Filter, analysis: Analysis, setup: dict):
         """
          The main pipeline object. Calls "extract" and "analyse" in an appropriate manner.
          is usually build through Pipeline_Factory
@@ -12,9 +13,9 @@ class Pipeline():
          for extraction, analysis and the objects inside of them,
         """
         self.extraction = extraction
+        self.filter = filter
         self.analysis = analysis
         self.setup = setup
-
 
     def execute(self, input_path, output_path):
         """
@@ -28,9 +29,8 @@ class Pipeline():
         """
 
         data = self.extraction.extract(input_path, output_path)
-        results = self.analysis.analyse(data)
-
-
+        filtered_data = self.filter.filter_all(data, output_path)
+        results = self.analysis.analyse(filtered_data, output_path)
 
         # TODO save results to output path   or handle that in the analysis?    doc cutrently states that the visualizer handles that.
         #  Should the output path be given to the analysis as well?
