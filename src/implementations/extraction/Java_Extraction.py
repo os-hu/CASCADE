@@ -15,11 +15,11 @@ class Java_Extraction(Extraction):
         self.pattern = pattern
 
     """
-    The Java extraction class, this class supports extracting from both jar files and source folders.
+    The Java extraction class, this class supports extracting from source folders.
     """
     def extract(self, input_path, output_path) -> List[Dict[str, any]]:
         """
-        Extracts a java class hierarchy from the source folder or jar that the input path points to.
+        Extracts a java class hierarchy from the source folder that the input path points to.
 
         For typical java package structures point it to the directory which contains both the source and the test
         directory.
