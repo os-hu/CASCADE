@@ -90,11 +90,21 @@ class Pipeline_Factory:
 
         else:
             setup = self.all_setups[pipelineName]
-
+        # TODO    change the path to be more indiviudla    provided by the CLI
         name = setup["Extraction"]["name"]
         path = "src.implementations.extraction." + name
         kwargs_ = setup["Extraction"]["kwargs"]
         extraction = self.load_class(name, path, [], kwargs_)
+
+
+
+        name = setup["Filter"]["name"]
+        path = "src.implementations.extraction." + name
+        kwargs_ = setup["Extraction"]["kwargs"]
+        extraction = self.load_class(name, path, [], kwargs_)
+
+
+
 
         name = setup["Code_Generator"]["name"]
         path = "src.implementations.generation.code_generator." + name

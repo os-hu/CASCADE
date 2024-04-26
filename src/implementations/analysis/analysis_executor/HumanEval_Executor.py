@@ -8,9 +8,9 @@ import shutil
 
 
 
-class HumanEval_Executor(Analysis_Executor):
+class HumanEval_Executor(Unittest_Executor):
     def __init__(self, debug=False):
-        self.debug = debug
+        super().__init__(debug)
 
 
     def build_code_file(self, context) -> str:
@@ -42,7 +42,6 @@ class HumanEval_Executor(Analysis_Executor):
 
             context["root_path"] = temp_dir
 
-            unittest_executor = Unittest_Executor(debug=self.debug)
-            result = unittest_executor.execute(code, tests, context)
+            result = super().execute(code, tests, context)
 
         return result

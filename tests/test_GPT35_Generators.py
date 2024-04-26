@@ -6,7 +6,8 @@ from src.implementations.extraction.HumanEval_Basic_Extraction import HumanEval_
 
 class test_GPT35_Genearotrs(unittest.TestCase):
     def setUp(self):
-        self.context = HumanEval_Basic_Extraction().extract("./test_resources/humanevaltest/single_test/humanevaltest.jsonl", "")
+        self.context = HumanEval_Basic_Extraction().extract(
+            "test_resources/humanevaltest/datasets/single_test/humanevaltest.jsonl", "")
 
     def test_prompt_builder(self):
         # TODO

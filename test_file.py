@@ -12,9 +12,9 @@ from tqdm import tqdm
 
 in_path = "/home/kiecketo/PycharmProjects/CASCADE/tests/test_resources/humanevaltest/single_test/humanevaltest.jsonl"
 
-out_path = "/home/kiecketo/PycharmProjects/CASCADE/resources/output"
+out_path = "/test_resources/humanevaltest/output"
 
-api_key_path = "/home/kiecketo/PycharmProjects/CASCADE/api_keys/openai_key"
+api_key_path = "/test_resources/api_keys/openai_key"
 
 
 
@@ -59,3 +59,8 @@ print(res)
 #     print(res)
 
 
+
+
+
+# TODO USE THAT IN FILTER
+result = filter(lambda x: all([filter(x) for filter in filterList]), data)

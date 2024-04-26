@@ -4,5 +4,11 @@
    "Test_Generator": { "name": "GPT35_Test_Generator",         "kwargs" : {}},
    "Analysis"      : { "name": "Full_Analysis",                "kwargs" : {}},
    "Executor"      : { "name": "Unittest_Executor",            "kwargs" : {}},
-   "Visualizer"    : { "name": "Basic_Tree_Visualizer",        "kwargs" : {}}
+   "Visualizer"    : { "name": "Basic_Tree_Visualizer",        "kwargs" : {}},
+
+   "FilterFunctions"  : [
+      { "name": "basicPythonFilter1", "Kwargs" : {}},
+      { "name": "basicPythonFilter2", "Kwargs" : {}},
+      { "name": "basicPythonFilter3", "Kwargs" : {"length":300}}
+   ]
 }
