@@ -80,6 +80,8 @@ class PipelineFactory:
             setup = Utils.load_json_from_path(os.path.join(self.folder_path, pipeline_name))
 
         # TODO    change the path to be more indiviudla    provided by the CLI
+        sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
+        print(sys.path)
 
         name = setup["Extraction"]["name"]
         path = "src.extraction." + name
