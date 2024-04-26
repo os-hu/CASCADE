@@ -2,9 +2,9 @@
 
 
 
-tests/resources/api_keys/*
+/tests/resources/api_keys/*
 !tests/resources/api_keys/README.md
-tests/resources/temp/*
+/tests/resources/temp/*
 
 
 
