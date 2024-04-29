@@ -9,4 +9,8 @@ class Filter:
 
     def filter_all(self, data: List[dict], output_path: str) -> List[dict]:
         # TODO explain this
-        return filter(lambda x: all([f(x) for f in self.filter_functions]), data)
+        filtered_data = filter(lambda x: all([f(x) for f in self.filter_functions]), data)
+
+        return list(filtered_data)
+
+        # TODO add saving filtered list
