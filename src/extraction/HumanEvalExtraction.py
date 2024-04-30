@@ -1,4 +1,6 @@
 import gzip
+
+from src.extraction.JsonExtraction import JsonExtraction
 from src.utils.Utils import *
 import ast
 from src.extraction.Extraction import Extraction
@@ -10,7 +12,7 @@ class HumanEvalExtraction(Extraction):
     This is designed to extract the Basic 164 functions from the HumanEval dataset provided in its basic json format.
     See extract() method for details.
     """
-    def __init__(self):
+    def __init__(self) -> object:
         pass
 
     class AssertTransformer(ast.NodeTransformer):
@@ -90,6 +92,12 @@ class HumanEvalExtraction(Extraction):
         :return: a dictionary
         """
 
+        json_extractor = JsonExtraction()
+        extracted = json_extractor.extract(input_path, output_path)
+        if extracted:
+            return extracted
+
+
         # TODO should this first part go into the Utils load_json function?
         if print_mode: print(f"starting to extract from: {input_path}")
 
@@ -111,7 +119,7 @@ class HumanEvalExtraction(Extraction):
             file_path = input_path
 
         else:
-            raise FileNotFoundError(f"could not find folder or file {input_path}")
+            raise FileNotFoundError(f"could not find folder or file: {input_path}")
 
         allowed_extensions = (".json",".jsonl",".gz")
         if not file_path.endswith(allowed_extensions):

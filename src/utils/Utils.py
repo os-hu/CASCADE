@@ -8,13 +8,17 @@ def load_json_from_path(file_path):
     """
     # TODO maybe use the functionaility from Human_Eval_basic_Extraction
     # TODO add error handling the filed does not exist or is not a file?
-    with open(file_path, 'r') as file:
-        data = json.load(file)
+    try:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+
+    except:
+        return []
 
     return data
 
 
-def save_dicts_list_to_json(data: List[Dict[str, Any]], file_path: str, create_folder=False, override=False):
+def save_dicts_list_to_json(data: List[Dict[str, Any]], file_path: str, create_folder=True, override=True):
     """
     this saves a list of dictionaries to a json file in the json list format [{},{},{},...]
     :param data: the list of dictionaries that should be saved

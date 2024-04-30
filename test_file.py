@@ -1,61 +1,42 @@
+from src.Pipeline import Pipeline
+from src.extraction.HumanEvalExtraction import HumanEvalExtraction
+from src.filters.Filter import Filter
+from src.analysis.TreeAnalysis import TreeAnalysis
 
-from generation.code.GPT35CodeGenerator import Gpt35CodeGenerator
-from generation.test.GPT35TestGenerator import Gpt35TestGenerator
-from generation.Generation import Generation
+from src.generation.Generation import Generation
+from src.generation.code.GPT35CodeGenerator import GPT35CodeGenerator
+from src.generation.test.GPT35TestGenerator import GPT35TestGenerator
+from src.generation.NoGenerator import NoGenerator
 
-from extraction.HumanEvalExtraction import HumanEvalExtraction
+from src.analysis.executor.HumanEvalExecutor import HumanEvalExecutor
+from src.analysis.visualizer.TreeVisualizer import TreeVisualizer
 
-in_path = "/home/kiecketo/PycharmProjects/CASCADE/tests/test_resources/humanevaltest/single_test/humanevaltest.jsonl"
+# test pipeline
 
-out_path = "/test_resources/humanevaltest/output"
-
-api_key_path = "/test_resources/api_keys/openai_key"
-
-
-
-extractor = HumanEvalExtraction()
-extr = extractor.extract(in_path, out_path, print_mode=True)
-
-print(f"extracted{len(extr)}" )
+in_path = "./tests/resources/humanevaltest/datasets/single_test/humanevaltest.jsonl"
+out_path = "./tests/resources/temp"
 
 
-code_generator = Gpt35CodeGenerator(api_key_path)
-test_generator = Gpt35TestGenerator(api_key_path)
-generator = Generation(code_generator, test_generator)
+extraction = HumanEvalExtraction()
+filter_ = Filter([])
 
 
-
-prompt = """# SETUP: Write python unittests for this function.
-
-def triangle_area(a, b, c):
-    \"\"\"
-    Given the lengths of the three sides of a triangle. Return the area of
-    the triangle rounded to 2 decimal points if the three sides form a valid triangle. 
-    Otherwise return -1
-    Three sides make a valid triangle when the sum of any two sides is greater 
-    than the third side.
-    \"\"\"
-    pass
-
-# Tests:
-import unittest
-
-class test_Class(unittest.TestCase):"""
-
-from src.implementations.generation.executor.GPT35Completion_Prompt_Executor import GPT35Completion_Prompt_Executor
-
-executor = GPT35Completion_Prompt_Executor(api_key_path)
-res = executor.execute(prompt)
-print(res)
+api_key_path = "./tests/resources/apikeys/openai_key"
+code_gen_args = {}
 
 
-# for c in tqdm(extr):
-#     res, res2 = generator.generate_tests(c, ".")
-#     print(res)
+code_generator = GPT35CodeGenerator(api_key_path, **code_gen_args)
+test_generator = GPT35TestGenerator(api_key_path)
+
+generator = Generation(code_generator, test_generator, NoGenerator())
+executor = HumanEvalExecutor()
+visualizer = TreeVisualizer()
 
 
+analysis = TreeAnalysis(generator, executor, visualizer)
 
+setup = {}
 
+pipeline = Pipeline(extraction, filter_, analysis, setup)
 
-# TODO USE THAT IN FILTER
-result = filter(lambda x: all([filter(x) for filter in filterList]), data)
+results = pipeline.execute(in_path, out_path)

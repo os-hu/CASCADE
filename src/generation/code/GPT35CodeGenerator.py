@@ -4,7 +4,7 @@ from src.utils.PythonUtils import build_signature
 
 import os
 import copy
-
+import re
 
 class GPT35CodeGenerator(Generator):
     def __init__(self, api_key_path, max_attempts=1, max_tokens=800, temperature=0, delay=3):
@@ -16,23 +16,30 @@ class GPT35CodeGenerator(Generator):
         prompt = setup + sig_and_doc
 
         return prompt
-        return [{"role": "user", "content": prompt}]
 
     def generate(self, context, output_path):
         prompt = self.build_prompt(context)
-        print(prompt)
+
         response = self.prompt_executor.execute(prompt).model_dump()
 
         savety_copy = copy.deepcopy(context)
         savety_copy["response"] = response
-        #save_dicts_list_to_json([savety_copy], os.path.join(output_path, "code_generator_current.json"))
-
-
 
         with open(os.path.join(output_path, "code_generator_current.json") , "w") as file:
             file.write(str(savety_copy))
 
-
+        # TODO if max tokens have been used  cut the response down?
         new_code = response["choices"][0]["text"]
+        indent = re.match(r"\s*" , new_code)[0]
+        indent = indent.replace("\n" , "")
+        indent_length = len(indent)
 
-        return(new_code , response)
+        temp_new_code = []
+        for line in new_code.splitlines():
+            if line.startswith(indent):
+                line = line[indent_length:]
+            temp_new_code.append(line)
+
+        new_code = "\n".join(temp_new_code)
+
+        return new_code , response

@@ -23,6 +23,7 @@ class HumanEvalExecutor(UnittestExecutor):
 
         if self.debug:
             print("build function: ", full_func)
+        # TODO change canocnical solution aka 'code'  to be without indent   and add it here again
 
         return full_func
 
@@ -38,6 +39,11 @@ class HumanEvalExecutor(UnittestExecutor):
 
             context["root_path"] = temp_dir
 
-            result = super().execute(code, tests, context)
+            try:
+                result = super().execute(code, tests, context)
+            except Exception as e:
+                if self.debug:
+                    print("failed to execute:" , e)
+                result = ([], [], [])
 
         return result
