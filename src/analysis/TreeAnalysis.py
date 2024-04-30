@@ -76,7 +76,6 @@ class TreeAnalysis(Analysis):
                 pass
 
             #print("    Level 3")
-
             # Level 3   new_code + new_test: ---------------------------------
             if "new_code" not in d:
                 new_code, response = self.generator.generate_code(d, output_path)
@@ -114,20 +113,8 @@ class TreeAnalysis(Analysis):
                 # failed
                 pass
 
+
+        save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
+
         self.visualizer.visualize(data)
         print("--------------")
-
-
-
-
-
-
-
-        # for each thing in data DO:
-        #
-
-        #       phase 1 code + test
-        #
-        #
-        #
-
