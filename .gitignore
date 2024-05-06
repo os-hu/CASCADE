@@ -5,8 +5,7 @@
 /tests/resources/apikeys/*
 !tests/resources/apikeys/README.md
 /tests/resources/temp/*
-
-
+/tests/resources/humanevaltest/output/*
 
 # dotenv
 .env

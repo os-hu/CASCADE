@@ -19,15 +19,14 @@ class TreeVisualizer(AnalysisVisualizer):
         }
         """
         self.vis_key = "id"
+        self.draw_tree(data, full=full)
 
-        self.draw_tree(data)
 
-
-    def draw_tree(self, data):
+    def draw_tree(self, data, full=False):
         k = self.vis_key
         total = len(data)
         executed = list(filter(lambda x: "results" in x ,data))
-        print(len(executed))
+        print(f"generated: {len(executed)}/{total}")
 
         levels = {
             "1" : {"level": "(code, tests)", "p": [], "f": [], "e": []},
@@ -40,7 +39,6 @@ class TreeVisualizer(AnalysisVisualizer):
         for d in executed:
             res = d["results"]
             for l in levels.values():
-                print(l)
                 if l["level"] in res:
                     if res[l["level"]][0] == [] and res[l["level"]][1] == []:
                         # if there was an internal error append the key to the array
@@ -55,8 +53,11 @@ class TreeVisualizer(AnalysisVisualizer):
         for l in levels.values():
             print(f"{l['level']}:\t p:{len(l['p'])}, f:{len(l['f'])}, e:{len(l['e'])}")
 
+        if full:
+            print("------------final---------------")
+            for l in levels.values():
+                print(f"{l['level']}:\t p:{l['p']}, f:{l['f']}, e:{l['e']}")
 
-        pass
 
     def remove_tree(self, data):
         pass
