@@ -18,6 +18,20 @@ def load_json_from_path(file_path):
     return data
 
 
+def get_value_from_context(key, context, error_case_lambda):
+    components = key.split(".")
+    value = context
+    for component in components:
+        try:
+            if component in value:
+                value = value[component]
+            else:
+                return error_case_lambda(key)
+        except:
+            return error_case_lambda(key)
+    return value
+
+
 def save_dicts_list_to_json(data: List[Dict[str, Any]], file_path: str, create_folder=True, override=True):
     """
     this saves a list of dictionaries to a json file in the json list format [{},{},{},...]

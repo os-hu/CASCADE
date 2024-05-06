@@ -117,9 +117,12 @@ class Requirements:
             for entry in data:
                 value = entry
                 for component in components:
-                    if component in value:
-                        value = value[component]
-                    elif self.reqs[key] == Requirements.Level.MANDATORY:
+                    try:
+                        if component in value:
+                            value = value[component]
+                        elif self.reqs[key] == Requirements.Level.MANDATORY:
+                            errors.add(key)
+                    except:
                         errors.add(key)
         if errors:
             raise RequirementsMismatchException("Keys " + str(errors) + " were mandatory, but are (sometimes) missing.")
