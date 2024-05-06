@@ -40,6 +40,19 @@ class DockerizedWrapper():
 
         return succeeded, failed, errored
 
+    def setup_image(self, context: dict):
+        client = docker.from_env()
+        images = client.images.list(context["new_image"])
+        try:
+            if images:
+                return
+            container = self.setup(context)
+            self.run(container, context)
+            container.commit(context["new_image"])
+        finally:
+            if not images:
+                self.kill(container)
+
     def setup(self, context: dict):
         client = docker.from_env()
         container = client.containers.run(context["image"], "tail -f /dev/null", detach=True)
@@ -51,13 +64,14 @@ class DockerizedWrapper():
         return container
 
     def run(self, container: Container, context: dict):
-        res = container.exec_run('bash -c - "cd ~; ' + context["command"] + '"')
+        res = container.exec_run('bash -c - "cd ~; ' + context["command"].replace('"', "\\\"") + '"')
         if self.debug:
+            print("Command:", context["command"])
             print(res.exit_code)
             print(str(res.output, "utf-8"))
 
     def eval(self, container: Container, context: dict):
-        res = container.exec_run('bash -c - "cd ~; ' + context["eval_command"] + '"')
+        res = container.exec_run('bash -c - "cd ~; ' + context["eval_command"].replace('"', "\\\"") + '"')
         if self.debug:
             print(res.exit_code)
             print(str(res.output, "utf-8"))
