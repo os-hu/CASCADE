@@ -7,15 +7,17 @@ from src.utils import Utils
 class ContainsFilterFunction(FilterFunction):
     def __init__(self, key, content, iterate=True, re=False, invert=False, return_value_if_not_exists=False):
         """
-        A filter that is used .
+        A filter that is used to check if a key contains a certain content.
 
-        If the requirements contain 'all', they will NOT be verified
+        Keys are evaluated hierarchically, so to check "name" in {"signature": {"name": "test"}}, the key would be
+        "signature.name".
 
-        :param data: The dictionary on which the requirements are supposed to hold
-
-        :raise RequirementsMismatchException: If any :class:`Requirements.Level`.MANDATORY requirements were not fulfilled
-
-        :return: True if all mandatory requirements are fulfilled (e.g., the key exists)
+        :param key: The dictionary key in question
+        :param content: The string that is supposed to be contained
+        :param iterate: Sets if the value should be iterated if it is a list (default True)
+        :param re: Sets the matching type to regex matching (default False)
+        :param invert: Inverts the return value if the value is contained (default False)
+        :param return_value_if_not_exists: Sets the value to concern if anything goes wrong during the search (default False)
         """
 
         self.return_value_if_not_exists = return_value_if_not_exists

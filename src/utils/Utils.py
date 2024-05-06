@@ -18,7 +18,19 @@ def load_json_from_path(file_path):
     return data
 
 
-def get_value_from_context(key, context, error_case_lambda):
+def get_value_from_context(key, context, error_case_callback):
+    """
+    A function which extracts the value of a key from the context dictionary put in.
+
+    Keys are evaluated hierarchically, so to check "name" in {"signature": {"name": "test"}}, the key would be
+    "signature.name".
+
+    :param key: The dictionary key in question
+    :param context: The context dictionary to extract from
+    :param error_case_callback: The function to execute if anything goes wrong
+
+    :return: The value associated to the key
+    """
     components = key.split(".")
     value = context
     for component in components:
@@ -26,9 +38,9 @@ def get_value_from_context(key, context, error_case_lambda):
             if component in value:
                 value = value[component]
             else:
-                return error_case_lambda(key)
+                return error_case_callback(key)
         except:
-            return error_case_lambda(key)
+            return error_case_callback(key)
     return value
 
 
