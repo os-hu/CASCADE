@@ -3,16 +3,6 @@ from enum import Enum
 from src.filters.FilterFunction import FilterFunction
 from src.utils import Utils
 
-
-class Operators(Enum):
-    GREATER = 0
-    GREATER_EQUAL = 1
-    EQUAL = 2
-    UNEQUAL = 3
-    SMALLER_EQUAL = 4
-    SMALLER = 5
-
-
 class CheckLengthFilterFunction(FilterFunction):
     def __init__(self, key, op, val):
         """
@@ -23,7 +13,8 @@ class CheckLengthFilterFunction(FilterFunction):
         "signature.name".
 
         :param key: The dictionary key in question
-        :param op: The operator that is used in the comparison from :class:`Operators`
+        :param op: The operator that is used in the comparison from
+        ["GREATER", "GREATER_EQUAL", "EQUAL", "UNEQUAL", "SMALLER_EQUAL", "SMALLER"]
         :param val: The value to compare to
         """
         self.key = key
@@ -34,14 +25,14 @@ class CheckLengthFilterFunction(FilterFunction):
         value = Utils.get_value_from_context(self.key, context, lambda x: None)
         try:
             functions = {
-                Operators.GREATER: lambda x, y: x > y,
-                Operators.GREATER_EQUAL: lambda x, y: x >= y,
-                Operators.EQUAL: lambda x, y: x == y,
-                Operators.UNEQUAL: lambda x, y: x != y,
-                Operators.SMALLER_EQUAL: lambda x, y: x <= y,
-                Operators.SMALLER: lambda x, y: x == y,
+                "GREATER": lambda x, y: x > y,
+                "GREATER_EQUAL": lambda x, y: x >= y,
+                "EQUAL": lambda x, y: x == y,
+                "UNEQUAL": lambda x, y: x != y,
+                "SMALLER_EQUAL": lambda x, y: x <= y,
+                "SMALLER": lambda x, y: x == y,
             }
-            functions[self.op](len(value), self.val)
+            functions[str(self.op).upper()](len(value), self.val)
         except Exception as e:
             print(e)
             return False
