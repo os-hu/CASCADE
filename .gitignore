@@ -58,3 +58,5 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+/tests/test_JavaExecution.py
