@@ -55,7 +55,7 @@ class UnittestExecutor(AnalysisExecutor):
 
 
                 # TODO make this handel several functions of te same name in  the same file  ( via contex[parent] or signature )
-                transformer = self.ReplaceFunctionBody(context["signature"]["name"] , context[code] )
+                transformer = self.ReplaceFunctionBody(context["signature"]["name"], context[code] )
                 new_tree = transformer.visit(tree)
 
                 new_code_file = ast.unparse(new_tree)
@@ -75,10 +75,12 @@ class UnittestExecutor(AnalysisExecutor):
 
             dock_ex = DockerizedWrapper(debug=self.debug)
 
+            # TODO make timout a paramter and f string it
+
             dock_context = {
                 "image" : "python",
                 "directory" : temp_dir,
-                "command" : "ls; cat test.py; python3 test-runner.py",
+                "command" : "ls; cat test.py; timeout 15 python3 test-runner.py",
                 "eval_command" : "cat out",
                 "eval_function" : lambda x : [ast.literal_eval(l) for l in x.split(";")]
             }

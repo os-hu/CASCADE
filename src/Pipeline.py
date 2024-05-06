@@ -2,6 +2,7 @@ from src.extraction.Extraction import Extraction
 from src.filters.Filter import Filter
 from src.analysis.Analysis import Analysis
 
+
 class Pipeline():
     def __init__(self, extraction: Extraction, filter: Filter, analysis: Analysis, setup: dict):
         """
@@ -34,4 +35,4 @@ class Pipeline():
 
         # TODO save results to output path   or handle that in the analysis?    doc cutrently states that the visualizer handles that.
         #  Should the output path be given to the analysis as well?
-        print(results)
+        #print(results)

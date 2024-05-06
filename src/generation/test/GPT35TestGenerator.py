@@ -15,7 +15,7 @@ class GPT35TestGenerator(Generator):
         sig_and_doc = build_signature(context, doc=True)
         prompt = setup + sig_and_doc + "\n    pass"
 
-        unittestprompt = "\n\n# Tests:\nimport unittest\n\nclass test_Class(unittest.TestCase):\n"
+        unittestprompt = f"\n\n# Tests:\nimport unittest\n\nclass test_{context['signature']['name']}(unittest.TestCase):\n"
 
         prompt += unittestprompt
 
@@ -24,7 +24,6 @@ class GPT35TestGenerator(Generator):
 
     def generate(self, context, output_path):
         prompt = self.build_prompt(context)
-        print(prompt)
 
         response = self.prompt_executor.execute(prompt).model_dump()
 
@@ -36,7 +35,9 @@ class GPT35TestGenerator(Generator):
         with open(os.path.join(output_path, "test_generator_current.json") , "w") as file:
             file.write(str(savety_copy))
 
+        # TODO if max tokens have been used  cut the response down?
+        new_test = response["choices"][0]["text"]
 
-        new_code = response["choices"][0]["text"]
+        new_test = "import unittest\nfrom func import *\n\nclass test_func(unittest.TestCase):\n" + new_test
 
-        return(new_code , response)
+        return new_test , response
