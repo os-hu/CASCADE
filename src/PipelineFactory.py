@@ -61,22 +61,27 @@ class PipelineFactory:
             print(f"Error instantiating class '{class_name}': {e}")
 
 
-    def build(self, pipeline_path):
+    def build(self, pipeline_path, kwargs):
         """
         TODO
         :return: a build pipeline object
         """
 
         setup = Utils.load_json_from_path(pipeline_path)
+        if not setup:
+            raise Exception("AAAAAAAH")
 
 
         # TODO    change the path to be more individual    provided by the CLI
+        if kwargs["module_path"]:
+            sys.path.append(os.path.abspath(kwargs["module_path"]))
         sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
         print(sys.path)
 
         name = setup["Extraction"]["name"]
         path = "src.extraction." + name
         kwargs_ = setup["Extraction"]["kwargs"]
+        kwargs_.update(kwargs["Extraction"])
         extraction = self.load_class(name, path, [], kwargs_)
 
         filter_functions = []
@@ -85,6 +90,9 @@ class PipelineFactory:
                 name = f["name"]
                 path = "src.filters." + name
                 kwargs_ = f["kwargs"]
+                index = setup["FilterFunctions"].index(f)
+                if len(kwargs["FilterFunctions"]) > index:
+                    kwargs_.update(kwargs["FilterFunctions"][index])
                 filter_functions.append(self.load_class(name, path, [], kwargs_))
 
         filter_ = Filter(filter_functions)
@@ -100,6 +108,7 @@ class PipelineFactory:
                 name = current["name"]
                 path = f"src.generation.{gen[1]}." + name
                 kwargs_ = current["kwargs"]
+                kwargs_.update(kwargs[gen[0]])
                 generators[gen[1]] = self.load_class(name, path, [self.api_key_path], kwargs_)
 
         generation = Generation(generators["code"], generators["test"], generators["doc"])
@@ -108,16 +117,19 @@ class PipelineFactory:
         name = setup["Executor"]["name"]
         path = "src.analysis.executor." + name
         kwargs_ = setup["Executor"]["kwargs"]
+        kwargs_.update(kwargs["Executor"])
         analysis_executor = self.load_class(name, path, [], kwargs_)
 
         name = setup["Visualizer"]["name"]
         path = "src.analysis.visualizer." + name
         kwargs_ = setup["Visualizer"]["kwargs"]
+        kwargs_.update(kwargs["Visualizer"])
         analysis_visualizer = self.load_class(name, path, [], kwargs_)
 
         name = setup["Analysis"]["name"]
         path = "src.analysis." + name
         kwargs_ = setup["Analysis"]["kwargs"]
+        kwargs_.update(kwargs["Analysis"])
         analysis = self.load_class(name, path, [generation, analysis_visualizer, analysis_executor], kwargs_)
 
         pipeline = Pipeline(extraction, filter_, analysis, setup)
