@@ -29,6 +29,8 @@ class ContainsFilterFunction(FilterFunction):
 
     def filter(self, context) -> bool:
         value = Utils.get_value_from_context(self.key, context, lambda x: None)
+        if not value:
+            return self.return_value_if_not_exists
         if isinstance(value, list):
             if self.iterate:
                 for sub_value in value:

@@ -17,12 +17,10 @@ class PipelineFactory:
     TODO
     """
 
-    def __init__ (self, folder_path):
+    def __init__ (self):
         """
         TODO Write Doc
         """
-        self.folder_path = folder_path
-
 
         # TODO replace this with CLI input later
         self.api_key_path = ""
@@ -63,23 +61,16 @@ class PipelineFactory:
             print(f"Error instantiating class '{class_name}': {e}")
 
 
-    def build(self, pipeline_name):
+    def build(self, pipeline_path):
         """
         TODO
         :return: a build pipeline object
         """
 
+        setup = Utils.load_json_from_path(pipeline_path)
 
 
-        setup_files = os.listdir(self.folder_path)
-        if pipeline_name not in setup_files:
-            print(f"'{pipeline_name}' is not in the setup files\n content: {setup_files}")
-            sys.exit(-2)
-
-        else:
-            setup = Utils.load_json_from_path(os.path.join(self.folder_path, pipeline_name))
-
-        # TODO    change the path to be more indiviudla    provided by the CLI
+        # TODO    change the path to be more individual    provided by the CLI
         sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
         print(sys.path)
 
