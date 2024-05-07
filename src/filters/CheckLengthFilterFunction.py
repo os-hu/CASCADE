@@ -13,8 +13,7 @@ class CheckLengthFilterFunction(FilterFunction):
         "signature.name".
 
         :param key: The dictionary key in question
-        :param op: The operator that is used in the comparison from
-        ["GREATER", "GREATER_EQUAL", "EQUAL", "UNEQUAL", "SMALLER_EQUAL", "SMALLER"]
+        :param op: The operator that is used in the comparison from [">", ">=", "==", "!=", "<=", "<"]
         :param val: The value to compare to
         """
         self.key = key
@@ -25,14 +24,14 @@ class CheckLengthFilterFunction(FilterFunction):
         value = Utils.get_value_from_context(self.key, context, lambda x: None)
         try:
             functions = {
-                "GREATER": lambda x, y: x > y,
-                "GREATER_EQUAL": lambda x, y: x >= y,
-                "EQUAL": lambda x, y: x == y,
-                "UNEQUAL": lambda x, y: x != y,
-                "SMALLER_EQUAL": lambda x, y: x <= y,
-                "SMALLER": lambda x, y: x == y,
+                ">": lambda x, y: x > y,
+                ">=": lambda x, y: x >= y,
+                "==": lambda x, y: x == y,
+                "!=": lambda x, y: x != y,
+                "<=": lambda x, y: x <= y,
+                "<": lambda x, y: x == y,
             }
-            functions[str(self.op).upper()](len(value), self.val)
+            functions[self.op](len(value), self.val)
         except Exception as e:
             print(e)
             return False
