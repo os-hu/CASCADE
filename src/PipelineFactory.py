@@ -1,3 +1,5 @@
+from src.analysis.executor.Execution import Execution
+from src.analysis.visualizer.Visualization import Visualization
 from src.generation.NoGenerator import NoGenerator
 from src.Pipeline import Pipeline
 from src.generation.Generation import Generation
@@ -124,7 +126,7 @@ class PipelineFactory:
         path = "src.analysis." + name
         kwargs_ = setup["Analysis"]["kwargs"]
         kwargs_.update(kwargs["Analysis"])
-        analysis = self.load_class(name, path, [generation, analysis_visualizer, analysis_executor], kwargs_)
+        analysis = self.load_class(name, path, [generation, Visualization(analysis_visualizer), Execution(analysis_executor)], kwargs_)
 
         can_work = True
         extraction_prov = extraction.provided

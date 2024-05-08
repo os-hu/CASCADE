@@ -1,10 +1,10 @@
 import os
 
 from src.analysis.Analysis import Analysis
+from src.analysis.executor.Execution import Execution
+from src.analysis.visualizer.Visualization import Visualization
 
 from src.generation.Generation import Generation
-from src.analysis.executor.AnalysisExecutor import AnalysisExecutor
-from src.analysis.visualizer.AnalysisVisualizer import AnalysisVisualizer
 
 from src.utils.Utils import save_dicts_list_to_json, load_json_from_path
 
@@ -13,7 +13,7 @@ class TreeAnalysis(Analysis):
     """
     TODO
     """
-    def __init__(self, generator: Generation, executor: AnalysisExecutor, visualizer: AnalysisVisualizer, regenerate=False, debug=False):
+    def __init__(self, generator: Generation, executor: Execution, visualizer: Visualization, regenerate=False, debug=False):
         super().__init__(generator, executor, visualizer)
         self.regenerate = regenerate
         self.debug = debug

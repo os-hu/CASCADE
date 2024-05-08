@@ -9,7 +9,7 @@ class AnalysisVisualizer(ABC):
         self.analysis_requirements = Requirements(Requirements.Kind.EXPECTED, name="Visualizer-Analysis-Expected")
 
     @abstractmethod
-    def visualize(self, data):
+    def visualize(self, data, **kwargs):
         """
         This is used to visualize the results of the analysis module
         :param data: the data to be visualized
