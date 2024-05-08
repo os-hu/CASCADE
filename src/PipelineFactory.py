@@ -22,13 +22,6 @@ class PipelineFactory:
         TODO Write Doc
         """
 
-        # TODO replace this with CLI input later
-        self.api_key_path = ""
-        if "API_KEY_PATH" in os.environ:
-            self.api_key_path = os.environ["API_KEY_PATH"]
-
-
-
     @staticmethod
     def load_class(class_name, module_path, args, kwargs):
         """
@@ -61,7 +54,7 @@ class PipelineFactory:
             print(f"Error instantiating class '{class_name}': {e}")
 
 
-    def build(self, pipeline_path, kwargs):
+    def build(self, pipeline_path, kwargs={"module_path": None, "Extraction": {}, "CodeGenerator": {}, "TestGenerator": {}, "DocGenerator": {}, "Analysis": {}, "Executor": {}, "Visualizer": {}, "FilterFunctions": []}):
         """
         TODO
         :return: a build pipeline object
@@ -70,6 +63,7 @@ class PipelineFactory:
         setup = Utils.load_json_from_path(pipeline_path)
         if not setup:
             raise Exception("AAAAAAAH")
+        # TODO change that to soemthing meaningfull
 
 
         # TODO    change the path to be more individual    provided by the CLI
@@ -109,7 +103,7 @@ class PipelineFactory:
                 path = f"src.generation.{gen[1]}." + name
                 kwargs_ = current["kwargs"]
                 kwargs_.update(kwargs[gen[0]])
-                generators[gen[1]] = self.load_class(name, path, [self.api_key_path], kwargs_)
+                generators[gen[1]] = self.load_class(name, path, [], kwargs_)
 
         generation = Generation(generators["code"], generators["test"], generators["doc"])
 

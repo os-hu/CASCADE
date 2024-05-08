@@ -5,14 +5,14 @@ from src.PipelineFactory import PipelineFactory
 class test_PipelineFactory(unittest.TestCase):
 
     def test_build_with_arguments(self):
-        pipeline_name = "setup_with_arg.json"  # "test_pipeline"
-        file_path = "resources/setup/"
+        pipeline_path = "resources/setup/setup_with_arg.json"  # "test_pipeline"
 
-        pipeline_fact = (PipelineFactory(file_path))
+        pipeline_fact = (PipelineFactory())
 
         pipeline_fact.api_key_path = "./resources/apikeys/openai_key"
 
-        pipeline = pipeline_fact.build(pipeline_name)
+
+        pipeline = pipeline_fact.build(pipeline_path)
 
         self.assertEqual(str(type(pipeline.extraction)),
                              "<class 'src.extraction.HumanEvalExtraction.HumanEvalExtraction'>")

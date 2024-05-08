@@ -1,3 +1,5 @@
+import os
+
 from openai import OpenAI
 import time
 
@@ -5,13 +7,16 @@ from src.generation.executor.PromptExecutor import PromptExecutor
 
 
 class GPT4Executor(PromptExecutor):
-    def __init__(self, api_key_path, max_attempts=1, max_tokens=1200, temperature=0, delay=3, dummy=False):
+    def __init__(self, max_attempts=1, max_tokens=1200, temperature=0, delay=3, dummy=False):
         # read in api key
         # TODO add other way to add api key than string in a file
 
         if not dummy:
-            with open(api_key_path, "r") as file:
-                api_key = file.read()
+            if "OPENAI_API_KEY" in os.environ:
+                api_key = os.environ["OPENAI_API_KEY"]
+            else:
+                # TODO
+                raise Exception("No api key in environment")
 
             self.client = OpenAI(api_key=api_key)
 

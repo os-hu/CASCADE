@@ -23,16 +23,18 @@ class CheckLengthFilterFunction(FilterFunction):
 
     def filter(self, context) -> bool:
         value = Utils.get_value_from_context(self.key, context, lambda x: None)
-        try:
-            functions = {
-                ">": lambda x, y: x > y,
-                ">=": lambda x, y: x >= y,
-                "==": lambda x, y: x == y,
-                "!=": lambda x, y: x != y,
-                "<=": lambda x, y: x <= y,
-                "<": lambda x, y: x == y,
-            }
-            functions[self.op](len(value), self.val)
-        except Exception as e:
-            print(e)
-            return False
+        if value:
+            try:
+                functions = {
+                    ">": lambda x, y: x > y,
+                    ">=": lambda x, y: x >= y,
+                    "==": lambda x, y: x == y,
+                    "!=": lambda x, y: x != y,
+                    "<=": lambda x, y: x <= y,
+                    "<": lambda x, y: x == y,
+                }
+                return functions[self.op](len(value), self.val)
+            except Exception as e:
+                print(e)
+                return False
+        return False

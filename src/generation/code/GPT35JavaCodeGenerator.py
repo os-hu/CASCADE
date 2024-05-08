@@ -1,20 +1,37 @@
 from src.generation.Generator import Generator
 from src.generation.executor.GPT35CompletionExecutor import GPT35CompletionExecutor
-from src.utils.PythonUtils import build_signature
+from src.utils.JavaUtils import build_context
 
 import os
 import copy
 import re
+import tiktoken
 
 class GPT35JavaCodeGenerator(Generator):
-    def __init__(self, api_key_path, max_attempts=1, max_tokens=800, temperature=0, delay=3, dummy=False):
+    def __init__(self, max_attempts=1, max_prompt_tokens=1600, max_tokens=800, temperature=0, delay=3, dummy=False):
         super().__init__()
-        self.prompt_executor = GPT35CompletionExecutor(api_key_path, max_attempts=max_attempts, max_tokens=max_tokens, temperature=temperature, delay=delay, dummy=dummy)
+        self.max_prompt_tokens = max_prompt_tokens
+        self.prompt_executor = GPT35CompletionExecutor(max_attempts=max_attempts, max_tokens=max_tokens,
+                                                       temperature=temperature, delay=delay, dummy=dummy)
 
     def build_prompt(self, context):
-        prompt = ""
+        enc = tiktoken.encoding_for_model("gpt-3.5-turbo-instruct")
+
+
+        setup = f"// SETUP: Write Java code for {context['signature']['name']}\n\n"
+
+        packg_declaration = f"package {context['package']};\n\n"
+
+        imports = "".join(context["parent"]["imports"]) + "\n"
+
+        code = build_context(context, doc=True) + "{"
+
+        prompt = setup + packg_declaration + imports + code
+
+        len(enc.encode(prompt))
 
         return prompt
+
 
     def generate(self, context, output_path):
         prompt = self.build_prompt(context)

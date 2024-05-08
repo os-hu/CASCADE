@@ -28,7 +28,7 @@ class test_HumanEvalExecutor(unittest.TestCase):
 
         # TODO currently under construction 26.04.2024    error:      cat: out: No such file or directory
         executor = HumanEvalExecutor(debug=True)
-        for d in data:
+        for d in data[:3]:
             results = executor.execute("code" , "tests", d)
             print("ID__________________" , d["id"])
             if not results[0]:

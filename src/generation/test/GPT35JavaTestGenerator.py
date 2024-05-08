@@ -1,22 +1,23 @@
 from src.generation.Generator import Generator
 from src.generation.executor.GPT35CompletionExecutor import GPT35CompletionExecutor
-from src.utils.JavaUtils import build_signature
+from src.utils.JavaUtils import build_context
 
 import copy
 import os
 
 
 class GPT35JavaTestGenerator(Generator):
-    def __init__(self, api_key_path, max_attempts=1, max_tokens=1000, temperature=0, delay=3, dummy=False):
+    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, dummy=False):
         super().__init__()
-        self.prompt_executor = GPT35CompletionExecutor(api_key_path, max_attempts=max_attempts, max_tokens=max_tokens, temperature=temperature, delay=delay, dummy=dummy)
+        self.prompt_executor = GPT35CompletionExecutor(max_attempts=max_attempts, max_tokens=max_tokens,
+                                                       temperature=temperature, delay=delay, dummy=dummy)
 
     def build_prompt(self, context):
 
 
         setup = f"// SETUP: Write Java JUnit tests for {context['signature']['name']}\n\n// CODE:\n\n"
 
-        code = build_signature(context, doc=True) + ";\n}\n\n// TEST:\n\n"
+        code = build_context(context, doc=True) + ";\n}\n\n// TEST:\n\n"
 
         packg_declaration = f"package {context['test_package']};\n\n"
 

@@ -7,6 +7,9 @@
    "Visualizer"    : { "name": "TreeVisualizer",  "kwargs" : {}},
 
    "FilterFunctions"  : [
-      { "name": "NoTestsFilterFunction", "kwargs" : {}}
+      { "name": "NoTestsFilterFunction", "kwargs" : {}},
+      { "name": "ContainsFilterFunction", "kwargs" : {"key":"doc", "content":"@inheritDoc" , "invert":true}},
+      { "name": "CheckLengthFilterFunction", "kwargs" : {"key":"doc", "op":">", "val":10}},
+      { "name": "CheckLengthFilterFunction", "kwargs" : {"key":"doc", "op":"<", "val":400}}
    ]
 }

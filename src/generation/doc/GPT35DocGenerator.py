@@ -8,9 +8,10 @@ import copy
 
 # TODO   CHANGE THIS TO DOC GENERATION
 class GPT35DocGenerator(Generator):
-    def __init__(self, api_key_path, max_attempts=1, max_tokens=800, temperature=0, delay=3):
+    def __init__(self, max_attempts=1, max_tokens=800, temperature=0, delay=3):
         super().__init__()
-        self.prompt_executor = GPT35CompletionExecutor(api_key_path, max_attempts=max_attempts, max_tokens=max_tokens, temperature=temperature, delay=delay)
+        self.prompt_executor = GPT35CompletionExecutor(max_attempts=max_attempts, max_tokens=max_tokens,
+                                                       temperature=temperature, delay=delay)
 
     def build_prompt(self, context):
         setup = "# SETUP: Write functional correct python code.\n\n"

@@ -37,7 +37,12 @@ class CLI:
                 for kw in value:
                     try:
                         key_value = kw.split(":")
-                        kwargs_overrides[key][key_value[0]] = ast.literal_eval(key_value[1])
+
+                        try:
+                            kwargs_overrides[key][key_value[0]] = ast.literal_eval(key_value[1])
+                        except:
+                            kwargs_overrides[key][key_value[0]] = key_value[1]
+
                     except Exception as e:
                         print(e)
         if args.filters:
@@ -48,7 +53,11 @@ class CLI:
                     filters = kwargs_overrides["FilterFunctions"]
                     while len(filters) <= index:
                         filters.append({})
-                    filters[index][key_value[0].strip()] = ast.literal_eval(key_value[1])
+                    try:
+                        filters[index][key_value[0].strip()] = ast.literal_eval(key_value[1])
+                    except:
+                        filters[index][key_value[0].strip()] = key_value[1]
+
                 except Exception as e:
                     print(e)
         kwargs_ = {}
@@ -59,3 +68,9 @@ class CLI:
         factory = PipelineFactory()
         pipeline = factory.build(args.setup_file, kwargs_)
         pipeline.execute(args.input_path, args.output_path)
+
+
+if __name__ == '__main__':
+    cli = CLI()
+    cli.main()
+

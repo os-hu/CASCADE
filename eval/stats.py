@@ -1,33 +1,111 @@
 import os.path
+from collections import defaultdict, Counter
+
+os.environ
+
+import csv
+
 
 from src.extraction.JavaExtraction import JavaExtraction
 from src.filters.Filter import Filter
 from src.filters.NoTestsFilterFunction import NoTestsFilterFunction
 from src.filters.ContainsFilterFunction import ContainsFilterFunction
+from src.generation.code.GPT35JavaCodeGenerator import GPT35JavaCodeGenerator
 from src.generation.test.GPT35JavaTestGenerator import GPT35JavaTestGenerator
+from src.filters.CheckLengthFilterFunction import CheckLengthFilterFunction
+
 
 in_path = "/home/kiecketo/repos/commons-text"
 out_path = os.path.dirname(__file__)
 
-
+#
 extr = JavaExtraction()
 data = extr.extract(in_path, out_path)
 
-print(len(data))
 
-filter_ = Filter(
-    [NoTestsFilterFunction(),
-     ContainsFilterFunction("signature.modifier", "public"),
-     ContainsFilterFunction("doc", "@inheritDoc", invert=True)
-     ]
-)
+filter_ = Filter([CheckLengthFilterFunction("doc", ">", 12), ContainsFilterFunction("doc", "@inheritDoc", invert=True), NoTestsFilterFunction()])
+data = filter_.filter_all(data, out_path)
 
-filtered_data = filter_.filter_all(data, out_path)
+def flatten_dict(d, parent_key='', sep='.'):
+    items = []
+    for k, v in d.items():
+        new_key = parent_key + sep + k if parent_key else k
+        if isinstance(v, dict):
+            items.extend(flatten_dict(v, new_key, sep=sep).items())
+        else:
+            items.append((new_key, v))
+    return dict(items)
 
-print(len(filtered_data))
+
+def process_entry(entry):
+    flattened = flatten_dict(entry)
+    result = {}
+    for key, value in flattened.items():
+        # Check if the value is a list or similar iterable, otherwise treat as a single item
+
+        if key == "id":
+            result[key] = value
+
+        elif hasattr(value, '__len__'): # and not isinstance(value, str):
+            result[key] = len(value)
+        elif value is None:
+            result[key] = 'None'
+        else:
+            result[key] = 1  # Default length for single items
+    return result
 
 
-for d in filtered_data[120:124]:
-    test_prompt = GPT35JavaTestGenerator("", dummy=True).build_prompt(d)
-    print(test_prompt)
-    print("--------------------------")
+def write_length_stats(data):
+    all_keys = set()
+    processed_data = []
+
+    # Process each entry, flatten and calculate lengths
+    for entry in data:
+        processed_entry = process_entry(entry)
+        processed_data.append(processed_entry)
+        all_keys.update(processed_entry.keys())
+
+    # Ensure each dictionary has all keys
+    for entry in processed_data:
+        for key in all_keys:
+            entry.setdefault(key, 'N')  # N for non-existent keys
+
+    # Write to CSV
+    with open('output.csv', 'w', newline='') as csvfile:
+        fieldnames = list(all_keys)
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        writer.writeheader()
+        for entry in processed_data:
+            writer.writerow(entry)
+
+
+def print_histograms(dicts, top_n=5):
+    # Step 1: Flatten all dictionaries
+    flattened_dicts = [flatten_dict(d) for d in dicts]
+
+    # Step 2: Collect all values for each key
+    key_value_counts = defaultdict(Counter)
+    for flat_dict in flattened_dicts:
+        for key, value in flat_dict.items():
+            key_value_counts[key][str(value)] += 1
+
+    # Step 3: Print the histogram of the most common values for each key
+    for key, counter in key_value_counts.items():
+        print(f'Key: {key}')
+        most_common = counter.most_common(top_n)
+        for value, count in most_common:
+            print(f'  Value: {value}, Count: {count}, Length: {len(value)}')
+        print()
+
+
+# Example usage
+# data = [
+#     {'key1': [1, 2, 3], 'key2': {'subkey1': 'value1', 'subkey2': [4, 5]}},
+#     {'key1': [4, 5], 'key2': {'subkey1': 'value2'}},
+#     {'key3': 'just a string'}
+# ]
+
+write_length_stats(data)
+
+#print_histograms(data)

@@ -9,9 +9,10 @@ from src.utils.PythonUtils import build_signature
 
 
 class GPT4TestGenerator(Generator):
-    def __init__(self, api_key_path, max_attempts=1, max_tokens=1000, temperature=0, delay=3):
+    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3):
         super().__init__()
-        self.prompt_executor = GPT4Executor(api_key_path, max_attempts=max_attempts, max_tokens=max_tokens, temperature=temperature, delay=delay)
+        self.prompt_executor = GPT4Executor(max_attempts=max_attempts, max_tokens=max_tokens, temperature=temperature,
+                                            delay=delay)
 
     def build_prompt(self, context):
         sig_and_doc = build_signature(context, doc=True)

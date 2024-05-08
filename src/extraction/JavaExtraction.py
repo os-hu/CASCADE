@@ -44,4 +44,10 @@ class JavaExtraction(Extraction):
              output_path]
         )
         extracted = json_extractor.extract(input_path, output_path)
+
+        count = 0
+        for e in extracted:
+            e["id"] = count
+            count += 1
+
         return extracted
