@@ -1,8 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+from src.Requirements import Requirements
+
 
 class Extraction(ABC):
+    def __init__(self):
+        self.provided: Requirements = Requirements(Requirements.Kind.PROVIDED, name="Extraction-Provided")
+        self.provided.add_requirement("all", Requirements.Level.MANDATORY)
     @abstractmethod
     def extract(self, input_path, output_path) -> List[dict]:
         """

@@ -12,6 +12,7 @@ import shutil
 
 class JavaExecutor(AnalysisExecutor):
     def __init__(self, debug=False, builder=None):
+        super().__init__()
         self.debug = debug
         self.builder = builder
 

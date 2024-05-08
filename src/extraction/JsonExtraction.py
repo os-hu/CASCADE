@@ -6,6 +6,8 @@ import json
 
 
 class JsonExtraction(Extraction):
+    def __init__(self):
+        super().__init__()
     """
     This is a basic extraction module
     """

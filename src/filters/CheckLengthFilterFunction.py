@@ -16,6 +16,7 @@ class CheckLengthFilterFunction(FilterFunction):
         :param op: The operator that is used in the comparison from [">", ">=", "==", "!=", "<=", "<"]
         :param val: The value to compare to
         """
+        super().__init__()
         self.key = key
         self.op = op
         self.val = val

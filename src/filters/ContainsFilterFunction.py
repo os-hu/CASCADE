@@ -20,6 +20,7 @@ class ContainsFilterFunction(FilterFunction):
         :param return_value_if_not_exists: Sets the value to concern if anything goes wrong during the search (default False)
         """
 
+        super().__init__()
         self.return_value_if_not_exists = return_value_if_not_exists
         self.invert = invert
         self.re = re

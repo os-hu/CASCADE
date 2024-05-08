@@ -36,7 +36,7 @@ class Requirements:
         self.name = name
         Requirements.i += 1
 
-    def add_requirement(self, name: str, level: "Requirements.Level" = Level.MANDATORY):
+    def add_requirement(self, key: str, level: "Requirements.Level" = Level.MANDATORY):
         """
         A function to add requirements to this requirement object.
 
@@ -50,13 +50,26 @@ class Requirements:
         ]
         One has to use addRequirement("signature.name", :class:`Requirements.Level`.OPTIONAL)
 
-        :param name: The name of the requirement, if necessary hierarchically separated by dots
+        :param key: The name of the requirement, if necessary hierarchically separated by dots
         :param level: The level the requirement has, is it mandatory or optional (defaults to mandatory)
 
         :return: This object, so requirements can be daisy-chained
         """
-        self.reqs[name] = level
+        self.reqs[key] = level
         return self
+
+    def set_name(self, name):
+        """
+        Sets the name for this requirements object.
+
+        :param name: The name to set
+        """
+
+    def clear(self):
+        """
+        Clears the requirements
+        """
+        self.reqs = dict()
 
     def fulfills(self, other: "Requirements"):
         """
@@ -123,7 +136,8 @@ class Requirements:
                         elif self.reqs[key] == Requirements.Level.MANDATORY:
                             errors.add(key)
                     except:
-                        errors.add(key)
+                        if self.reqs[key] == Requirements.Level.MANDATORY:
+                            errors.add(key)
         if errors:
             raise RequirementsMismatchException("Keys " + str(errors) + " were mandatory, but are (sometimes) missing.")
         return True
@@ -142,7 +156,7 @@ class Requirements:
             raise RequirementsMismatchException("Both Requirements were of different kinds"
                                                 + ", you probably wanted to use self.fulfills() instead!")
 
-        r = Requirements(self.kind, "merged-" + self.name + "-" + other.name)
+        r = Requirements(self.kind, "merged-" + self.name)
         # Iterate over symmetric difference and add all keys
         for key in self.reqs.keys() ^ other.reqs.keys():
             if key in self.reqs:

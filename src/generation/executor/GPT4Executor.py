@@ -5,19 +5,20 @@ from src.generation.executor.PromptExecutor import PromptExecutor
 
 
 class GPT4Executor(PromptExecutor):
-    def __init__(self, api_key_path, max_attempts=1, max_tokens=1200, temperature=0, delay=3):
+    def __init__(self, api_key_path, max_attempts=1, max_tokens=1200, temperature=0, delay=3, dummy=False):
         # read in api key
         # TODO add other way to add api key than string in a file
 
-        with open(api_key_path, "r") as file:
-            api_key = file.read()
+        if not dummy:
+            with open(api_key_path, "r") as file:
+                api_key = file.read()
 
-        self.client = OpenAI(api_key=api_key)
+            self.client = OpenAI(api_key=api_key)
 
-        self.max_attempts = max_attempts
-        self.max_tokens = max_tokens
-        self.temperature = temperature
-        self.delay = delay
+            self.max_attempts = max_attempts
+            self.max_tokens = max_tokens
+            self.temperature = temperature
+            self.delay = delay
 
     def execute(self, prompt):
         attempt = 0

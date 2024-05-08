@@ -3,6 +3,7 @@ from src.analysis.visualizer.AnalysisVisualizer import AnalysisVisualizer
 
 class TreeVisualizer(AnalysisVisualizer):
     def __init__(self, vis_key="name"):
+        super().__init__()
         self.vis_key = vis_key
 
     def visualize(self, data, full=False):

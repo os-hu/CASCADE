@@ -132,6 +132,23 @@ class PipelineFactory:
         kwargs_.update(kwargs["Analysis"])
         analysis = self.load_class(name, path, [generation, analysis_visualizer, analysis_executor], kwargs_)
 
+        can_work = True
+        extraction_prov = extraction.provided
+        for ff in filter_functions:
+            can_work &= extraction_prov.fulfills(ff.extraction_requirements)
+            extraction_prov.merge(ff.provided)
+        can_work &= extraction_prov.fulfills(analysis.extraction_requirements)
+        for gen in generators.values():
+            can_work &= extraction_prov.fulfills(gen.extraction_requirements)
+        can_work &= extraction_prov.fulfills(analysis_executor.extraction_requirements)
+        can_work &= extraction_prov.fulfills(analysis_visualizer.extraction_requirements)
+        analysis_prov = analysis.provided
+        for gen in generators.values():
+            can_work &= analysis_prov.fulfills(gen.analysis_requirements)
+        can_work &= analysis_prov.fulfills(analysis_executor.analysis_requirements)
+        can_work &= analysis_prov.fulfills(analysis_visualizer.analysis_requirements)
+        print(can_work)
+
         pipeline = Pipeline(extraction, filter_, analysis, setup)
 
         return pipeline

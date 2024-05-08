@@ -13,7 +13,7 @@ class HumanEvalExtraction(Extraction):
     See extract() method for details.
     """
     def __init__(self) -> object:
-        pass
+        super().__init__()
 
     class AssertTransformer(ast.NodeTransformer):
         """

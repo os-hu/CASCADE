@@ -9,6 +9,7 @@ import shutil
 
 class UnittestExecutor(AnalysisExecutor):
     def __init__(self, debug=False):
+        super().__init__()
         self.debug = debug
 
     class ReplaceFunctionBody(ast.NodeTransformer):

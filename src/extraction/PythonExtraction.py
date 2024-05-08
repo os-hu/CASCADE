@@ -1,4 +1,4 @@
-from extraction.Extraction import Extraction
+from src.extraction.Extraction import Extraction
 
 
 class PythonExtraction(Extraction):
@@ -7,7 +7,7 @@ class PythonExtraction(Extraction):
     This is designed to extract all functions, corresponding tests, docstrings and context from a given python Project
     """
     def __init__(self):
-        pass
+        super().__init__()
 
     def extract(self, input_path, output_path, print_mode=False) -> dict:
         """
