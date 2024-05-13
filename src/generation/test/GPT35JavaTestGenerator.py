@@ -1,3 +1,7 @@
+import json
+
+import tiktoken
+
 from src.generation.Generator import Generator
 from src.generation.executor.GPT35CompletionExecutor import GPT35CompletionExecutor
 from src.utils.JavaUtils import build_context
@@ -7,44 +11,78 @@ import os
 
 
 class GPT35JavaTestGenerator(Generator):
-    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, dummy=False):
+    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, dummy=False, max_prompt_tokens=2000, debug=False):
         super().__init__()
+        self.debug = debug
+        self.max_prompt_tokens = max_prompt_tokens
         self.prompt_executor = GPT35CompletionExecutor(max_attempts=max_attempts, max_tokens=max_tokens,
                                                        temperature=temperature, delay=delay, dummy=dummy)
 
     def build_prompt(self, context):
-
+        enc = tiktoken.encoding_for_model("gpt-3.5-turbo-instruct")
 
         setup = f"// SETUP: Write Java JUnit tests for {context['signature']['name']}\n\n// CODE:\n\n"
 
         code = build_context(context, doc=True) + ";\n}\n\n// TEST:\n\n"
 
-        packg_declaration = f"package {context['test_package']};\n\n"
+        test_header = self.build_tests(context)
 
-        imports = "".join(context["test_imports"]) + "\n"
+        prompt = setup + code + test_header
 
-        classdefinition = "public class " + context["test_file_path"].split("/")[-1].split(".")[0] + "{"
 
-        prompt = setup + code + packg_declaration + imports + classdefinition
+        if len(enc.encode(prompt)) > self.max_prompt_tokens:
+            code = build_context(context, doc=True, no_fields=True)
+            prompt = setup + code + test_header
+
+        if len(enc.encode(prompt)) > self.max_prompt_tokens:
+            code = build_context(context, doc=True, no_fields=True, no_constructors=True)
+            prompt = setup + code + test_header
+
+        if len(enc.encode(prompt)) > self.max_prompt_tokens:
+            code = build_context(context, doc=True, no_fields=True, no_constructors=True, no_other_methods=True)
+            prompt = setup + code + test_header
+
+        if len(enc.encode(prompt)) > self.max_prompt_tokens:
+            return ""
 
         return prompt
+
+    def build_tests(self, context):
+        packg_declaration = f"package {context['test_package']};\n\n"
+        imports = "".join(context["test_imports"]) + "\n"
+        classdefinition = "public class " + context["test_file_path"].split("/")[-1].split(".")[0] + "{"
+        return packg_declaration + imports + classdefinition
 
     def generate(self, context, output_path):
         prompt = self.build_prompt(context)
 
-        response = self.prompt_executor.execute(prompt).model_dump()
+        test_safety_copy_path = os.path.join(output_path, "test_generator_current.json")
 
+        response = None
+        if os.path.exists(test_safety_copy_path):
+            with open(test_safety_copy_path, "r") as file:
+                context2 = json.load(file)
 
-        savety_copy = copy.deepcopy(context)
-        savety_copy["response"] = response
-        #save_dicts_list_to_json([savety_copy], os.path.join(output_path, "code_generator_current.json"))
+            response = context2["response"]
+            del context2["response"]
+            context2["root_path"] = context["root_path"]
 
-        with open(os.path.join(output_path, "test_generator_current.json") , "w") as file:
-            file.write(str(savety_copy))
+            if context != context2:
+                response = None
 
+        if not response:
+            response = self.prompt_executor.execute(prompt).model_dump()
+
+            savety_copy = copy.deepcopy(context)
+            savety_copy["response"] = response
+
+            with open(test_safety_copy_path , "w") as file:
+                json.dump(savety_copy, file)
+        if self.debug:
+            print(response)
 
         new_test = response["choices"][0]["text"]
 
-        new_test = "import unittest\nfrom func import *\n\nclass test_func(unittest.TestCase):\n" + new_test
+        new_test = self.build_tests(context) + new_test
 
         return new_test , response

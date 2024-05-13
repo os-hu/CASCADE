@@ -21,8 +21,7 @@ class Generation:
         """
         TODO
         """
-        imm = MappingProxyType(copy.deepcopy(context))
-        code, response = self.code_generator.generate(imm, output_path)
+        code, response = self.code_generator.generate(copy.deepcopy(context), output_path)
 
         return code, response
 
@@ -30,8 +29,7 @@ class Generation:
         """
         TODO
         """
-        imm = MappingProxyType(copy.deepcopy(context))
-        tests, response = self.test_generator.generate(imm, output_path)
+        tests, response = self.test_generator.generate(copy.deepcopy(context), output_path)
 
         return tests, response
 
@@ -39,7 +37,6 @@ class Generation:
         """
         TODO
         """
-        imm = MappingProxyType(copy.deepcopy(context))
-        doc, response = self.doc_generator.generate(imm, output_path)
+        doc, response = self.doc_generator.generate(copy.deepcopy(context), output_path)
 
         return doc, response

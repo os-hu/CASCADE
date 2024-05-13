@@ -1,7 +1,7 @@
 import copy
 from types import MappingProxyType
 
-from AnalysisExecutor import AnalysisExecutor
+from src.analysis.executor.AnalysisExecutor import AnalysisExecutor
 
 
 class Execution:
@@ -9,5 +9,4 @@ class Execution:
         self.executor = executor
 
     def execute(self, code, tests, context):
-        imm = MappingProxyType(copy.deepcopy(context))
-        self.executor.execute(code, tests, imm)
+        return self.executor.execute(code, tests, copy.deepcopy(context))

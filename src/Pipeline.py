@@ -31,15 +31,15 @@ class Pipeline():
 
         data = self.extraction.extract(input_path, output_path)
 
-        filtered_data = self.filter.filter_all(data, output_path)
+        filtered_data = self.filter.filter_all(data)
 
         can_work = True
         can_work &= self.analysis.extraction_requirements.verify(filtered_data)
         can_work &= self.analysis.generator.test_generator.extraction_requirements.verify(filtered_data)
         can_work &= self.analysis.generator.code_generator.extraction_requirements.verify(filtered_data)
         can_work &= self.analysis.generator.doc_generator.extraction_requirements.verify(filtered_data)
-        can_work &= self.analysis.executor.extraction_requirements.verify(filtered_data)
-        can_work &= self.analysis.visualizer.extraction_requirements.verify(filtered_data)
+        can_work &= self.analysis.executor.executor.extraction_requirements.verify(filtered_data)
+        can_work &= self.analysis.visualizer.visualizer.extraction_requirements.verify(filtered_data)
 
         results = self.analysis.analyse(filtered_data, output_path)
 

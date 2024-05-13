@@ -31,7 +31,7 @@ class CheckLengthFilterFunction(FilterFunction):
                     "==": lambda x, y: x == y,
                     "!=": lambda x, y: x != y,
                     "<=": lambda x, y: x <= y,
-                    "<": lambda x, y: x == y,
+                    "<": lambda x, y: x < y,
                 }
                 return functions[self.op](len(value), self.val)
             except Exception as e:
