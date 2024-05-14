@@ -53,6 +53,13 @@ class DockerizedWrapper():
             if not images:
                 self.kill(container)
 
+    def remove_image(self, context: dict):
+        client = docker.from_env()
+        try:
+            client.images.remove(context["new_image"], force=True)
+        except Exception as e:
+            print(f"Could not remove image because of Exception: {e}")
+
     def setup(self, context: dict):
         client = docker.from_env()
         container = client.containers.run(context["image"], "tail -f /dev/null", detach=True)
