@@ -72,7 +72,6 @@ class PipelineFactory:
         if kwargs["module_path"]:
             sys.path.append(os.path.abspath(kwargs["module_path"]))
         sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
-        print(sys.path)
 
         name = setup["Extraction"]["name"]
         path = "src.extraction." + name
@@ -126,7 +125,7 @@ class PipelineFactory:
         path = "src.analysis." + name
         kwargs_ = setup["Analysis"]["kwargs"]
         kwargs_.update(kwargs["Analysis"])
-        analysis = self.load_class(name, path, [generation, Visualization(analysis_visualizer), Execution(analysis_executor)], kwargs_)
+        analysis = self.load_class(name, path, [generation, Execution(analysis_executor), Visualization(analysis_visualizer)], kwargs_)
 
         can_work = True
         extraction_prov = extraction.provided
@@ -143,7 +142,6 @@ class PipelineFactory:
             can_work &= analysis_prov.fulfills(gen.analysis_requirements)
         can_work &= analysis_prov.fulfills(analysis_executor.analysis_requirements)
         can_work &= analysis_prov.fulfills(analysis_visualizer.analysis_requirements)
-        print(can_work)
 
         pipeline = Pipeline(extraction, filter_, analysis, setup)
 

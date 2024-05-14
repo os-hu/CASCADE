@@ -1,5 +1,7 @@
 import os
 
+from tqdm import tqdm
+
 from src.analysis.Analysis import Analysis
 from src.analysis.executor.Execution import Execution
 from src.analysis.visualizer.Visualization import Visualization
@@ -13,8 +15,9 @@ class TreeAnalysis(Analysis):
     """
     TODO
     """
-    def __init__(self, generator: Generation, executor: Execution, visualizer: Visualization, regenerate=False, debug=False):
+    def __init__(self, generator: Generation, executor: Execution, visualizer: Visualization, regenerate=False, debug=False, step_size=1):
         super().__init__(generator, executor, visualizer)
+        self.step_size = step_size
         self.regenerate = regenerate
         self.debug = debug
 
@@ -33,25 +36,29 @@ class TreeAnalysis(Analysis):
                 data = temp_data
 
         #  loop through data
-        for d in data:
-
+        for d in tqdm(data[::self.step_size]):
             if self.debug:
                 self.visualizer.visualize(data)
                 print("--------------")
 
             # Phase 1  code + test: --------------------------------------
-            if d["id"] is not None and d["id"] != "":
+            if "id" in d and d["id"] != "":
                 print(d["id"])
             else:
-                print({d["signature"]["name"]})
-
+                print(d["signature"]["name"])
 
             if self.debug:
                 print("    Level 1")
 
-            res1 = self.executor.execute("code", "tests", d)
+            if "results" not in d:
+                d["results"] = {}
+            if "(code, tests)" not in d["results"]:
+                res1 = self.executor.execute("code", "tests", d)
+            else:
+                res1 = d["results"]["(code, tests)"]
+
             # check and sort stuff
-            d["results"] = {"(code, tests)": list(res1)}
+            d["results"]["(code, tests)"] = list(res1)
 
             if res1[0] == [] and res1[1] == []:
                 # error
@@ -80,8 +87,11 @@ class TreeAnalysis(Analysis):
             if os.path.exists(test_safety_copy_path):
                 os.remove(test_safety_copy_path)
 
+            if "(code, new_tests)" not in d["results"]:
+                res2 = self.executor.execute("code", "new_tests", d)
+            else:
+                res2 = d["results"]["(code, new_tests)"]
 
-            res2 = self.executor.execute("code","new_tests", d)
             d["results"]["(code, new_tests)"] = list(res2)
 
             if res2[0] == [] and res2[1] == []:
@@ -106,7 +116,11 @@ class TreeAnalysis(Analysis):
 
             save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
 
-            res3 = self.executor.execute("new_code", "new_tests", d)
+            if "(new_code, new_tests)" not in d["results"]:
+                res3 = self.executor.execute("new_code", "new_tests", d)
+            else:
+                res3 = d["results"]["(new_code, new_tests)"]
+
             d["results"]["(new_code, new_tests)"] = list(res3)
 
             if res3[0] == [] and res3[1] == []:
@@ -122,8 +136,11 @@ class TreeAnalysis(Analysis):
             if self.debug:
                 print("    Level 4")
 
+            if "(new_code, tests)" not in d["results"]:
+                res4 = self.executor.execute("new_code", "tests", d)
+            else:
+                res4 = d["results"]["(new_code, tests)"]
 
-            res4 = self.executor.execute("new_code", "tests", d)
             d["results"]["(new_code, tests)"] = list(res4)
 
             if res4[0] == [] and res4[1] == []:

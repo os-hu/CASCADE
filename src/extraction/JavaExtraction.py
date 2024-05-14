@@ -1,6 +1,7 @@
 from src.extraction.Extraction import Extraction
 from src.extraction.JsonExtraction import JsonExtraction
 from typing import List, Dict
+from src.utils.Utils import save_dicts_list_to_json
 import subprocess
 import os
 
@@ -49,5 +50,7 @@ class JavaExtraction(Extraction):
         for e in extracted:
             e["id"] = count
             count += 1
+
+        save_dicts_list_to_json(extracted, os.path.join(output_path, "extracted.json"))
 
         return extracted

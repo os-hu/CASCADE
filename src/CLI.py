@@ -63,7 +63,6 @@ class CLI:
         kwargs_ = {}
         kwargs_["module_path"] = args.module_path
         kwargs_.update(kwargs_overrides)
-        print(kwargs_)
 
         factory = PipelineFactory()
         pipeline = factory.build(args.setup_file, kwargs_)

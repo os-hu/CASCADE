@@ -1,6 +1,6 @@
 import copy
 
-from AnalysisVisualizer import AnalysisVisualizer
+from src.analysis.visualizer.AnalysisVisualizer import AnalysisVisualizer
 
 
 class Visualization:
@@ -8,5 +8,4 @@ class Visualization:
         self.visualizer = visualizer
 
     def visualize(self, data, **kwargs):
-        imm = tuple(copy.deepcopy(data))
-        self.visualizer.visualize(imm, **kwargs)
+        self.visualizer.visualize(copy.deepcopy(data), **kwargs)

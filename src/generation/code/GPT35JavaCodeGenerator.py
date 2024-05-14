@@ -18,23 +18,40 @@ class GPT35JavaCodeGenerator(Generator):
         enc = tiktoken.encoding_for_model("gpt-3.5-turbo-instruct")
 
 
-        setup = f"// SETUP: Write Java code for {context['signature']['name']}\n\n"
+        setup = f"// SETUP: Write one Java funtion for {context['signature']['name']}\n\n"
 
         packg_declaration = f"package {context['package']};\n\n"
 
         imports = "".join(context["parent"]["imports"]) + "\n"
 
-        code = build_context(context, doc=True) + "{"
+        code = build_context(context, doc=True)
 
         prompt = setup + packg_declaration + imports + code
 
-        len(enc.encode(prompt))
 
-        return prompt
+        if len(enc.encode(prompt)) > self.max_prompt_tokens:
+            code = build_context(context, doc=True, no_fields=True)
+            prompt = setup + packg_declaration + imports + code
+
+        if len(enc.encode(prompt)) > self.max_prompt_tokens:
+            code = build_context(context, doc=True, no_fields=True, no_constructors=True)
+            prompt = setup + packg_declaration + imports + code
+
+        if len(enc.encode(prompt)) > self.max_prompt_tokens:
+            code = build_context(context, doc=True, no_fields=True, no_constructors=True, no_other_methods=True)
+            prompt = setup + packg_declaration + imports + code
+
+        if len(enc.encode(prompt)) > self.max_prompt_tokens:
+            return ""
+
+        return prompt + "{\n// TODO complete this function"
 
 
     def generate(self, context, output_path):
         prompt = self.build_prompt(context)
+
+        if prompt == "":
+            return "", None
 
         response = self.prompt_executor.execute(prompt).model_dump()
 
@@ -46,16 +63,11 @@ class GPT35JavaCodeGenerator(Generator):
 
         # TODO if max tokens have been used  cut the response down?
         new_code = response["choices"][0]["text"]
-        indent = re.match(r"\s*" , new_code)[0]
-        indent = indent.replace("\n" , "")
-        indent_length = len(indent)
 
-        temp_new_code = []
-        for line in new_code.splitlines():
-            if line.startswith(indent):
-                line = line[indent_length:]
-            temp_new_code.append(line)
-
-        new_code = "\n".join(temp_new_code)
+        try:
+            new_code = new_code[:str(new_code).rindex("}")]
+            new_code = new_code[:str(new_code).rindex("}")]
+        except:
+            pass
 
         return new_code , response
