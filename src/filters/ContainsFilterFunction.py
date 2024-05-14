@@ -30,24 +30,29 @@ class ContainsFilterFunction(FilterFunction):
 
     def filter(self, context) -> bool:
         value = Utils.get_value_from_context(self.key, context, lambda x: None)
-        if not value:
+        if value == None:
+
             return self.return_value_if_not_exists
+
         if isinstance(value, list):
             if self.iterate:
                 for sub_value in value:
                     if self.check_if_contains(sub_value, self.content):
                         return not self.invert
+                return self.invert
+
             else:
                 return self.return_value_if_not_exists
         else:
-            return self.check_if_contains(value, self.content)
+
+            return self.check_if_contains(value, self.content) != self.invert
+
+    #missing return here
 
     def check_if_contains(self, value, content):
         if self.re:
             found = bool(re.search(content, value))
         else:
             found = content in value
-        if self.invert:
-            return not found
-        else:
-            return found
+        return found
+

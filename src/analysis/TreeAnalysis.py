@@ -8,7 +8,7 @@ from src.analysis.visualizer.Visualization import Visualization
 
 from src.generation.Generation import Generation
 
-from src.utils.Utils import save_dicts_list_to_json, load_json_from_path
+from src.utils.Utils import *
 
 
 class TreeAnalysis(Analysis):
@@ -20,6 +20,10 @@ class TreeAnalysis(Analysis):
         self.step_size = step_size
         self.regenerate = regenerate
         self.debug = debug
+        self.visualizer.logger = "tqdm"
+
+
+
 
     def analyse(self, data: list, output_path):
         """
@@ -37,18 +41,21 @@ class TreeAnalysis(Analysis):
 
         #  loop through data
         for d in tqdm(data[::self.step_size]):
+
+
             if self.debug:
                 self.visualizer.visualize(data)
-                print("--------------")
 
             # Phase 1  code + test: --------------------------------------
-            if "id" in d and d["id"] != "":
-                print(d["id"])
-            else:
-                print(d["signature"]["name"])
 
-            if self.debug:
-                print("    Level 1")
+
+
+            if "id" in d and d["id"] != "":
+                log(d["id"], logger="tqdm")
+            else:
+                log(d["signature"]["name"], logger="tqdm")
+            log("    Level 1", logger="tqdm")
+
 
             if "results" not in d:
                 d["results"] = {}
@@ -71,8 +78,7 @@ class TreeAnalysis(Analysis):
                 continue
 
             # Level 2   code + new_test: ---------------------------------
-            if self.debug:
-                print("    Level 2")
+            log("    Level 2", logger="tqdm")
 
             if "new_tests" not in d:
                 new_tests, _ = self.generator.generate_tests(d, output_path)
@@ -104,9 +110,8 @@ class TreeAnalysis(Analysis):
                 # failed
                 pass
 
-            if self.debug:
-                print("    Level 3")
 
+            log("    Level 3", logger="tqdm")
 
             # Level 3   new_code + new_test: ---------------------------------
             if "new_code" not in d:
@@ -133,8 +138,7 @@ class TreeAnalysis(Analysis):
                 # failed
                 continue
 
-            if self.debug:
-                print("    Level 4")
+            log("    Level 4", logger="tqdm")
 
             if "(new_code, tests)" not in d["results"]:
                 res4 = self.executor.execute("new_code", "tests", d)

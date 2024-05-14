@@ -1,8 +1,12 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
+
+
+
 # Read the CSV file
-file_path = './output.csv'
+file_path = './commons-lang/output.csv'
 data = pd.read_csv(file_path)
 
 # Specify the column name
@@ -13,14 +17,17 @@ if column_name not in data.columns:
     raise ValueError(f"Column '{column_name}' not found in the CSV file.")
 
 
+data = data[data[column_name] >= 2]
+data = data[data[column_name] <= 200]
 
-#data = data[data[column_name] >= 10]
-#data = data[data[column_name] <= 2000]
+print("length", len(data))
 
-print(data[column_name].max())
+
 print()
 
-print(data["id"][data[column_name].argmax()])
+print(data[column_name].min())
+print(data["id"][   data[column_name].argmin()  + 1  ])
+
 
 # Plot the histogram
 plt.figure(figsize=(10, 6))

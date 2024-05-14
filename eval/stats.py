@@ -1,6 +1,8 @@
 import os.path
 from collections import defaultdict, Counter
 
+import tiktoken
+
 os.environ
 
 import csv
@@ -15,16 +17,28 @@ from src.generation.test.GPT35JavaTestGenerator import GPT35JavaTestGenerator
 from src.filters.CheckLengthFilterFunction import CheckLengthFilterFunction
 
 
-in_path = "/home/kiecketo/repos/commons-text"
-out_path = os.path.dirname(__file__)
 
-#
+enc = tiktoken.encoding_for_model("gpt-3.5-turbo-instruct")
+
+
+in_path = "/home/kiecketo/repos/commons-lang"
+out_path = "/home/kiecketo/PycharmProjects/CASCADE/eval/commons-lang"
+
+
 extr = JavaExtraction()
 data = extr.extract(in_path, out_path)
 
+filter_ = Filter(
+    [
+        CheckLengthFilterFunction("doc", ">", 12),
+        ContainsFilterFunction("doc", "@inheritDoc", invert=True),
+        ContainsFilterFunction("signature.modifier", "public"),
+        ContainsFilterFunction("signature.modifier", "static", invert=True),
+        NoTestsFilterFunction()
+    ]
+)
 
-filter_ = Filter([CheckLengthFilterFunction("doc", ">", 12), ContainsFilterFunction("doc", "@inheritDoc", invert=True), NoTestsFilterFunction()])
-data = filter_.filter_all(data, out_path)
+data = filter_.filter_all(data)
 
 def flatten_dict(d, parent_key='', sep='.'):
     items = []
@@ -46,8 +60,15 @@ def process_entry(entry):
         if key == "id":
             result[key] = value
 
+
         elif hasattr(value, '__len__'): # and not isinstance(value, str):
-            result[key] = len(value)
+            if isinstance(value, str):
+                # Strings are encoded and the returned number is the numebr of tokens
+                result[key] = len(enc.encode(value))
+                if entry["id"] == 1050:
+                    print(len(enc.encode(value)), key, value, enc.encode(value))
+            else:
+                result[key] = len(value)
         elif value is None:
             result[key] = 'None'
         else:
@@ -68,10 +89,10 @@ def write_length_stats(data):
     # Ensure each dictionary has all keys
     for entry in processed_data:
         for key in all_keys:
-            entry.setdefault(key, 'N')  # N for non-existent keys
+            entry.setdefault(key, "N")  # N for non-existent keys
 
     # Write to CSV
-    with open('output.csv', 'w', newline='') as csvfile:
+    with open(os.path.join(out_path, "output.csv")  , "w", newline="") as csvfile:
         fieldnames = list(all_keys)
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
@@ -108,4 +129,4 @@ def print_histograms(dicts, top_n=5):
 
 write_length_stats(data)
 
-#print_histograms(data)
+print_histograms(data)

@@ -2,6 +2,9 @@ import json
 import os
 from typing import List, Dict, Any
 
+from tqdm import tqdm
+
+
 def load_json_from_path(file_path):
     """
     :return:
@@ -82,3 +85,10 @@ def save_dicts_list_to_json(data: List[Dict[str, Any]], file_path: str, create_f
 
             else:
                 raise ValueError(f"specified folder {os.path.dirname(file_path)} does not exist and 'create_folder' is set to False")
+
+
+def log(content, logger="print"):
+    if logger == "print":
+        print(content)
+    if logger == "tqdm":
+        tqdm.write(str(content))

@@ -1,10 +1,15 @@
+from tqdm import tqdm
+
 from src.analysis.visualizer.AnalysisVisualizer import AnalysisVisualizer
+from src.utils.Utils import log
 
 
 class TreeVisualizer(AnalysisVisualizer):
-    def __init__(self, vis_key="name"):
+    def __init__(self, vis_key="name", logger="print"):
         super().__init__()
+        self.logger = logger
         self.vis_key = vis_key
+
 
     def visualize(self, data, full=False):
         """
@@ -24,10 +29,11 @@ class TreeVisualizer(AnalysisVisualizer):
 
 
     def draw_tree(self, data, full=False):
+
         k = self.vis_key
         total = len(data)
         executed = list(filter(lambda x: "results" in x ,data))
-        print(f"generated: {len(executed)}/{total}")
+        log(f"generated: {len(executed)}/{total}", logger=self.logger)
 
         levels = {
             "1" : {"level": "(code, tests)", "p": [], "f": [], "e": []},
@@ -52,12 +58,12 @@ class TreeVisualizer(AnalysisVisualizer):
 
 
         for l in levels.values():
-            print(f"{l['level']}:\t p:{len(l['p'])}, f:{len(l['f'])}, e:{len(l['e'])}")
+            log(f"{l['level']}:\t p:{len(l['p'])}, f:{len(l['f'])}, e:{len(l['e'])}" , logger=self.logger)
 
         if full:
-            print("------------final---------------")
+            log("------------final---------------", logger=self.logger)
             for l in levels.values():
-                print(f"{l['level']}:\t p:{l['p']}, f:{l['f']}, e:{l['e']}")
+                log(f"{l['level']}:\t p:{l['p']}, f:{l['f']}, e:{l['e']}", logger=self.logger)
 
 
     def remove_tree(self, data):

@@ -20,6 +20,8 @@ from src.analysis.visualizer.TreeVisualizer import TreeVisualizer
 
 # test pipeline
 
+
+
 in_path = "/home/kiecketo/repos/commons-text"
 out_path = "./temp/"
 
@@ -28,23 +30,33 @@ filter_ = Filter([
     NoTestsFilterFunction(),
     ContainsFilterFunction(key="doc", content="@inheritDoc", invert=True),
     CheckLengthFilterFunction(key="doc", op=">", val=10),
-    # CheckLengthFilterFunction(key="doc", op="<", val=400)
+    CheckLengthFilterFunction(key="doc", op="<", val=400)
 ])
 
 debug = True
 
-code_generator = GPT35JavaCodeGenerator(max_attempts=3, dummy=True)
+code_generator = GPT35JavaCodeGenerator(max_attempts=3, dummy=False)
 
 data = extraction.extract(in_path, out_path)
 
-data = filter_.filter_all(data, out_path)
+data = filter_.filter_all(data)
 
-length = []
-for d in data:
-    length.append(len(code_generator.build_prompt(d)))
-    #print(code_generator.build_prompt(d))
 
-print(sorted(length))
+
+print(len(data))
+
+#
+# length = []
+#
+#
+# data = data[::100]
+#
+# len()
+#
+#
+for d in data[::30]:
+    print(code_generator.generate(d, out_path)[0])
+    print("---------------")
 
 #test_generator = GPT35JavaTestGenerator(max_attempts=3)
 #
