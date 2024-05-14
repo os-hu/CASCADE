@@ -11,7 +11,7 @@ import os
 
 
 class GPT35JavaTestGenerator(Generator):
-    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, dummy=False, max_prompt_tokens=2000, debug=False):
+    def __init__(self, max_attempts=1, max_tokens=2048, temperature=0, delay=3, dummy=False, max_prompt_tokens=2000, debug=False):
         super().__init__()
         self.debug = debug
         self.max_prompt_tokens = max_prompt_tokens
@@ -81,8 +81,22 @@ class GPT35JavaTestGenerator(Generator):
         if self.debug:
             print(response)
 
+
+
         new_test = response["choices"][0]["text"]
+
+        if response["choices"][0]["finish_reason"] == "length":
+            new_test = self.try_to_fix(new_test)
+
 
         new_test = self.build_tests(context) + new_test
 
         return new_test , response
+
+    def try_to_fix(self, new_test):
+        last_test = 0
+        lines = new_test.splitlines()
+        for line in lines:
+            if "@Test" in line:
+                last_test = lines.index(line)
+        return "\n".join(lines[:last_test]) + "\n}"

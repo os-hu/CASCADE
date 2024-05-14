@@ -8,17 +8,17 @@ import re
 import tiktoken
 
 class GPT35JavaCodeGenerator(Generator):
-    def __init__(self, max_attempts=1, max_prompt_tokens=1600, max_tokens=800, temperature=0, delay=3, dummy=False):
+    def __init__(self, max_attempts=1, max_prompt_tokens=2048, max_tokens=2048, temperature=0, delay=3, dummy=False):
         super().__init__()
         self.max_prompt_tokens = max_prompt_tokens
         self.prompt_executor = GPT35CompletionExecutor(max_attempts=max_attempts, max_tokens=max_tokens,
-                                                       temperature=temperature, delay=delay, dummy=dummy)
+                                                       temperature=temperature, delay=delay, stop_sequence=None , dummy=dummy)
 
     def build_prompt(self, context):
         enc = tiktoken.encoding_for_model("gpt-3.5-turbo-instruct")
 
 
-        setup = f"// SETUP: Write one Java funtion for {context['signature']['name']}\n\n"
+        setup = f"// SETUP: Write the body of one Java function for {context['signature']['name']}\n\n"
 
         packg_declaration = f"package {context['package']};\n\n"
 
@@ -44,7 +44,7 @@ class GPT35JavaCodeGenerator(Generator):
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
             return ""
 
-        return prompt + "{\n// TODO complete this function"
+        return prompt + "{\n// write the function body here"
 
 
     def generate(self, context, output_path):
@@ -64,10 +64,25 @@ class GPT35JavaCodeGenerator(Generator):
         # TODO if max tokens have been used  cut the response down?
         new_code = response["choices"][0]["text"]
 
-        try:
-            new_code = new_code[:str(new_code).rindex("}")]
-            new_code = new_code[:str(new_code).rindex("}")]
-        except:
-            pass
+        if response["choices"][0]["finish_reason"] == "stop":
+            new_code = self.try_to_fix(new_code)
 
         return new_code , response
+
+    def try_to_fix(self, new_code):
+        lines = new_code.splitlines()
+        doc_comment = len(lines)
+        for line in lines:
+            if "/**" in line:
+                doc_comment = lines.index(line)
+                break
+        new_code = "\n".join(lines[:doc_comment])
+
+        try:
+            if doc_comment == len(lines):
+                new_code = new_code[:str(new_code).rindex("}")]
+            if new_code.rstrip()[-1] != ";":
+                new_code = new_code[:str(new_code).rindex("}")]
+        except:
+            pass
+        return "{" + new_code + "}"

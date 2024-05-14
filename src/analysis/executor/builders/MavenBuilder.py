@@ -9,7 +9,7 @@ from src.utils.DockerizedWrapper import DockerizedWrapper
 
 class MavenBuilder(Builder):
     def __init__(self):
-        super().__init__("echo \"[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0\" > out; output=$(mvn test -Drat.skip=true -Dtest=%t | grep -E \"Tests run\" | grep -v in && tail -n 1) && echo $output > out;",
+        super().__init__("echo \"[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0\" > out; output=$(mvn test -Drat.skip=true -Dtest=%t | grep -E \"Tests run\" | grep -v in && tail -n 1) && echo $output > out;",
                          self.eval_function,
                          "maven_modified")
 

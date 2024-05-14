@@ -28,10 +28,10 @@ class CLI:
 
         #arg_parser.parse_args(args=["-h"])
         args = arg_parser.parse_args()
-        #print(args)
+        print(args)
 
         kwargs_overrides = {"Extraction": {}, "CodeGenerator": {}, "TestGenerator": {}, "DocGenerator": {}, "Analysis": {}, "Executor": {}, "Visualizer": {}, "FilterFunctions": []}
-        override_to_arg = {"Extraction": args.extraction, "CodeGenerator": args.code_generator, "TestGenerator": args.test_generator, "DocGenerator": args.doc_generator, "Analysis": args.analysis, "Visualizer": args.visualizer}
+        override_to_arg = {"Extraction": args.extraction, "CodeGenerator": args.code_generator, "TestGenerator": args.test_generator, "DocGenerator": args.doc_generator, "Analysis": args.analysis, "Executor": args.executor, "Visualizer": args.visualizer}
         for key, value in override_to_arg.items():
             if value:
                 for kw in value:
@@ -63,6 +63,8 @@ class CLI:
         kwargs_ = {}
         kwargs_["module_path"] = args.module_path
         kwargs_.update(kwargs_overrides)
+
+        print("kwargs", kwargs_)
 
         factory = PipelineFactory()
         pipeline = factory.build(args.setup_file, kwargs_)
