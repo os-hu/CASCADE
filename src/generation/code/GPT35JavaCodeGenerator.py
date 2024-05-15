@@ -76,9 +76,9 @@ class GPT35JavaCodeGenerator(Generator):
     def try_to_fix(self, new_code):
         lines = new_code.splitlines()
         doc_comment = len(lines)
-        for line in lines:
+        for num, line in enumerate(lines):
             if "/**" in line:
-                doc_comment = lines.index(line)
+                doc_comment = num
                 break
         new_code = "\n".join(lines[:doc_comment])
 

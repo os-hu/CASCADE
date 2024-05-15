@@ -25,7 +25,7 @@ class GPT35JavaTestGenerator(Generator):
 
         code = build_context(context, doc=True) + ";\n}\n\n// TEST:\n\n"
 
-        test_header = self.build_tests(context)
+        test_header = self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here\n")
 
         prompt = setup + code + test_header
 
@@ -51,11 +51,13 @@ class GPT35JavaTestGenerator(Generator):
 
         return prompt
 
-    def build_tests(self, context):
+    def build_tests(self, context, primer=""):
         packg_declaration = f"package {context['test_package']};\n\n"
         imports = "".join(context["test_imports"]) + "\n"
         classdefinition = "public class " + context["test_file_path"].split("/")[-1].split(".")[0] + "{"
-        return packg_declaration + imports + classdefinition
+        name = str(context["signature"]["name"])
+        func_definition = "    @Test\n    public void test" + name[0].upper() + name[1:] + "1(){"
+        return packg_declaration + imports + classdefinition + primer + func_definition
 
     def generate(self, context, output_path):
         prompt = self.build_prompt(context)
@@ -100,7 +102,7 @@ class GPT35JavaTestGenerator(Generator):
     def try_to_fix(self, new_test):
         last_test = 0
         lines = new_test.splitlines()
-        for line in lines:
+        for num, line in enumerate(lines):
             if "@Test" in line:
-                last_test = lines.index(line)
+                last_test = num
         return "\n".join(lines[:last_test]) + "\n}"
