@@ -40,6 +40,9 @@ class TreeAnalysis(Analysis):
             if temp_data:
                 data = temp_data
 
+        # allows seting up requieremnts needed in every step of the execution (i.e. load docker images )
+        self.executor.set_up(data)
+
         #  loop through data
         for d in tqdm(data[::self.step_size]):
 
@@ -162,5 +165,9 @@ class TreeAnalysis(Analysis):
 
 
         save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
+
+
+        self.executor.tear_down(data)
+
 
         self.visualizer.visualize(data, full=True)

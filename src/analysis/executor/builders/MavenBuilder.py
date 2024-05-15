@@ -30,7 +30,7 @@ class MavenBuilder(Builder):
             counter += 1
         return result
 
-    def build(self, temp_dir):
+    def set_up(self, temp_dir, _):
         wrapper = DockerizedWrapper(debug=True)
         dock_context = {
             "image": "maven",
@@ -40,5 +40,11 @@ class MavenBuilder(Builder):
         }
         wrapper.setup_image(dock_context)
 
+    def tear_down(self, _):
+        wrapper = DockerizedWrapper(debug=True)
+        dock_context = {
+            "new_image": "maven_modified",
+        }
+        wrapper.remove_image(dock_context)
 
 #executor debug an    neuer filter dazu

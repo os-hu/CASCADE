@@ -73,7 +73,7 @@ class UnittestExecutor(AnalysisExecutor):
             with open(os.path.join(temp_dir, "test.py"), "w") as file:
                 file.write(context[tests])
 
-
+            # TODO create a builder and call set_up
             dock_ex = DockerizedWrapper(debug=self.debug)
 
             # TODO make timout a paramter and f string it
@@ -89,3 +89,10 @@ class UnittestExecutor(AnalysisExecutor):
             result = dock_ex.execute(dock_context)
 
         return result
+
+    def set_up(self, context):
+        pass
+
+    def tear_down(self, context):
+        pass
+

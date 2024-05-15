@@ -52,9 +52,6 @@ class JavaExecutor(AnalysisExecutor):
             if self.debug:
                 print(p.stdout)
 
-            if self.builder:
-                self.builder.build(temp_dir)
-
             dock_ex = DockerizedWrapper(debug=self.debug)
 
             test_class_name = (self.builder.test_pattern
@@ -71,3 +68,23 @@ class JavaExecutor(AnalysisExecutor):
             result = dock_ex.execute(dock_context)
 
         return result
+
+    def set_up(self, data):
+        context = data[0]
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                shutil.copytree(context["root_path"], temp_dir, dirs_exist_ok=True)
+
+            except Exception as e:
+                print("could not copy root path")
+                print(e)
+
+            if self.builder:
+                self.builder.set_up(temp_dir)
+
+    def tear_down(self, data):
+        context = data[0]
+
+        if self.builder:
+            self.builder.tear_down(context)

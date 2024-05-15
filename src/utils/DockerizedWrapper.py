@@ -45,7 +45,7 @@ class DockerizedWrapper():
         images = client.images.list(context["new_image"])
         try:
             if images:
-                return
+                self.remove_image(context)
             container = self.setup(context)
             self.run(container, context)
             container.commit(context["new_image"])
