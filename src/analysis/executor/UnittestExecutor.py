@@ -81,7 +81,7 @@ class UnittestExecutor(AnalysisExecutor):
             dock_context = {
                 "image" : "python",
                 "directory" : temp_dir,
-                "command" : "ls; cat test.py; timeout 15 python3 test-runner.py",
+                "command" : "ls; cat test.py; timeout 30 python3 test-runner.py",
                 "eval_command" : "cat out",
                 "eval_function" : lambda x : [ast.literal_eval(l) for l in x.split(";")]
             }
