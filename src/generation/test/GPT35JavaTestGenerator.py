@@ -39,7 +39,11 @@ class GPT35JavaTestGenerator(Generator):
             prompt = setup + code + test_header
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
-            code = build_context(context, doc=True, no_fields=True, no_constructors=True, no_other_methods=True)
+            code = build_context(context, doc=True, no_fields=True, no_constructors=True, no_other_method_docs=True)
+            prompt = setup + code + test_header
+
+        if len(enc.encode(prompt)) > self.max_prompt_tokens:
+            code = build_context(context, doc=True, no_fields=True, no_constructors=True,  no_other_method_docs=True, no_other_methods=True)
             prompt = setup + code + test_header
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:

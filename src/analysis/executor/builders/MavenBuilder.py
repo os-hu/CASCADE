@@ -21,7 +21,8 @@ class MavenBuilder(Builder):
         for match in range(matches[1]):
             result[1].append(str(counter))
             counter += 1
-        for match in range(matches[2] + matches[3]):
+        for match in range(matches[2]):
+            # there is a fourth option namely skipped tests  matches[3]  which we ignore
             result[2].append(str(counter))
             counter += 1
         for match in range(counter, total_tests):
@@ -38,3 +39,6 @@ class MavenBuilder(Builder):
             "command": "mvn dependency:go-offline; rm -rf ../root/*;",
         }
         wrapper.setup_image(dock_context)
+
+
+#executor debug an    neuer filter dazu
