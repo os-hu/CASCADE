@@ -37,12 +37,12 @@ def build_project(context, in_path, out_path, code, tests):
 
 if __name__ == '__main__':
     # load the json
-    analyzed_path = "/home/kiecketo/testoutput/t5/analyzed.json"
+    analyzed_path = "/home/kiecketo/Downloads/analyzed.json"
     in_path = "/home/kiecketo/repos/commons-text/"
     out_path = "/home/kiecketo/PycharmProjects/CASCADE/eval/commons-text2/"
-    id = 2423
+    id = 1337
 
-    code = "new_code"
+    code = "code"
     tests = "new_tests"
 
 
@@ -51,6 +51,6 @@ if __name__ == '__main__':
     context = next(item for item in data if item["id"] == id)
     print(context["package"], context["parent"]["name"])
     print(context["signature"])
-    print(context["new_code_response"])
+    #print(context["new_code_response"])
 
     build_project(context, in_path, out_path, code, tests)

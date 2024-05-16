@@ -13,5 +13,5 @@ import shutil
 
 
 class MavenJavaExecutor(JavaExecutor):
-    def __init__(self, debug=False):
-        super().__init__(debug, MavenBuilder())
+    def __init__(self, debug=False, new_image_name=""):
+        super().__init__(debug, MavenBuilder(new_image_name=new_image_name))

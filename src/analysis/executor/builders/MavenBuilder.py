@@ -8,10 +8,11 @@ from src.utils.DockerizedWrapper import DockerizedWrapper
 
 
 class MavenBuilder(Builder):
-    def __init__(self):
+    def __init__(self, new_image_name="maven_modified"):
         super().__init__("echo \"[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0\" > out; output=$(timeout 60 mvn test -Drat.skip=true -Dtest=%t | grep -E \"Tests run\" | grep -v in && tail -n 1) && echo $output > out;",
                          self.eval_function,
-                         "maven_modified")
+                         new_image_name)
+        self.new_image_name = new_image_name
 
     def eval_function(self, x):
         matches = list(map(int, re.findall(r"\d+", x)))
@@ -34,7 +35,7 @@ class MavenBuilder(Builder):
         wrapper = DockerizedWrapper(debug=True)
         dock_context = {
             "image": "maven",
-            "new_image": "maven_modified",
+            "new_image": self.new_image_name,
             "directory": temp_dir,
             "command": "mvn dependency:go-offline; rm -rf ../root/*;",
         }
@@ -43,7 +44,7 @@ class MavenBuilder(Builder):
     def tear_down(self, _):
         wrapper = DockerizedWrapper(debug=True)
         dock_context = {
-            "new_image": "maven_modified",
+            "new_image": self.new_image_name,
         }
         wrapper.remove_image(dock_context)
 
