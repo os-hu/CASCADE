@@ -8,10 +8,11 @@ from src.utils.DockerizedWrapper import DockerizedWrapper
 
 
 class MavenBuilder(Builder):
-    def __init__(self):
-        super().__init__("echo \"[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0\" > out; output=$(mvn test -Drat.skip=true -Dtest=%t | grep -E \"Tests run\" | grep -v in && tail -n 1) && echo $output > out;",
+    def __init__(self, new_image_name="maven_modified"):
+        super().__init__("echo \"[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0\" > out; output=$(timeout 60 mvn test -Drat.skip=true -Dtest=%t | grep -E \"Tests run\" | grep -v in && tail -n 1) && echo $output > out;",
                          self.eval_function,
-                         "maven_modified")
+                         new_image_name)
+        self.new_image_name = new_image_name
 
     def eval_function(self, x):
         matches = list(map(int, re.findall(r"\d+", x)))
@@ -21,7 +22,8 @@ class MavenBuilder(Builder):
         for match in range(matches[1]):
             result[1].append(str(counter))
             counter += 1
-        for match in range(matches[2] + matches[3]):
+        for match in range(matches[2]):
+            # there is a fourth option namely skipped tests  matches[3]  which we ignore
             result[2].append(str(counter))
             counter += 1
         for match in range(counter, total_tests):
@@ -29,12 +31,21 @@ class MavenBuilder(Builder):
             counter += 1
         return result
 
-    def build(self, temp_dir):
+    def set_up(self, temp_dir, _):
         wrapper = DockerizedWrapper(debug=True)
         dock_context = {
             "image": "maven",
-            "new_image": "maven_modified",
+            "new_image": self.new_image_name,
             "directory": temp_dir,
             "command": "mvn dependency:go-offline; rm -rf ../root/*;",
         }
         wrapper.setup_image(dock_context)
+
+    def tear_down(self, _):
+        wrapper = DockerizedWrapper(debug=True)
+        dock_context = {
+            "new_image": self.new_image_name,
+        }
+        wrapper.remove_image(dock_context)
+
+#executor debug an    neuer filter dazu

@@ -15,6 +15,7 @@ class JavaExecutor(AnalysisExecutor):
         super().__init__()
         self.debug = debug
         self.builder = builder
+        print(debug)
 
     def execute(self, code: str, tests: str, context: dict) -> (succeeded, failed, errored):
         result = ([], [], [])
@@ -43,11 +44,13 @@ class JavaExecutor(AnalysisExecutor):
 
             os.remove(entry)
 
+            if p.stderr:
+                if self.debug:
+                    print(p.stderr)
+                return [], [], []
+
             if self.debug:
                 print(p.stdout)
-
-            if self.builder:
-                self.builder.build(temp_dir)
 
             dock_ex = DockerizedWrapper(debug=self.debug)
 
@@ -56,7 +59,7 @@ class JavaExecutor(AnalysisExecutor):
             dock_context = {
                 "image" : self.builder.image,
                 "directory" : temp_dir,
-                "command" : f"ls;"
+                "command" : f"ls; cat {context['code_file_path']};"
                             f"{test_class_name}",
                 "eval_command" : "cat out",
                 "eval_function" : self.builder.eval_function
@@ -65,3 +68,23 @@ class JavaExecutor(AnalysisExecutor):
             result = dock_ex.execute(dock_context)
 
         return result
+
+    def set_up(self, data):
+        context = data[0]
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                shutil.copytree(context["root_path"], temp_dir, dirs_exist_ok=True)
+
+            except Exception as e:
+                print("could not copy root path")
+                print(e)
+
+            if self.builder:
+                self.builder.set_up(temp_dir, context)
+
+    def tear_down(self, data):
+        context = data[0]
+
+        if self.builder:
+            self.builder.tear_down(context)

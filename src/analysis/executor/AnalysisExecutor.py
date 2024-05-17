@@ -26,3 +26,11 @@ class AnalysisExecutor(ABC):
         :return: TODO fill this
         """
         pass
+
+    @abstractmethod
+    def set_up(self, context):
+        pass
+
+    @abstractmethod
+    def tear_down(self, context):
+        pass

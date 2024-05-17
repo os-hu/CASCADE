@@ -15,8 +15,9 @@ class TreeAnalysis(Analysis):
     """
     TODO
     """
-    def __init__(self, generator: Generation, executor: Execution, visualizer: Visualization, regenerate=False, debug=False, step_size=1):
+    def __init__(self, generator: Generation, executor: Execution, visualizer: Visualization, regenerate=False, reexecute=False, debug=False, step_size=1):
         super().__init__(generator, executor, visualizer)
+        self.reexecute = reexecute
         self.step_size = step_size
         self.regenerate = regenerate
         self.debug = debug
@@ -39,6 +40,9 @@ class TreeAnalysis(Analysis):
             if temp_data:
                 data = temp_data
 
+        # allows seting up requieremnts needed in every step of the execution (i.e. load docker images )
+        self.executor.set_up(data)
+
         #  loop through data
         for d in tqdm(data[::self.step_size]):
 
@@ -59,7 +63,7 @@ class TreeAnalysis(Analysis):
 
             if "results" not in d:
                 d["results"] = {}
-            if "(code, tests)" not in d["results"]:
+            if self.reexecute or "(code, tests)" not in d["results"]:
                 res1 = self.executor.execute("code", "tests", d)
             else:
                 res1 = d["results"]["(code, tests)"]
@@ -81,10 +85,11 @@ class TreeAnalysis(Analysis):
             log("    Level 2", logger="tqdm")
 
             if "new_tests" not in d:
-                new_tests, _ = self.generator.generate_tests(d, output_path)
+                new_tests, response = self.generator.generate_tests(d, output_path)
                 #test #new_tests = "import unittest\nfrom func import *\n\nclass test_func(unittest.TestCase):\n" +"    def test_specialFilter(self):\n        self.assertEqual(specialFilter([15, -73, 14, -15]), 1)\n        self.assertEqual(specialFilter([33, -2, -3, 45, 21, 109]), 2)\n        self.assertEqual(specialFilter([1, 3, 5, 7, 9, 11, 13, 15, 17, 19]), 10)\n        self.assertEqual(specialFilter([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]), 0)\n        self.assertEqual(specialFilter([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 0)\n\nif __name__ == '__main__':\n    unittest.main()"
 
                 d["new_tests"] = new_tests
+                d["new_tests_response"] = response
 
             save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
 
@@ -93,7 +98,7 @@ class TreeAnalysis(Analysis):
             if os.path.exists(test_safety_copy_path):
                 os.remove(test_safety_copy_path)
 
-            if "(code, new_tests)" not in d["results"]:
+            if self.reexecute or "(code, new_tests)" not in d["results"]:
                 res2 = self.executor.execute("code", "new_tests", d)
             else:
                 res2 = d["results"]["(code, new_tests)"]
@@ -117,11 +122,12 @@ class TreeAnalysis(Analysis):
             if "new_code" not in d:
                 new_code, response = self.generator.generate_code(d, output_path)
                 d["new_code"] = new_code
+                d["new_code_response"] = response
 
 
             save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
 
-            if "(new_code, new_tests)" not in d["results"]:
+            if self.reexecute or "(new_code, new_tests)" not in d["results"]:
                 res3 = self.executor.execute("new_code", "new_tests", d)
             else:
                 res3 = d["results"]["(new_code, new_tests)"]
@@ -140,7 +146,7 @@ class TreeAnalysis(Analysis):
 
             log("    Level 4", logger="tqdm")
 
-            if "(new_code, tests)" not in d["results"]:
+            if self.reexecute or "(new_code, tests)" not in d["results"]:
                 res4 = self.executor.execute("new_code", "tests", d)
             else:
                 res4 = d["results"]["(new_code, tests)"]
@@ -159,5 +165,9 @@ class TreeAnalysis(Analysis):
 
 
         save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
+
+
+        self.executor.tear_down(data)
+
 
         self.visualizer.visualize(data, full=True)

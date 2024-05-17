@@ -1,4 +1,4 @@
-def build_context(context, doc=False, no_fields=False, no_other_methods=False, no_constructors=False):
+def build_context(context, doc=False, no_fields=False, no_other_method_docs=False , no_other_methods=False, no_constructors=False):
     generics = context["parent"]["generics"]
     implements = context["parent"]["implements"]
     extends = context["parent"]["extends"]
@@ -12,7 +12,7 @@ def build_context(context, doc=False, no_fields=False, no_other_methods=False, n
 
     other_methods = ""
     for other in (context["parent"]["other_methods"] if not no_other_methods else []):
-        other_methods += build_signature(other) + ";\n"
+        other_methods += build_signature(other, doc=(not no_other_method_docs)) + ";\n"
 
     signature = build_signature(context, doc)
 

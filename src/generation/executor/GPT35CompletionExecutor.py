@@ -7,9 +7,10 @@ from src.generation.executor.PromptExecutor import PromptExecutor
 
 
 class GPT35CompletionExecutor(PromptExecutor):
-    def __init__(self, max_attempts=1, max_tokens=800, temperature=0, delay=3, dummy=False):
+    def __init__(self, max_attempts=1, max_tokens=800, temperature=0, delay=3, dummy=False, stop_sequence=None):
         # read in api key
         # TODO add other way to add api key than string in a file
+
 
         if not dummy:
             if "OPENAI_API_KEY" in os.environ:
@@ -24,6 +25,8 @@ class GPT35CompletionExecutor(PromptExecutor):
             self.max_tokens = max_tokens
             self.temperature = temperature
             self.delay = delay
+            self.stop_sequence = stop_sequence
+
 
     def execute(self, prompt):
         attempt = 0
@@ -33,7 +36,8 @@ class GPT35CompletionExecutor(PromptExecutor):
                     model="gpt-3.5-turbo-instruct",
                     prompt=prompt,
                     max_tokens=self.max_tokens,
-                    temperature=self.temperature
+                    temperature=self.temperature,
+                    stop=self.stop_sequence
                 )
 
                 return response

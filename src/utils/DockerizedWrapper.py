@@ -31,26 +31,29 @@ class DockerizedWrapper():
         pass
 
     def execute(self, context: dict) -> (succeeded, failed, errored):
+        container = None
         try:
             container = self.setup(context)
             self.run(container, context)
             succeeded, failed, errored = self.eval(container, context)
         finally:
-            self.kill(container)
+            if container:
+                self.kill(container)
 
         return succeeded, failed, errored
 
     def setup_image(self, context: dict):
+        container = None
         client = docker.from_env()
         images = client.images.list(context["new_image"])
         try:
             if images:
-                return
+                self.remove_image(context)
             container = self.setup(context)
             self.run(container, context)
             container.commit(context["new_image"])
         finally:
-            if not images:
+            if not images and container:
                 self.kill(container)
 
     def remove_image(self, context: dict):
