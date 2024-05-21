@@ -15,7 +15,6 @@ class JavaExecutor(AnalysisExecutor):
         super().__init__()
         self.debug = debug
         self.builder = builder
-        print(debug)
 
     def execute(self, code: str, tests: str, context: dict) -> (succeeded, failed, errored):
         result = ([], [], [])

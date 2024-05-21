@@ -3,13 +3,12 @@ from collections import defaultdict, Counter
 
 import tiktoken
 
-os.environ
-
 import csv
 
 
 from src.extraction.JavaExtraction import JavaExtraction
 from src.filters.Filter import Filter
+from src.filters.KeyExistsFilterFunction import KeyExistsFilterFunction
 from src.filters.NoTestsFilterFunction import NoTestsFilterFunction
 from src.filters.ContainsFilterFunction import ContainsFilterFunction
 from src.generation.code.GPT35JavaCodeGenerator import GPT35JavaCodeGenerator
@@ -21,8 +20,8 @@ from src.filters.CheckLengthFilterFunction import CheckLengthFilterFunction
 enc = tiktoken.encoding_for_model("gpt-3.5-turbo-instruct")
 
 
-in_path = "/home/kiecketo/repos/commons-lang"
-out_path = "/home/kiecketo/PycharmProjects/CASCADE/eval/commons-lang"
+in_path = "/home/kiecketo/repos/guava"
+out_path = "/home/kiecketo/PycharmProjects/CASCADE/eval/guava"
 
 
 extr = JavaExtraction()
@@ -30,11 +29,12 @@ data = extr.extract(in_path, out_path)
 
 filter_ = Filter(
     [
-        CheckLengthFilterFunction("doc", ">", 12),
+        CheckLengthFilterFunction("doc", ">", 8, encoder="gpt-3.5-turbo-instruct"),
         ContainsFilterFunction("doc", "@inheritDoc", invert=True),
         ContainsFilterFunction("signature.modifier", "public"),
         ContainsFilterFunction("signature.modifier", "static", invert=True),
-        NoTestsFilterFunction()
+        NoTestsFilterFunction(),
+        KeyExistsFilterFunction("code")
     ]
 )
 
@@ -120,12 +120,6 @@ def print_histograms(dicts, top_n=5):
         print()
 
 
-# Example usage
-# data = [
-#     {'key1': [1, 2, 3], 'key2': {'subkey1': 'value1', 'subkey2': [4, 5]}},
-#     {'key1': [4, 5], 'key2': {'subkey1': 'value2'}},
-#     {'key3': 'just a string'}
-# ]
 
 write_length_stats(data)
 

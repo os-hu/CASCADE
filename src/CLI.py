@@ -26,9 +26,10 @@ class CLI:
         arg_parser.add_argument('-visua', '--visualizer', action="append", help="A way to overwrite the key word arguments for the visualizer.")
         arg_parser.add_argument('-filter', '--filters', action="append", help="A way to overwrite the key word arguments for the filters.")
 
+        arg_parser.add_argument('--debug-cli', help="Shows debug information for the CLI call.")
+
         #arg_parser.parse_args(args=["-h"])
         args = arg_parser.parse_args()
-        print(args)
 
         kwargs_overrides = {"Extraction": {}, "CodeGenerator": {}, "TestGenerator": {}, "DocGenerator": {}, "Analysis": {}, "Executor": {}, "Visualizer": {}, "FilterFunctions": []}
         override_to_arg = {"Extraction": args.extraction, "CodeGenerator": args.code_generator, "TestGenerator": args.test_generator, "DocGenerator": args.doc_generator, "Analysis": args.analysis, "Executor": args.executor, "Visualizer": args.visualizer}
@@ -63,8 +64,8 @@ class CLI:
         kwargs_ = {}
         kwargs_["module_path"] = args.module_path
         kwargs_.update(kwargs_overrides)
-
-        print("kwargs", kwargs_)
+        if args.debug_cli:
+            print("kwargs", kwargs_)
 
         factory = PipelineFactory()
         pipeline = factory.build(args.setup_file, kwargs_)

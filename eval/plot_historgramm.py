@@ -2,11 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-
-
-
 # Read the CSV file
-file_path = './commons-lang/output.csv'
+file_path = './guava/output.csv'
 data = pd.read_csv(file_path)
 
 # Specify the column name
@@ -18,7 +15,7 @@ if column_name not in data.columns:
 
 
 data = data[data[column_name] >= 2]
-data = data[data[column_name] <= 200]
+data = data[data[column_name] <= 100]
 
 print("length", len(data))
 
@@ -36,4 +33,4 @@ plt.title(f'Histogram of {column_name}')
 plt.xlabel(column_name)
 plt.ylabel('Frequency')
 plt.grid(True)
-#plt.show()
+plt.show()

@@ -28,27 +28,28 @@ class GPT35JavaCodeGenerator(Generator):
 
         prompt = setup + packg_declaration + imports + code
 
+        primer =  "{\n// write the function body here\n"
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
             code = build_context(context, doc=True, no_fields=True)
-            prompt = setup + packg_declaration + imports + code
+            prompt = setup + packg_declaration + imports + primer
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
             code = build_context(context, doc=True, no_fields=True, no_constructors=True)
-            prompt = setup + packg_declaration + imports + code
+            prompt = setup + packg_declaration + imports + code + primer
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
             code = build_context(context, doc=True, no_fields=True, no_constructors=True, no_other_method_docs=True)
-            prompt = setup + packg_declaration + imports + code
+            prompt = setup + packg_declaration + imports + code + primer
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
             code = build_context(context, doc=True, no_fields=True, no_constructors=True,  no_other_method_docs=True, no_other_methods=True)
-            prompt = setup + packg_declaration + imports + code
+            prompt = setup + packg_declaration + imports + code + primer
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
             return ""
 
-        return prompt + "{\n// write the function body here"
+        return prompt
 
 
     def generate(self, context, output_path):
