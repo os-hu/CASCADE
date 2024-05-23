@@ -8,17 +8,21 @@ from src.utils.DockerizedWrapper import DockerizedWrapper
 
 
 class MavenBuilder(Builder):
-    def __init__(self, new_image_name="maven_modified"):
-        super().__init__("echo \"[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0\" > out; output=$(timeout 60 mvn test -Drat.skip=true -Dtest=%t | grep -E \"Tests run\" | grep -v in && tail -n 1) && echo $output > out;",
+    def __init__(self, new_image_name, maven_args=""):
+        super().__init__(f"echo \"[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0\" > out; timeout 120 mvn test {maven_args} -Dtest=\"%t\" -DfailIfNoTests=false 2>&1 > output; cat output > out; cat output",
                          self.eval_function,
                          new_image_name)
         self.new_image_name = new_image_name
 
     def eval_function(self, x):
-        matches = list(map(int, re.findall(r"\d+", x)))
+        matches = re.search(r"Tests run: \d+, Failures: \d+, Errors: \d+, Skipped: \d+, Time", x)
+        result = ([], [], [])
+        if not matches:
+            return result
+        matched_line = matches[0]
+        matches = list(map(int, re.findall(r"\d+", matched_line)))
         total_tests = matches[0]
         counter = 0
-        result = ([], [], [])
         for match in range(matches[1]):
             result[1].append(str(counter))
             counter += 1

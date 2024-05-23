@@ -1,3 +1,5 @@
+import os
+
 from tqdm import tqdm
 
 from src.analysis.visualizer.AnalysisVisualizer import AnalysisVisualizer
@@ -11,8 +13,9 @@ class TreeVisualizer(AnalysisVisualizer):
         self.vis_key = vis_key
 
 
-    def visualize(self, data, full=False):
+    def visualize(self, data, output_path, full=False):
         """
+        :param output_path:
         :param full:
         :param data: the data to be visualized
         TODO write this
@@ -25,10 +28,10 @@ class TreeVisualizer(AnalysisVisualizer):
         }
         """
         self.vis_key = "id"
-        self.draw_tree(data, full=full)
+        self.draw_tree(data, output_path, full=full)
 
 
-    def draw_tree(self, data, full=False):
+    def draw_tree(self, data, output_path, full=False):
 
         k = self.vis_key
         total = len(data)
@@ -61,6 +64,11 @@ class TreeVisualizer(AnalysisVisualizer):
             log(f"{l['level']}:\t p:{len(l['p'])}, f:{len(l['f'])}, e:{len(l['e'])}" , logger=self.logger)
 
         if full:
+            with open(os.path.join(output_path, "visualized.txt"), "w") as file:
+                for l in levels.values():
+                    file.write(f"{l['level']}:\t p:{l['p']}, f:{l['f']}, e:{l['e']}")
+
+
             log("------------final---------------", logger=self.logger)
             for l in levels.values():
                 log(f"{l['level']}:\t p:{l['p']}, f:{l['f']}, e:{l['e']}", logger=self.logger)

@@ -7,5 +7,5 @@ class Visualization:
     def __init__(self, visualizer: AnalysisVisualizer):
         self.visualizer = visualizer
 
-    def visualize(self, data, **kwargs):
-        self.visualizer.visualize(copy.deepcopy(data), **kwargs)
+    def visualize(self, data, output_path, **kwargs):
+        self.visualizer.visualize(copy.deepcopy(data), output_path, **kwargs)

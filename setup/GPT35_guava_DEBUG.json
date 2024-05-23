@@ -3,7 +3,7 @@
    "CodeGenerator": { "name": "GPT35JavaCodeGenerator", "kwargs" : {}},
    "TestGenerator": { "name": "GPT35JavaTestGenerator", "kwargs" : {}},
    "Analysis"      : { "name": "TreeAnalysis",  "kwargs" : {"debug": true}},
-   "Executor"      : { "name": "MavenJavaExecutor",   "kwargs" : {"debug":  true}},
+   "Executor"      : { "name": "GuavaJavaExecutor",   "kwargs" : {"debug":  true}},
    "Visualizer"    : { "name": "TreeVisualizer",  "kwargs" : {}},
 
    "FilterFunctions"  : [

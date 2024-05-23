@@ -40,19 +40,19 @@ class TreeAnalysis(Analysis):
             if temp_data:
                 data = temp_data
 
-        # allows seting up requieremnts needed in every step of the execution (i.e. load docker images )
+        # allows setting up requirements needed in every step of the execution (i.e. load docker images )
+        print("Set up started")
         self.executor.set_up(data)
+        print("Set up finished")
 
         #  loop through data
         for d in tqdm(data[::self.step_size]):
-
+            dirty = False
 
             if self.debug:
-                self.visualizer.visualize(data)
+                self.visualizer.visualize(data, output_path)
 
             # Phase 1  code + test: --------------------------------------
-
-
 
             if "id" in d and d["id"] != "":
                 log(d["id"], logger="tqdm")
@@ -60,16 +60,20 @@ class TreeAnalysis(Analysis):
                 log(d["signature"]["name"], logger="tqdm")
             log("    Level 1", logger="tqdm")
 
-
             if "results" not in d:
                 d["results"] = {}
             if self.reexecute or "(code, tests)" not in d["results"]:
                 res1 = self.executor.execute("code", "tests", d)
+                dirty = True
             else:
                 res1 = d["results"]["(code, tests)"]
 
+
             # check and sort stuff
             d["results"]["(code, tests)"] = list(res1)
+            if dirty:
+                save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
+                dirty = False
 
             if res1[0] == [] and res1[1] == []:
                 # error
@@ -90,20 +94,23 @@ class TreeAnalysis(Analysis):
 
                 d["new_tests"] = new_tests
                 d["new_tests_response"] = response
-
-            save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
-
-            #
-            test_safety_copy_path = os.path.join(output_path, "test_generator_current.json")
-            if os.path.exists(test_safety_copy_path):
-                os.remove(test_safety_copy_path)
+                dirty = True
 
             if self.reexecute or "(code, new_tests)" not in d["results"]:
                 res2 = self.executor.execute("code", "new_tests", d)
+                dirty = True
             else:
                 res2 = d["results"]["(code, new_tests)"]
 
             d["results"]["(code, new_tests)"] = list(res2)
+
+            if dirty:
+                save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
+                dirty = False
+
+            test_safety_copy_path = os.path.join(output_path, "test_generator_current.json")
+            if os.path.exists(test_safety_copy_path):
+                os.remove(test_safety_copy_path)
 
             if res2[0] == [] and res2[1] == []:
                 # error
@@ -123,16 +130,24 @@ class TreeAnalysis(Analysis):
                 new_code, response = self.generator.generate_code(d, output_path)
                 d["new_code"] = new_code
                 d["new_code_response"] = response
-
-
-            save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
+                dirty = True
 
             if self.reexecute or "(new_code, new_tests)" not in d["results"]:
                 res3 = self.executor.execute("new_code", "new_tests", d)
+                dirty = True
             else:
                 res3 = d["results"]["(new_code, new_tests)"]
 
             d["results"]["(new_code, new_tests)"] = list(res3)
+
+            if dirty:
+                save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
+                dirty = False
+
+            code_safety_copy_path = os.path.join(output_path, "code_generator_current.json")
+            if os.path.exists(code_safety_copy_path):
+                os.remove(code_safety_copy_path)
+
 
             if res3[0] == [] and res3[1] == []:
                 # error
@@ -144,14 +159,19 @@ class TreeAnalysis(Analysis):
                 # failed
                 continue
 
+
             log("    Level 4", logger="tqdm")
 
             if self.reexecute or "(new_code, tests)" not in d["results"]:
                 res4 = self.executor.execute("new_code", "tests", d)
+                dirty = True
             else:
                 res4 = d["results"]["(new_code, tests)"]
 
             d["results"]["(new_code, tests)"] = list(res4)
+
+            if dirty:
+                save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
 
             if res4[0] == [] and res4[1] == []:
                 # error
@@ -164,10 +184,6 @@ class TreeAnalysis(Analysis):
                 pass
 
 
-        save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
-
-
         self.executor.tear_down(data)
 
-
-        self.visualizer.visualize(data, full=True)
+        self.visualizer.visualize(data, output_path, full=True)

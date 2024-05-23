@@ -15,7 +15,8 @@ def load_json_from_path(file_path):
         with open(file_path, 'r') as file:
             data = json.load(file)
 
-    except:
+    except Exception as e:
+        print(e)
         return []
 
     return data

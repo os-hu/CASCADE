@@ -45,6 +45,7 @@ class JavaExecutor(AnalysisExecutor):
 
             if p.stderr:
                 if self.debug:
+                    print(p.stdout)
                     print(p.stderr)
                 return [], [], []
 

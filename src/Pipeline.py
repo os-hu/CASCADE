@@ -28,10 +28,13 @@ class Pipeline():
         The visualizer of the analysis object handles whether any output/results are printed
         or just saved to the output_path.
         """
-
+        print("Extraction started")
         data = self.extraction.extract(input_path, output_path)
+        print("Extraction finished")
 
+        print("Filtering started")
         filtered_data = self.filter.filter_all(data)
+        print("Filtering finished")
 
         can_work = True
         can_work &= self.analysis.extraction_requirements.verify(filtered_data)
@@ -41,7 +44,9 @@ class Pipeline():
         can_work &= self.analysis.executor.executor.extraction_requirements.verify(filtered_data)
         can_work &= self.analysis.visualizer.visualizer.extraction_requirements.verify(filtered_data)
 
+        print("Analysis started")
         results = self.analysis.analyse(filtered_data, output_path)
+        print("Analysis finished")
 
         # TODO save results to output path   or handle that in the analysis?    doc cutrently states that the visualizer handles that.
         #  Should the output path be given to the analysis as well?
