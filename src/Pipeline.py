@@ -18,7 +18,7 @@ class Pipeline():
         self.analysis = analysis
         self.setup = setup
 
-    def execute(self, input_path, output_path):
+    def execute(self, input_path, output_path) -> None:
         """
        This executes the entire pipline. First extract() from the extraction object is called.
        The output of that is passed to the analysis object. and analyse is executed.
@@ -51,3 +51,4 @@ class Pipeline():
         # TODO save results to output path   or handle that in the analysis?    doc cutrently states that the visualizer handles that.
         #  Should the output path be given to the analysis as well?
         #print(results)
+

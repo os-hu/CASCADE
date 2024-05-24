@@ -19,7 +19,7 @@ class GPT35CodeGenerator(Generator):
 
         return prompt
 
-    def generate(self, context, output_path):
+    def generate(self, context, output_path, safety_copy_prefix):
         prompt = self.build_prompt(context)
 
         response = self.prompt_executor.execute(prompt).model_dump()
@@ -27,7 +27,7 @@ class GPT35CodeGenerator(Generator):
         savety_copy = copy.deepcopy(context)
         savety_copy["response"] = response
 
-        with open(os.path.join(output_path, "code_generator_current.json") , "w") as file:
+        with open(os.path.join(output_path, safety_copy_prefix + "code_generator_current.json") , "w") as file:
             file.write(str(savety_copy))
 
         # TODO if max tokens have been used  cut the response down?

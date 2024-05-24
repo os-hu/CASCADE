@@ -21,7 +21,7 @@ class GPT35DocGenerator(Generator):
         return prompt
         return [{"role": "user", "content": prompt}]
 
-    def generate(self, context, output_path):
+    def generate(self, context, output_path, safety_copy_prefix):
         prompt = self.build_prompt(context)
         print(prompt)
         response = self.prompt_executor.execute(prompt).model_dump()
@@ -32,7 +32,7 @@ class GPT35DocGenerator(Generator):
 
 
 
-        with open(os.path.join(output_path, "code_generator_current.json") , "w") as file:
+        with open(os.path.join(output_path, safety_copy_prefix + "doc_generator_current.json") , "w") as file:
             file.write(str(savety_copy))
 
 

@@ -12,7 +12,7 @@ class Generator(ABC):
         self.analysis_requirements = Requirements(Requirements.Kind.EXPECTED, name="Generator-Analysis-Expected")
 
     @abstractmethod
-    def generate(self, context, output_path):
+    def generate(self, context, output_path, safety_copy_prefix):
         """
         TODO
         """
