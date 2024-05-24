@@ -2,15 +2,15 @@
    "Extraction"    : { "name": "JavaExtraction",  "kwargs" : {}},
    "CodeGenerator": { "name": "GPT35JavaCodeGenerator", "kwargs" : {}},
    "TestGenerator": { "name": "GPT35JavaTestGenerator", "kwargs" : {}},
-   "Analysis"      : { "name": "TreeAnalysis",  "kwargs" : {"debug": true}},
-   "Executor"      : { "name": "GuavaJavaExecutor",   "kwargs" : {"debug":  true}},
+   "Analysis"      : { "name": "ParallelTreeAnalysis",  "kwargs" : {}},
+   "Executor"      : { "name": "GuavaJavaExecutor",   "kwargs" : {}},
    "Visualizer"    : { "name": "TreeVisualizer",  "kwargs" : {}},
 
    "FilterFunctions"  : [
       { "name": "NoTestsFilterFunction", "kwargs" : {}},
       { "name": "ContainsFilterFunction", "kwargs" : {"key":"doc", "content":"@inheritDoc" , "invert":true}},
       { "name": "CheckLengthFilterFunction", "kwargs" : {"key":"code", "op":">", "val":2, "encoder":"gpt-3.5-turbo-instruct"}},
-      { "name": "CheckLengthFilterFunction", "kwargs" : {"key":"code", "op":"<", "val":100, "encoder":"gpt-3.5-turbo-instruct"}},
+      { "name": "CheckLengthFilterFunction", "kwargs" : {"key":"code", "op":"<", "val":200, "encoder":"gpt-3.5-turbo-instruct"}},
       { "name": "CheckLengthFilterFunction", "kwargs" : {"key":"doc", "op":">", "val":12}},
       { "name": "ContainsFilterFunction", "kwargs" : {"key":"signature.modifier", "content":"public"}},
       { "name": "ContainsFilterFunction", "kwargs" : {"key":"signature.modifier", "content":"static", "invert":true}}
