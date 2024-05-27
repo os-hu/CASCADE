@@ -17,7 +17,7 @@ class TreeAnalysis(Analysis):
     """
     def __init__(self, generator: Generation, executor: Execution, visualizer: Visualization, regenerate=False, reexecute=False, debug=0, step_size=1):
         super().__init__(generator, executor, visualizer)
-        self.reexecute = reexecute
+        self.reexecute = reexecute or regenerate
         self.step_size = step_size
         self.regenerate = regenerate
         self.debug = debug
@@ -35,11 +35,10 @@ class TreeAnalysis(Analysis):
         """
 
         # generated artifacts for the same dataset can be saved to avoid repeated generation of code and tests.
-        if not self.regenerate:
-            temp_data = load_json_from_path(os.path.join(output_path, "analyzed.json"))
-            if temp_data:
-                del data
-                data = temp_data
+        temp_data = load_json_from_path(os.path.join(output_path, "analyzed.json"))
+        if temp_data:
+            del data
+            data = temp_data
 
         # allows setting up requirements needed in every step of the execution (i.e. load docker images )
         print("Set up started")
@@ -89,7 +88,7 @@ class TreeAnalysis(Analysis):
             # Level 2   code + new_test: ---------------------------------
             log("    Level 2", logger="tqdm")
 
-            if "new_tests" not in d:
+            if "new_tests" not in d or self.regenerate:
 
                 if self.debug >= 1:
                     log("        Generating new tests", logger="tqdm")
@@ -133,7 +132,7 @@ class TreeAnalysis(Analysis):
             log("    Level 3", logger="tqdm")
 
             # Level 3   new_code + new_test: ---------------------------------
-            if "new_code" not in d:
+            if "new_code" not in d or self.regenerate:
                 if self.debug >= 1:
                     log("        Generating new code", logger="tqdm")
 
