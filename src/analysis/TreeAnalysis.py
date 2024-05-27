@@ -15,7 +15,7 @@ class TreeAnalysis(Analysis):
     """
     TODO
     """
-    def __init__(self, generator: Generation, executor: Execution, visualizer: Visualization, regenerate=False, reexecute=False, debug=False, step_size=1):
+    def __init__(self, generator: Generation, executor: Execution, visualizer: Visualization, regenerate=False, reexecute=False, debug=0, step_size=1):
         super().__init__(generator, executor, visualizer)
         self.reexecute = reexecute
         self.step_size = step_size
@@ -38,6 +38,7 @@ class TreeAnalysis(Analysis):
         if not self.regenerate:
             temp_data = load_json_from_path(os.path.join(output_path, "analyzed.json"))
             if temp_data:
+                del data
                 data = temp_data
 
         # allows setting up requirements needed in every step of the execution (i.e. load docker images )
@@ -49,7 +50,7 @@ class TreeAnalysis(Analysis):
         for d in tqdm(data[::self.step_size]):
             dirty = False
 
-            if self.debug:
+            if self.debug >= 2:
                 self.visualizer.visualize(data, output_path)
 
             # Phase 1  code + test: --------------------------------------
@@ -63,8 +64,15 @@ class TreeAnalysis(Analysis):
             if "results" not in d:
                 d["results"] = {}
             if self.reexecute or "(code, tests)" not in d["results"]:
+                if self.debug >= 1:
+                    log("        Executing code, tests", logger="tqdm")
+
                 res1 = self.executor.execute("code", "tests", d)
+
+                if self.debug >= 1:
+                    log("        Finished executing code, tests", logger="tqdm")
                 dirty = True
+
             else:
                 res1 = d["results"]["(code, tests)"]
 
@@ -75,30 +83,36 @@ class TreeAnalysis(Analysis):
                 save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
                 dirty = False
 
-            if res1[0] == [] and res1[1] == []:
-                # error
-                continue
-            elif res1[1] == [] and res1[2] == []:
-                # if no errors or failures  then passed
-                pass
-            else:
-                # failed
+            if self.should_skip(res1, False):
                 continue
 
             # Level 2   code + new_test: ---------------------------------
             log("    Level 2", logger="tqdm")
 
             if "new_tests" not in d:
+
+                if self.debug >= 1:
+                    log("        Generating new tests", logger="tqdm")
+
                 new_tests, response = self.generator.generate_tests(d, output_path)
-                #test #new_tests = "import unittest\nfrom func import *\n\nclass test_func(unittest.TestCase):\n" +"    def test_specialFilter(self):\n        self.assertEqual(specialFilter([15, -73, 14, -15]), 1)\n        self.assertEqual(specialFilter([33, -2, -3, 45, 21, 109]), 2)\n        self.assertEqual(specialFilter([1, 3, 5, 7, 9, 11, 13, 15, 17, 19]), 10)\n        self.assertEqual(specialFilter([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]), 0)\n        self.assertEqual(specialFilter([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 0)\n\nif __name__ == '__main__':\n    unittest.main()"
+
+                if self.debug >= 1:
+                    log("        Finished generating new tests", logger="tqdm")
 
                 d["new_tests"] = new_tests
-                if self.debug:
+                if self.debug >= 3:
                     d["new_tests_response"] = response
                 dirty = True
 
             if self.reexecute or "(code, new_tests)" not in d["results"]:
+                if self.debug >= 1:
+                    log("        Executing code, new_tests", logger="tqdm")
+
                 res2 = self.executor.execute("code", "new_tests", d)
+
+                if self.debug >= 1:
+                    log("        Finished executing code, new_tests", logger="tqdm")
+
                 dirty = True
             else:
                 res2 = d["results"]["(code, new_tests)"]
@@ -113,29 +127,35 @@ class TreeAnalysis(Analysis):
             if os.path.exists(test_safety_copy_path):
                 os.remove(test_safety_copy_path)
 
-            if res2[0] == [] and res2[1] == []:
-                # error
+            if self.should_skip(res2, True):
                 continue
-            elif res2[1] == [] and res2[2] == []:
-                # if no errors or failures  then passed
-                continue
-            else:
-                # failed
-                pass
-
 
             log("    Level 3", logger="tqdm")
 
             # Level 3   new_code + new_test: ---------------------------------
             if "new_code" not in d:
+                if self.debug >= 1:
+                    log("        Generating new code", logger="tqdm")
+
                 new_code, response = self.generator.generate_code(d, output_path)
+
+                if self.debug >= 1:
+                    log("        Finished generating new code", logger="tqdm")
+
                 d["new_code"] = new_code
-                if self.debug:
+                if self.debug >= 3:
                     d["new_code_response"] = response
                 dirty = True
 
             if self.reexecute or "(new_code, new_tests)" not in d["results"]:
+                if self.debug >= 1:
+                    log("        Executing new_code, new_tests", logger="tqdm")
+
                 res3 = self.executor.execute("new_code", "new_tests", d)
+
+                if self.debug >= 1:
+                    log("        Finished executing new_code, new_tests", logger="tqdm")
+
                 dirty = True
             else:
                 res3 = d["results"]["(new_code, new_tests)"]
@@ -150,22 +170,20 @@ class TreeAnalysis(Analysis):
             if os.path.exists(code_safety_copy_path):
                 os.remove(code_safety_copy_path)
 
-
-            if res3[0] == [] and res3[1] == []:
-                # error
+            if self.should_skip(res3, False):
                 continue
-            elif res3[1] == [] and res3[2] == []:
-                # if no errors or failures  then passed
-                pass
-            else:
-                # failed
-                continue
-
 
             log("    Level 4", logger="tqdm")
 
             if self.reexecute or "(new_code, tests)" not in d["results"]:
+                if self.debug >= 1:
+                    log("        Executing new_code, tests", logger="tqdm")
+
                 res4 = self.executor.execute("new_code", "tests", d)
+
+                if self.debug >= 1:
+                    log("        Finished executing new_code, tests", logger="tqdm")
+
                 dirty = True
             else:
                 res4 = d["results"]["(new_code, tests)"]
@@ -175,17 +193,26 @@ class TreeAnalysis(Analysis):
             if dirty:
                 save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
 
-            if res4[0] == [] and res4[1] == []:
-                # error
+            if self.should_skip(res4, True):
                 continue
-            elif res4[1] == [] and res4[2] == []:
-                # if no errors or failures  then passed
-                pass
-            else:
-                # failed
-                pass
-
 
         self.executor.tear_down(data)
 
         self.visualizer.visualize(data, output_path, full=True)
+
+    def should_skip(self, res, skip_on_passed):
+        if res[0] == [] and res[1] == []:
+            if self.debug >= 1:
+                log("        Error", logger="tqdm")
+            # error
+            return True
+        elif res[1] == [] and res[2] == []:
+            if self.debug >= 1:
+                log("        Passed", logger="tqdm")
+            # if no errors or failures  then passed
+            return skip_on_passed
+        else:
+            if self.debug >= 1:
+                log("        Failed", logger="tqdm")
+            # failed
+            return not skip_on_passed
