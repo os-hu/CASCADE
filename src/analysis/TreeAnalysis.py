@@ -93,7 +93,8 @@ class TreeAnalysis(Analysis):
                 #test #new_tests = "import unittest\nfrom func import *\n\nclass test_func(unittest.TestCase):\n" +"    def test_specialFilter(self):\n        self.assertEqual(specialFilter([15, -73, 14, -15]), 1)\n        self.assertEqual(specialFilter([33, -2, -3, 45, 21, 109]), 2)\n        self.assertEqual(specialFilter([1, 3, 5, 7, 9, 11, 13, 15, 17, 19]), 10)\n        self.assertEqual(specialFilter([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]), 0)\n        self.assertEqual(specialFilter([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 0)\n\nif __name__ == '__main__':\n    unittest.main()"
 
                 d["new_tests"] = new_tests
-                d["new_tests_response"] = response
+                if self.debug:
+                    d["new_tests_response"] = response
                 dirty = True
 
             if self.reexecute or "(code, new_tests)" not in d["results"]:
@@ -129,7 +130,8 @@ class TreeAnalysis(Analysis):
             if "new_code" not in d:
                 new_code, response = self.generator.generate_code(d, output_path)
                 d["new_code"] = new_code
-                d["new_code_response"] = response
+                if self.debug:
+                    d["new_code_response"] = response
                 dirty = True
 
             if self.reexecute or "(new_code, new_tests)" not in d["results"]:

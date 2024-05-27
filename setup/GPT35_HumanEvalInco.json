@@ -1,0 +1,8 @@
+{
+   "Extraction"    : { "name": "HumanEvalIncoExtraction",  "kwargs" : {}},
+   "CodeGenerator": { "name": "GPT35CodeGenerator", "kwargs" : {}},
+   "TestGenerator": { "name": "GPT35TestGenerator", "kwargs" : {}},
+   "Analysis"      : { "name": "TreeAnalysis",  "kwargs" : {}},
+   "Executor"      : { "name": "HumanEvalExecutor", "kwargs" : {}},
+   "Visualizer"    : { "name": "TreeVisualizer",  "kwargs" : {}}
+}
