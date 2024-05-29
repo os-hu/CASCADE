@@ -59,7 +59,7 @@ class JavaExecutor(AnalysisExecutor):
             dock_context = {
                 "image" : self.builder.image,
                 "directory" : temp_dir,
-                "command" : f"ls; cat {context['code_file_path']};"
+                "command" : f"ls;"
                             f"{test_class_name}",
                 "eval_command" : "cat out",
                 "eval_function" : self.builder.eval_function

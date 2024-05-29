@@ -7,10 +7,10 @@ import os
 
 
 class GPT35TestGenerator(Generator):
-    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3):
+    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, freq_penalty=0.0):
         super().__init__()
         self.prompt_executor = GPT35CompletionExecutor(max_attempts=max_attempts, max_tokens=max_tokens,
-                                                       temperature=temperature, delay=delay)
+                                                       temperature=temperature, delay=delay, freq_penalty=freq_penalty)
 
     def build_prompt(self, context):
         setup = "# SETUP: Write python unittests for this function.\n"

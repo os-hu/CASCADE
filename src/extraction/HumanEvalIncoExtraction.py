@@ -24,7 +24,7 @@ class HumanEvalIncoExtraction(Extraction):
 
         """
 
-    def extract(self, input_path, output_path, print_mode=False) -> list[dict]:
+    def extract(self, input_path, output_path) -> list[dict]:
         """
         nuni - no usage examples, no inconsistencies
         wuni - with usage examples, no inconsistencies
@@ -42,6 +42,8 @@ class HumanEvalIncoExtraction(Extraction):
             data = json.load(file)
 
         for entry in data:
+            if self.doc_modifier in ["nuwi", "wuwi"]:
+                entry["inco_type"] = entry["doc"]["changes"]
             entry["doc"] = entry["doc"][self.doc_modifier]
 
         return data

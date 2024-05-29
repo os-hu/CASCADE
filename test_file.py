@@ -1,6 +1,8 @@
 from src.Pipeline import Pipeline
 from src.extraction.HumanEvalExtraction import HumanEvalExtraction
+from src.extraction.HumanEvalIncoExtraction import HumanEvalIncoExtraction
 from src.extraction.JavaExtraction import JavaExtraction
+from src.extraction.JsonExtraction import JsonExtraction
 from src.filters.CheckLengthFilterFunction import CheckLengthFilterFunction
 from src.filters.ContainsFilterFunction import ContainsFilterFunction
 from src.filters.Filter import Filter
@@ -22,55 +24,13 @@ from src.analysis.visualizer.TreeVisualizer import TreeVisualizer
 
 
 
-in_path = "/home/kiecketo/repos/commons-text"
-out_path = "./temp/"
-
-extraction = JavaExtraction()
-filter_ = Filter([
-    NoTestsFilterFunction(),
-    ContainsFilterFunction(key="doc", content="@inheritDoc", invert=True),
-    CheckLengthFilterFunction(key="doc", op=">", val=10),
-    CheckLengthFilterFunction(key="doc", op="<", val=400)
-])
-
-debug = True
-
-code_generator = GPT35JavaCodeGenerator(max_attempts=3, dummy=False)
-
-data = extraction.extract(in_path, out_path)
-
-data = filter_.filter_all(data)
+in_path = "/home/kiecketo/repos/HE/HumanEvalInco.json"
+out_path = ""
 
 
+json_extr = HumanEvalIncoExtraction()
 
-print(len(data))
+data = json_extr.extract(in_path, out_path)
 
-#
-# length = []
-#
-#
-# data = data[::100]
-#
-# len()
-#
-#
-for d in data[::30]:
-    print(code_generator.generate(d, out_path)[0])
-    print("---------------")
+print(GPT4TestGenerator(dummy=True).build_prompt(data[10]))
 
-#test_generator = GPT35JavaTestGenerator(max_attempts=3)
-#
-# generator = Generation(code_generator, test_generator, NoGenerator())
-# executor = HumanEvalExecutor()
-# visualizer = TreeVisualizer()
-#
-# analysis = TreeAnalysis(generator, executor, visualizer, debug=debug)
-#
-# setup = {}
-#
-# pipeline = Pipeline(extraction, filter_, analysis, setup)
-#
-# results = pipeline.execute(in_path, out_path)
-
-# DATA = extraction.extract("./tests/resources/humanevaltest/output/analyzed.json", out_path)
-# visualizer.visualize(DATA, full=True)

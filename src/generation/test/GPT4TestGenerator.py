@@ -9,10 +9,10 @@ from src.utils.PythonUtils import build_signature
 
 
 class GPT4TestGenerator(Generator):
-    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3):
+    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, freq_penalty=0.0, dummy=False):
         super().__init__()
         self.prompt_executor = GPT4Executor(max_attempts=max_attempts, max_tokens=max_tokens, temperature=temperature,
-                                            delay=delay)
+                                            delay=delay, freq_penalty=freq_penalty, dummy=dummy)
 
     def build_prompt(self, context):
         sig_and_doc = build_signature(context, doc=True)
@@ -56,16 +56,9 @@ class GPT4TestGenerator(Generator):
             with open(test_safety_copy_path , "w") as file:
                 json.dump(savety_copy, file)
 
-        print(response)
-
-
 
         # TODO if max tokens have been used  cut the response down?
         new_test = response["choices"][0]["message"]["content"]
-
-        indentstring = str(new_test).lstrip("\n")
-        if not indentstring.startswith(" ") and not indentstring.startswith("\t"):
-            sys.exit(-1)
 
         new_test = "import unittest\nfrom func import *\n\nclass test_func(unittest.TestCase):\n" + new_test
 

@@ -30,7 +30,7 @@ class Pipeline():
         The visualizer of the analysis object handles whether any output/results are printed
         or just saved to the output_path.
         """
-        if "analyzed.json" not in os.listdir(output_path):
+        if not os.path.exists(os.path.join(output_path, "analyzed.json")):
             print("Extraction started")
             data = self.extraction.extract(input_path, output_path)
             print("Extraction finished")

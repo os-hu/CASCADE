@@ -40,9 +40,9 @@ class CLI:
                         key_value = kw.split(":")
 
                         try:
-                            kwargs_overrides[key][key_value[0]] = ast.literal_eval(key_value[1])
+                            kwargs_overrides[key][key_value[0]] = ast.literal_eval(":".join(key_value[1:]))
                         except:
-                            kwargs_overrides[key][key_value[0]] = key_value[1]
+                            kwargs_overrides[key][key_value[0]] = ":".join(key_value[1:])
 
                     except Exception as e:
                         print(e)
@@ -55,9 +55,9 @@ class CLI:
                     while len(filters) <= index:
                         filters.append({})
                     try:
-                        filters[index][key_value[0].strip()] = ast.literal_eval(key_value[1])
+                        filters[index][key_value[0].strip()] = ast.literal_eval(":".join(key_value[1:]))
                     except:
-                        filters[index][key_value[0].strip()] = key_value[1]
+                        filters[index][key_value[0].strip()] = ":".join(key_value[1:])
 
                 except Exception as e:
                     print(e)

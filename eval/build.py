@@ -37,10 +37,10 @@ def build_project(context, in_path, out_path, code, tests):
 
 if __name__ == '__main__':
     # load the json
-    analyzed_path = "/home/kiecketo/results_commons_text/MainResults/analyzed.json"
-    in_path = "/home/kiecketo/repos/commons-lang/"
-    out_path = "/home/kiecketo/PycharmProjects/CASCADE/eval/commons-lang2/"
-    id = 1428
+    analyzed_path = "/home/kiecketo/testoutput/junit41/analyzed.json"
+    in_path = "/home/kiecketo/repos/junit4/"
+    out_path = "/home/kiecketo/PycharmProjects/CASCADE/eval/junit4/"
+    id = 1858
 
 
     code = "new_code"

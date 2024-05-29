@@ -66,6 +66,9 @@ class TreeVisualizer(AnalysisVisualizer):
         if full:
             with open(os.path.join(output_path, "visualized.txt"), "w") as file:
                 for l in levels.values():
+                    file.write(f"{l['level']}:\t p:{len(l['p'])}, f:{len(l['f'])}, e:{len(l['e'])}\n")
+                file.write("-------------------\n")
+                for l in levels.values():
                     file.write(f"{l['level']}:\t p:{l['p']}, f:{l['f']}, e:{l['e']}\n")
 
 

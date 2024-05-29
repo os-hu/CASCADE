@@ -20,8 +20,8 @@ from src.filters.CheckLengthFilterFunction import CheckLengthFilterFunction
 enc = tiktoken.encoding_for_model("gpt-3.5-turbo-instruct")
 
 
-in_path = "/home/kiecketo/repos/guava"
-out_path = "/home/kiecketo/PycharmProjects/CASCADE/eval/guava"
+in_path = "/home/kiecketo/repos/jfreechart"
+out_path = "/home/kiecketo/PycharmProjects/CASCADE/eval/jfreechart"
 
 
 extr = JavaExtraction()
@@ -29,16 +29,40 @@ data = extr.extract(in_path, out_path)
 
 filter_ = Filter(
     [
-        CheckLengthFilterFunction("doc", ">", 8, encoder="gpt-3.5-turbo-instruct"),
+        CheckLengthFilterFunction("doc", ">", 12, encoder="gpt-3.5-turbo-instruct"),
         ContainsFilterFunction("doc", "@inheritDoc", invert=True),
         ContainsFilterFunction("signature.modifier", "public"),
         ContainsFilterFunction("signature.modifier", "static", invert=True),
         NoTestsFilterFunction(),
-        KeyExistsFilterFunction("code")
+        KeyExistsFilterFunction("code"),
+        CheckLengthFilterFunction(key="code", op=">", val=2, encoder="gpt-3.5-turbo-instruct"),
+        CheckLengthFilterFunction(key="code", op="<", val=200, encoder="gpt-3.5-turbo-instruct"),
+        #ContainsFilterFunction("signature.name", "Draw"),
+#        ContainsFilterFunction("signature.name", "get", invert=True),
+#        ContainsFilterFunction("signature.name", "set", invert=True),
     ]
 )
 
+step_size = 1
+
+print(len(data))
 data = filter_.filter_all(data)
+backup = data
+data = data[::step_size]
+print(len(data))
+
+unique_classes = set()
+for d in data:
+    unique_classes.add(d["package"] + "." + d["parent"]["name"])
+
+print("unique classes:" , len(unique_classes))
+
+for d in backup:
+    unique_classes.add(d["package"] + "." + d["parent"]["name"])
+
+print("from original classes:" , len(unique_classes))
+
+
 
 def flatten_dict(d, parent_key='', sep='.'):
     items = []
@@ -123,4 +147,4 @@ def print_histograms(dicts, top_n=5):
 
 write_length_stats(data)
 
-print_histograms(data)
+#print_histograms(data)

@@ -11,12 +11,12 @@ import os
 
 
 class GPT35JavaTestGenerator(Generator):
-    def __init__(self, max_attempts=1, max_tokens=2048, temperature=0, delay=3, dummy=False, max_prompt_tokens=2000, debug=False):
+    def __init__(self, max_attempts=1, max_tokens=2048, temperature=0, delay=3, dummy=False, max_prompt_tokens=2000, debug=False, freq_penalty=0.0):
         super().__init__()
         self.debug = debug
         self.max_prompt_tokens = max_prompt_tokens
         self.prompt_executor = GPT35CompletionExecutor(max_attempts=max_attempts, max_tokens=max_tokens,
-                                                       temperature=temperature, delay=delay, dummy=dummy)
+                                                       temperature=temperature, delay=delay, dummy=dummy, freq_penalty=freq_penalty)
 
     def build_prompt(self, context):
         enc = tiktoken.encoding_for_model("gpt-3.5-turbo-instruct")

@@ -84,6 +84,7 @@ class TreeAnalysis(Analysis):
 
             if self.should_skip(res1, False):
                 continue
+            del res1
 
             # Level 2   code + new_test: ---------------------------------
             log("    Level 2", logger="tqdm")
@@ -128,6 +129,7 @@ class TreeAnalysis(Analysis):
 
             if self.should_skip(res2, True):
                 continue
+            del res2
 
             log("    Level 3", logger="tqdm")
 
@@ -171,6 +173,7 @@ class TreeAnalysis(Analysis):
 
             if self.should_skip(res3, False):
                 continue
+            del res3
 
             log("    Level 4", logger="tqdm")
 
@@ -194,6 +197,7 @@ class TreeAnalysis(Analysis):
 
             if self.should_skip(res4, True):
                 continue
+            del res4
 
         self.executor.tear_down(data)
 

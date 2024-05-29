@@ -7,7 +7,7 @@ from src.generation.executor.PromptExecutor import PromptExecutor
 
 
 class GPT4Executor(PromptExecutor):
-    def __init__(self, max_attempts=1, max_tokens=1200, temperature=0, delay=3, dummy=False):
+    def __init__(self, max_attempts=1, max_tokens=1200, temperature=0, delay=3, dummy=False, freq_penalty=0.0):
         # read in api key
         # TODO add other way to add api key than string in a file
 
@@ -24,6 +24,7 @@ class GPT4Executor(PromptExecutor):
             self.max_tokens = max_tokens
             self.temperature = temperature
             self.delay = delay
+            self.freq_penalty = freq_penalty
 
     def execute(self, prompt):
         attempt = 0
@@ -33,7 +34,8 @@ class GPT4Executor(PromptExecutor):
                     model="gpt-4",
                     messages=prompt,
                     max_tokens=self.max_tokens,
-                    temperature=self.temperature
+                    temperature=self.temperature,
+                    frequency_penalty=self.freq_penalty
                 )
 
                 return response
