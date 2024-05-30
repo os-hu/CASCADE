@@ -23,7 +23,6 @@ class HumanEvalExecutor(UnittestExecutor):
 
         if self.debug:
             print("build function: ", full_func)
-        # TODO change canocnical solution aka 'code'  to be without indent   and add it here again
 
         return full_func
 

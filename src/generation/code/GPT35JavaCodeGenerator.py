@@ -66,7 +66,6 @@ class GPT35JavaCodeGenerator(Generator):
         with open(os.path.join(output_path, safety_copy_prefix + "code_generator_current.json") , "w") as file:
             file.write(str(savety_copy))
 
-        # TODO if max tokens have been used  cut the response down?
         new_code = response["choices"][0]["text"]
 
         if response["choices"][0]["finish_reason"] == "stop":

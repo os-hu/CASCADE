@@ -6,7 +6,6 @@ import os
 import copy
 
 
-# TODO   CHANGE THIS TO DOC GENERATION
 class GPT35DocGenerator(Generator):
     def __init__(self, max_attempts=1, max_tokens=800, temperature=0, delay=3):
         super().__init__()

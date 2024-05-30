@@ -8,7 +8,7 @@ from src.utils.Utils import get_value_from_context
 class KeyExistsFilterFunction(FilterFunction):
     def __init__(self, key):
         """
-        TODO WRITE
+        TODO
         """
 
         super().__init__()

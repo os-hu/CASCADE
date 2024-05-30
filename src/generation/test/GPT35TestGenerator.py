@@ -37,7 +37,6 @@ class GPT35TestGenerator(Generator):
         with open(os.path.join(output_path, safety_copy_prefix + "test_generator_current.json") , "w") as file:
             file.write(str(savety_copy))
 
-        # TODO if max tokens have been used  cut the response down?
         new_test = response["choices"][0]["text"]
 
         new_test = "import unittest\nfrom func import *\n\nclass test_func(unittest.TestCase):\n" + new_test

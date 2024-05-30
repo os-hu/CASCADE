@@ -18,7 +18,7 @@ class TreeVisualizer(AnalysisVisualizer):
         :param output_path:
         :param full:
         :param data: the data to be visualized
-        TODO write this
+        TODO
 
 
         data in here is a list of dicts.
@@ -44,7 +44,6 @@ class TreeVisualizer(AnalysisVisualizer):
             "3" : {"level": "(new_code, new_tests)", "p": [], "f": [], "e": []},
             "4" : {"level": "(new_code, tests)", "p": [], "f": [], "e": []}
         }
-        # TODO all in a dict
 
         for d in executed:
             res = d["results"]

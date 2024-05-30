@@ -51,10 +51,6 @@ class Pipeline():
             filtered_data = []
 
         print("Analysis started")
-        results = self.analysis.analyse(filtered_data, output_path)
+        self.analysis.analyse(filtered_data, output_path)
         print("Analysis finished")
-
-        # TODO save results to output path   or handle that in the analysis?    doc cutrently states that the visualizer handles that.
-        #  Should the output path be given to the analysis as well?
-        #print(results)
 

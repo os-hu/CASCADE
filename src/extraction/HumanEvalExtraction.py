@@ -81,7 +81,6 @@ class HumanEvalExtraction(Extraction):
         :param input_path: should be a path to a file which contains the human eval dataset (or a subset of it.) either
         in json, (jsonl) or a .gz containing a json file
         Can also be a path to a folder containing exactly one file, then this is read in.
-        # TODO read in all files instead?
 
         :param output_path: the extracted dataset is saved as a temporary json file called "extracted.json"
         in this specified folder.
@@ -97,8 +96,6 @@ class HumanEvalExtraction(Extraction):
         if extracted:
             return extracted
 
-
-        # TODO should this first part go into the Utils load_json function?
         if print_mode: print(f"starting to extract from: {input_path}")
 
         # check if the path is to a file or to a folder
@@ -162,7 +159,7 @@ class HumanEvalExtraction(Extraction):
                     "imports": [],
                     "other_methods": []
                 },
-                "code": entry["canonical_solution"],    # TODO so far this is only the canonical solution.  do we want it to be more than that?
+                "code": entry["canonical_solution"],
                 "called_functions": "",
                 "tests": "",
                 "testrunner":  "unittest"
@@ -181,7 +178,7 @@ class HumanEvalExtraction(Extraction):
                     if node.name == func_name:
                         # found the interesting method.
                         # documentation
-                        results["doc"] = ast.get_docstring(node) #includes usage examples. TODO heuristic for getting rid of them?
+                        results["doc"] = ast.get_docstring(node) #includes usage examples.
 
                         # Parameters and types
                         for param in node.args.args:
@@ -196,19 +193,10 @@ class HumanEvalExtraction(Extraction):
                         if node.returns:
                             results["signature"]["returns"] = ast.unparse(node.returns).strip()
 
-                        # Body
-                        #results["code"] = ast.unparse(node.body).strip()
-                        #print(results["doc"])
-                        #print(".....")
-                        #print(results["code"])
-                        #p#rint("-----------")
-
                     else:
                         # TODO Parse these into usable functions each as a dict
                         results["parent"]["other_methods"].append(ast.unparse(node))
 
-            # test. TODO for now i will just put all asserts into one testcase.
-            # TODO do we need that last 'unittest main' part?
             base_tests = "import unittest\n\nclass test_{name}(unittest.TestCase):\n  def test_1(self):\n{test_method}\n\nif __name__ == '__main__':\n    unittest.main()"
 
 
@@ -234,20 +222,14 @@ class HumanEvalExtraction(Extraction):
         if output_path is None or output_path == "":
             output_path = ""
 
-            # TODO check if the output_path is ok.
         output_file_path = output_path + "/HumanEval_extracted.json"
         try:
             # save the extracted data
             save_dicts_list_to_json(data, output_file_path, create_folder=True, override=True)
-            if print_mode: print(f"saved data to: {output_file_path}")
+            if print_mode:
+                print(f"saved data to: {output_file_path}")
         except:
-            if print_mode: print(f"failed to save to: {output_file_path}")
-            try:
-                # TODO save it to a temp file folder
-                # name it temp1. if it does already exist temp2 etc.
-                pass
-            except:
-                pass
+            if print_mode:
+                print(f"failed to save to: {output_file_path}")
 
         return data
-

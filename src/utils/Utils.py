@@ -9,8 +9,7 @@ def load_json_from_path(file_path):
     """
     :return:
     """
-    # TODO maybe use the functionaility from Human_Eval_basic_Extraction
-    # TODO add error handling the filed does not exist or is not a file?
+
     try:
         with open(file_path, 'r') as file:
             data = json.load(file)

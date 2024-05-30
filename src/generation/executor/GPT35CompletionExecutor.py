@@ -9,8 +9,6 @@ from src.generation.executor.PromptExecutor import PromptExecutor
 class GPT35CompletionExecutor(PromptExecutor):
     def __init__(self, max_attempts=1, max_tokens=800, temperature=0, delay=3, dummy=False, stop_sequence=None, freq_penalty=0.0):
         # read in api key
-        # TODO add other way to add api key than string in a file
-
         if not dummy:
             if "OPENAI_API_KEY" in os.environ:
                 api_key = os.environ["OPENAI_API_KEY"]

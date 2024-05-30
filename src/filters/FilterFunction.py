@@ -2,12 +2,6 @@ from abc import ABC, abstractmethod
 
 from src.Requirements import Requirements
 
-
-# beim init get loaded filterfuncs
-
- # TODO filter all filters func      für alle entries i ndata   also für jeden einzelenne context check if all filters say true  otherweise remove form data
-
-
 class FilterFunction(ABC):
     def __init__(self):
         self.extraction_requirements = Requirements(Requirements.Kind.EXPECTED, name="FilterFunction-Extraction-Expected")

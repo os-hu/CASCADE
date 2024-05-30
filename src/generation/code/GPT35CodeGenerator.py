@@ -30,7 +30,6 @@ class GPT35CodeGenerator(Generator):
         with open(os.path.join(output_path, safety_copy_prefix + "code_generator_current.json") , "w") as file:
             file.write(str(savety_copy))
 
-        # TODO if max tokens have been used  cut the response down?
         new_code = response["choices"][0]["text"]
         indent = re.match(r"\s*" , new_code)[0]
         indent = indent.replace("\n" , "")

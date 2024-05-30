@@ -56,8 +56,6 @@ class GPT4TestGenerator(Generator):
             with open(test_safety_copy_path , "w") as file:
                 json.dump(savety_copy, file)
 
-
-        # TODO if max tokens have been used  cut the response down?
         new_test = response["choices"][0]["message"]["content"]
 
         new_test = "import unittest\nfrom func import *\n\nclass test_func(unittest.TestCase):\n" + new_test

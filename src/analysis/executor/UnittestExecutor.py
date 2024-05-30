@@ -55,7 +55,7 @@ class UnittestExecutor(AnalysisExecutor):
                 tree = ast.parse(old_code_file)
 
 
-                # TODO make this handel several functions of te same name in  the same file  ( via contex[parent] or signature )
+                # TODO make this handle several functions of te same name in  the same file  ( via contex[parent] or signature )
                 transformer = self.ReplaceFunctionBody(context["signature"]["name"], context[code] )
                 new_tree = transformer.visit(tree)
 
@@ -64,19 +64,11 @@ class UnittestExecutor(AnalysisExecutor):
                 with open(path_to_code, "w") as code_file:
                     code_file.write(new_code_file)
 
-
-                # TODO if code is not old code replace"
-                new_code = context[code]
-
-
             # create and write test into a file"
             with open(os.path.join(temp_dir, "test.py"), "w") as file:
                 file.write(context[tests])
 
-            # TODO create a builder and call set_up
             dock_ex = DockerizedWrapper(debug=self.debug)
-
-            # TODO make timout a paramter and f string it
 
             dock_context = {
                 "image" : "python",

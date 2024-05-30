@@ -65,10 +65,8 @@ class PipelineFactory:
         setup = Utils.load_json_from_path(pipeline_path)
         if not setup:
             raise Exception("AAAAAAAH")
-        # TODO change that to soemthing meaningfull
+        # TODO change that to something meaningful
 
-
-        # TODO    change the path to be more individual    provided by the CLI
         if kwargs["module_path"]:
             sys.path.append(os.path.abspath(kwargs["module_path"]))
         sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
@@ -108,7 +106,6 @@ class PipelineFactory:
 
         generation = Generation(generators["code"], generators["test"], generators["doc"])
 
-        # TODO handle that these might be optional???
         name = setup["Executor"]["name"]
         path = "src.analysis.executor." + name
         kwargs_ = setup["Executor"]["kwargs"]
