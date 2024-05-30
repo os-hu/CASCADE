@@ -6,14 +6,12 @@ import tiktoken
 import csv
 
 
-from src.extraction.JavaExtraction import JavaExtraction
-from src.filters.Filter import Filter
-from src.filters.KeyExistsFilterFunction import KeyExistsFilterFunction
-from src.filters.NoTestsFilterFunction import NoTestsFilterFunction
-from src.filters.ContainsFilterFunction import ContainsFilterFunction
-from src.generation.code.GPT35JavaCodeGenerator import GPT35JavaCodeGenerator
-from src.generation.test.GPT35JavaTestGenerator import GPT35JavaTestGenerator
-from src.filters.CheckLengthFilterFunction import CheckLengthFilterFunction
+from cascade.extraction import JavaExtraction
+from cascade.filters import Filter
+from cascade.filters import KeyExistsFilterFunction
+from cascade.filters import NoTestsFilterFunction
+from cascade.filters import ContainsFilterFunction
+from cascade.filters import CheckLengthFilterFunction
 
 
 

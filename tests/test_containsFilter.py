@@ -1,5 +1,5 @@
 import unittest
-from src.filters.ContainsFilterFunction import ContainsFilterFunction
+from cascade.filters.ContainsFilterFunction import ContainsFilterFunction
 
 testDict = {
     "1": ["A", "B"],

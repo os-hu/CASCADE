@@ -1,5 +1,5 @@
 import unittest
-from src.Requirements import Requirements, RequirementsMismatchException
+from cascade.Requirements import Requirements, RequirementsMismatchException
 
 Kind = Requirements.Kind
 Level = Requirements.Level

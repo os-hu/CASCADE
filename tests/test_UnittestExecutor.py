@@ -1,5 +1,5 @@
 import unittest
-from src.analysis.executor.UnittestExecutor import UnittestExecutor
+from cascade.analysis.executor.UnittestExecutor import UnittestExecutor
 
 class test_UnittestExecutor(unittest.TestCase):
     context = {
@@ -25,20 +25,54 @@ class test_UnittestExecutor(unittest.TestCase):
         "new_code" : "return math.fsum([a, b])",
         "code_file_path": "src/Basic_Calc.py",
         "called_functions": [],
-        "tests": "",
-        "new_tests" : "",
+        "tests": """import unittest
+import src.Basic_Calc
+
+
+class test_Basic_Calc(unittest.TestCase):
+
+    def test_sumgood(self):
+        c = src.Basic_Calc.Basic_Calc()
+        self.assertEqual((3 + 3), c.sum(3, 3))
+
+    def test_sumgood2(self):
+        c = src.Basic_Calc.Basic_Calc()
+        self.assertEqual((4 + 3), c.sum(3, 4))
+
+    def test_sumbad(self):
+        c = src.Basic_Calc.Basic_Calc()
+        self.assertNotEqual(55, c.sum(50, 5))
+
+    def test_sumerror(self):
+        c = src.Basic_Calc.Basic_Calc()
+        self.assertNotEqual(55, src.Basic_Calc.sum(50, 5))
+""",
+        "new_tests" : """import unittest
+import src.Basic_Calc
+
+
+class test_Basic_Calc(unittest.TestCase):
+
+    def test_sumgood(self):
+        c = src.Basic_Calc.Basic_Calc()
+        self.assertEqual((3 + 3), c.sum(3, 3))
+
+    def test_sumgood2(self):
+        c = src.Basic_Calc.Basic_Calc()
+        self.assertEqual((4 + 3), c.sum(3, 4))
+
+    def test_sumbad(self):
+        c = src.Basic_Calc.Basic_Calc()
+        self.assertNotEqual(55, c.sum(50, 5))
+
+    def test_sumerror(self):
+        c = src.Basic_Calc.Basic_Calc()
+        self.assertNotEqual(55, src.Basic_Calc.sum(50, 5))
+""",
         "test_imports": ["import unittest", "import src.Basic_Calc"],
         "test_file_path": "test/test_Basic_Calc.py",
         "testrunner": "unnittest",
     }
-
-
-    def setUp(self):
-        # TODO pfad relativ machen
-        with open(
-                "./resources/python/Test_Project/test/test_Basic_Calc.py",
-                "r") as file:
-            self.context["tests"] = file.read()
 
     def test_exec_old_old(self):
         executor = UnittestExecutor()
@@ -48,7 +82,7 @@ class test_UnittestExecutor(unittest.TestCase):
 
     def test_exec_old_new(self):
         #test for old code and new test
-        executor = UnittestExecutor(debug=True)
+        executor = UnittestExecutor()
         res = executor.execute("code","new_tests", self.context)
         self.assertEqual((['test_sumgood', 'test_sumgood2'], ['test_sumbad'], ['test_sumerror']), res)
 

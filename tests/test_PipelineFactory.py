@@ -1,5 +1,5 @@
 import unittest
-from src.PipelineFactory import PipelineFactory
+from cascade.PipelineFactory import PipelineFactory
 
 
 class test_PipelineFactory(unittest.TestCase):
@@ -15,7 +15,7 @@ class test_PipelineFactory(unittest.TestCase):
         pipeline = pipeline_fact.build(pipeline_path)
 
         self.assertEqual(str(type(pipeline.extraction)),
-                             "<class 'src.extraction.HumanEvalExtraction.HumanEvalExtraction'>")
+                             "<class 'cascade.extraction.HumanEvalExtraction.HumanEvalExtraction'>")
         self.assertEqual(pipeline.analysis.generator.code_generator.prompt_executor.max_attempts , 3)
 
         print(pipeline.filter.filter_functions)

@@ -1,7 +1,7 @@
 import unittest
 import os
 
-from src.utils.DockerizedWrapper import DockerizedWrapper
+from cascade.utils.DockerizedWrapper import DockerizedWrapper
 
 
 class TestDockerizedWrapper(unittest.TestCase):

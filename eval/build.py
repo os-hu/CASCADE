@@ -3,7 +3,7 @@ import os
 import shutil
 import subprocess
 
-from src.utils.Utils import load_json_from_path
+from cascade.utils.Utils import load_json_from_path
 
 
 def build_project(context, in_path, out_path, code, tests):
