@@ -6,7 +6,7 @@ import sys
 import test
 
 
-path = os.path.join("." , "out")
+path = os.path.join("", "out")
 
 # execute via testrunner
 try:

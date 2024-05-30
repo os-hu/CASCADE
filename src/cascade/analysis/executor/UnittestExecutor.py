@@ -38,7 +38,7 @@ class UnittestExecutor(AnalysisExecutor):
         with tempfile.TemporaryDirectory() as temp_dir:
             try:
                 root_dir = os.path.basename(context["root_path"])
-                shutil.copytree(os.path.join(my_path, "..", "..", "..", "..", "resources", "templates" , "PythonTemplate"), temp_dir , dirs_exist_ok=True)
+                shutil.copytree(os.path.join(my_path, "..", "..", "..", "resources", "templates" , "PythonTemplate"), temp_dir , dirs_exist_ok=True)
                 shutil.copytree(context["root_path"], temp_dir, dirs_exist_ok=True)
 
             except Exception as e:
