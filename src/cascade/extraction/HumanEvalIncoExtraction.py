@@ -1,4 +1,6 @@
 import ast
+import json
+
 from cascade.extraction.Extraction import Extraction
 
 
