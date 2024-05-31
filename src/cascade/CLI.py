@@ -1,5 +1,5 @@
 import ast
-from build import build
+from cascade.build import build
 
 from argparse import ArgumentParser
 
@@ -14,7 +14,7 @@ def main():
     arg_parser = ArgumentParser(prog=program_name,
                                 description=description,
                                 epilog=epilog)
-    subparsers = subparsers = arg_parser.add_subparsers(title='subcommands',
+    subparsers = arg_parser.add_subparsers(title='subcommands',
                                        description='valid subcommands',
                                        help='additional help')
     run_ = subparsers.add_parser("run")
