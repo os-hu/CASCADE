@@ -1,4 +1,6 @@
 import ast
+from build import build
+
 from argparse import ArgumentParser
 
 from cascade.PipelineFactory import PipelineFactory
@@ -12,36 +14,59 @@ def main():
     arg_parser = ArgumentParser(prog=program_name,
                                 description=description,
                                 epilog=epilog)
+    subparsers = subparsers = arg_parser.add_subparsers(title='subcommands',
+                                       description='valid subcommands',
+                                       help='additional help')
+    run = subparsers.add_parser("run")
 
-    arg_parser.add_argument('-i', '--input-path', required=True,
+    run.add_argument('-i', '--input-path', required=True,
                             help="The input path which will be used for extraction")
-    arg_parser.add_argument('-o', '--output-path', required=True,
+    run.add_argument('-o', '--output-path', required=True,
                             help="The output path in which results and temporary files will be stored")
-    arg_parser.add_argument('-s', '--setup-file', required=True,
+    run.add_argument('-s', '--setup-file', required=True,
                             help="The path to the setup file defining the pipeline")
-    arg_parser.add_argument('-m', '--module-path', help="The path to the user defined modules.")
-    arg_parser.add_argument('-extr', '--extraction', action="append",
+    run.add_argument('-m', '--module-path', help="The path to the user defined modules.")
+    run.add_argument('-extr', '--extraction', action="append",
                             help="A way to overwrite the key word arguments for the extraction.")
-    arg_parser.add_argument('-codegen', '--code-generator', action="append",
+    run.add_argument('-codegen', '--code-generator', action="append",
                             help="A way to overwrite the key word arguments for the code generator.")
-    arg_parser.add_argument('-testgen', '--test-generator', action="append",
+    run.add_argument('-testgen', '--test-generator', action="append",
                             help="A way to overwrite the key word arguments for the test generator.")
-    arg_parser.add_argument('-docgen', '--doc-generator', action="append",
+    run.add_argument('-docgen', '--doc-generator', action="append",
                             help="A way to overwrite the key word arguments for the doc generator.")
-    arg_parser.add_argument('-ana', '--analysis', action="append",
+    run.add_argument('-ana', '--analysis', action="append",
                             help="A way to overwrite the key word arguments for the analysis.")
-    arg_parser.add_argument('-exec', '--executor', action="append",
+    run.add_argument('-exec', '--executor', action="append",
                             help="A way to overwrite the key word arguments for the executor.")
-    arg_parser.add_argument('-visua', '--visualizer', action="append",
+    run.add_argument('-visua', '--visualizer', action="append",
                             help="A way to overwrite the key word arguments for the visualizer.")
-    arg_parser.add_argument('-filter', '--filters', action="append",
+    run.add_argument('-filter', '--filters', action="append",
                             help="A way to overwrite the key word arguments for the filters.")
 
-    arg_parser.add_argument('--debug-cli', help="Shows debug information for the CLI call.")
+    run.add_argument('--debug-cli', help="Shows debug information for the CLI call.", action='store_true')
+    run.set_defaults(func=run)
 
-    # arg_parser.parse_args(args=["-h"])
+    build_ = subparsers.add_parser("build-sample")
+    build_.add_argument('-i', '--input-path', required=True,
+                     help="The input path to the root of the analyzed project")
+    build_.add_argument('-o', '--output-path', required=True,
+                     help="The output path in which results and temporary files will be stored")
+    build_.add_argument('-a', '--analyzed-file', required=True,
+                     help="The path to the analyzed.json file containing the results")
+    build_.add_argument('-id', type=int, required=True,
+                        help="The id of the sample to build")
+    build_.add_argument('-code-key', required=True,
+                        help="The key for the code to put in the project")
+    build_.add_argument('-tests-key', required=True,
+                        help="The key for the tests to put in the project")
+
+    build_.set_defaults(func=build)
+
     args = arg_parser.parse_args()
+    args.func(args)
 
+
+def run(args):
     kwargs_overrides = {"Extraction": {}, "CodeGenerator": {}, "TestGenerator": {}, "DocGenerator": {}, "Analysis": {},
                         "Executor": {}, "Visualizer": {}, "FilterFunctions": []}
     override_to_arg = {"Extraction": args.extraction, "CodeGenerator": args.code_generator,

@@ -2,14 +2,38 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 
 from cascade.utils.Utils import load_json_from_path
 
 
+def build(args):
+    analyzed_path = args.analyzed_file
+    in_path = args.input_path
+    out_path = args.output_path
+    id_ = args.id
+
+    code = args.code
+    tests = args.tests
+
+    data = load_json_from_path(analyzed_path)
+
+    context = next(item for item in data if item["id"] == id_)
+    print(context["package"], context["parent"]["name"])
+    print(context["signature"])
+    if args.code + "_response" in context:
+        print(context[args.code + "_response"])
+    if args.tests + "_response" in context:
+        print(context[args.tests + "_response"])
+
+    if context["lang"] != "Java":
+        sys.stderr.write("Can only build Java projects right now!")
+        exit(-1)
+
+    build_project(context, in_path, out_path, code, tests)
+
+
 def build_project(context, in_path, out_path, code, tests):
-    result = ([], [], [])
-
-
     try:
         shutil.copytree(in_path, out_path, dirs_exist_ok=True)
 
@@ -33,25 +57,3 @@ def build_project(context, in_path, out_path, code, tests):
     )
 
     os.remove(entry)
-
-
-if __name__ == '__main__':
-    # load the json
-    analyzed_path = "/home/kiecketo/testoutput/junit41/analyzed.json"
-    in_path = "/home/kiecketo/repos/junit4/"
-    out_path = "/home/kiecketo/PycharmProjects/CASCADE/eval/junit4/"
-    id = 1858
-
-
-    code = "new_code"
-    tests = "new_tests"
-
-
-    data = load_json_from_path(analyzed_path)
-
-    context = next(item for item in data if item["id"] == id)
-    print(context["package"], context["parent"]["name"])
-    print(context["signature"])
-    #print(context["new_code_response"])
-
-    build_project(context, in_path, out_path, code, tests)
