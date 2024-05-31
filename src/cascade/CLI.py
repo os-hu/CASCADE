@@ -17,34 +17,34 @@ def main():
     subparsers = subparsers = arg_parser.add_subparsers(title='subcommands',
                                        description='valid subcommands',
                                        help='additional help')
-    run = subparsers.add_parser("run")
+    run_ = subparsers.add_parser("run")
 
-    run.add_argument('-i', '--input-path', required=True,
+    run_.add_argument('-i', '--input-path', required=True,
                             help="The input path which will be used for extraction")
-    run.add_argument('-o', '--output-path', required=True,
+    run_.add_argument('-o', '--output-path', required=True,
                             help="The output path in which results and temporary files will be stored")
-    run.add_argument('-s', '--setup-file', required=True,
+    run_.add_argument('-s', '--setup-file', required=True,
                             help="The path to the setup file defining the pipeline")
-    run.add_argument('-m', '--module-path', help="The path to the user defined modules.")
-    run.add_argument('-extr', '--extraction', action="append",
+    run_.add_argument('-m', '--module-path', help="The path to the user defined modules.")
+    run_.add_argument('-extr', '--extraction', action="append",
                             help="A way to overwrite the key word arguments for the extraction.")
-    run.add_argument('-codegen', '--code-generator', action="append",
+    run_.add_argument('-codegen', '--code-generator', action="append",
                             help="A way to overwrite the key word arguments for the code generator.")
-    run.add_argument('-testgen', '--test-generator', action="append",
+    run_.add_argument('-testgen', '--test-generator', action="append",
                             help="A way to overwrite the key word arguments for the test generator.")
-    run.add_argument('-docgen', '--doc-generator', action="append",
+    run_.add_argument('-docgen', '--doc-generator', action="append",
                             help="A way to overwrite the key word arguments for the doc generator.")
-    run.add_argument('-ana', '--analysis', action="append",
+    run_.add_argument('-ana', '--analysis', action="append",
                             help="A way to overwrite the key word arguments for the analysis.")
-    run.add_argument('-exec', '--executor', action="append",
+    run_.add_argument('-exec', '--executor', action="append",
                             help="A way to overwrite the key word arguments for the executor.")
-    run.add_argument('-visua', '--visualizer', action="append",
+    run_.add_argument('-visua', '--visualizer', action="append",
                             help="A way to overwrite the key word arguments for the visualizer.")
-    run.add_argument('-filter', '--filters', action="append",
+    run_.add_argument('-filter', '--filters', action="append",
                             help="A way to overwrite the key word arguments for the filters.")
 
-    run.add_argument('--debug-cli', help="Shows debug information for the CLI call.", action='store_true')
-    run.set_defaults(func=run)
+    run_.add_argument('--debug-cli', help="Shows debug information for the CLI call.", action='store_true')
+    run_.set_defaults(func=run)
 
     build_ = subparsers.add_parser("build-sample")
     build_.add_argument('-i', '--input-path', required=True,
