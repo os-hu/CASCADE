@@ -16,7 +16,7 @@ class TestDockerizedWrapper(unittest.TestCase):
         context["eval_command"] = "echo 1 2 3"
         context["eval_function"] = lambda x: [[e] for e in x.split()]
 
-        result = wrapper.execute(context)
+        result = wrapper.execute(context, output_path)
         succeeded, failed, errored = result
 
         self.assertEqual(succeeded, ["1"])

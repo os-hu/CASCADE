@@ -41,7 +41,7 @@ class TreeAnalysis(Analysis):
 
         # allows setting up requirements needed in every step of the execution (i.e. load docker images )
         print("Set up started")
-        self.executor.set_up(data)
+        self.executor.set_up(data, output_path)
         print("Set up finished")
 
         #  loop through data
@@ -65,7 +65,7 @@ class TreeAnalysis(Analysis):
                 if self.debug >= 1:
                     log("        Executing code, tests", logger="tqdm")
 
-                res1 = self.executor.execute("code", "tests", d)
+                res1 = self.executor.execute("code", "tests", d, output_path)
 
                 if self.debug >= 1:
                     log("        Finished executing code, tests", logger="tqdm")
@@ -107,7 +107,7 @@ class TreeAnalysis(Analysis):
                 if self.debug >= 1:
                     log("        Executing code, new_tests", logger="tqdm")
 
-                res2 = self.executor.execute("code", "new_tests", d)
+                res2 = self.executor.execute("code", "new_tests", d, output_path)
 
                 if self.debug >= 1:
                     log("        Finished executing code, new_tests", logger="tqdm")
@@ -151,7 +151,7 @@ class TreeAnalysis(Analysis):
                 if self.debug >= 1:
                     log("        Executing new_code, new_tests", logger="tqdm")
 
-                res3 = self.executor.execute("new_code", "new_tests", d)
+                res3 = self.executor.execute("new_code", "new_tests", d, output_path)
 
                 if self.debug >= 1:
                     log("        Finished executing new_code, new_tests", logger="tqdm")
@@ -180,7 +180,7 @@ class TreeAnalysis(Analysis):
                 if self.debug >= 1:
                     log("        Executing new_code, tests", logger="tqdm")
 
-                res4 = self.executor.execute("new_code", "tests", d)
+                res4 = self.executor.execute("new_code", "tests", d, output_path)
 
                 if self.debug >= 1:
                     log("        Finished executing new_code, tests", logger="tqdm")
