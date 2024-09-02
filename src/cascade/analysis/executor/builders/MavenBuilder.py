@@ -54,7 +54,7 @@ class MavenBuilder(Builder):
             "image": self.old_image_name,
             "new_image": self.image,
             "directory": temp_dir,
-            "command": f"mvn {self.set_up_maven_command} {self.set_up_maven_args}; rm -rf ../root/*;",
+            "command": f"mvn {self.set_up_maven_command} {self.set_up_maven_args}; RET=$?; rm -rf ../root/*; exit $RET;",
         }
         return wrapper.setup_image(dock_context, output_path)
 
