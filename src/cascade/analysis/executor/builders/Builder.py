@@ -8,7 +8,7 @@ class Builder(ABC):
         self.image = image
 
     @abstractmethod
-    def set_up(self, temp_dir, context):
+    def set_up(self, temp_dir, context, output_path):
         pass
 
     @abstractmethod
