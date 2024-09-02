@@ -84,7 +84,8 @@ class JavaExecutor(AnalysisExecutor):
                 print(e)
 
             if self.builder:
-                self.builder.set_up(temp_dir, context, output_path)
+                return self.builder.set_up(temp_dir, context, output_path)
+        return False
 
     def tear_down(self, data):
         context = data[0]

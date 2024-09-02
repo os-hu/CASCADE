@@ -7,9 +7,8 @@ class Builder(ABC):
         self.eval_function = eval_function
         self.image = image
 
-    @abstractmethod
     def set_up(self, temp_dir, context, output_path):
-        pass
+        return True
 
     @abstractmethod
     def tear_down(self, context):

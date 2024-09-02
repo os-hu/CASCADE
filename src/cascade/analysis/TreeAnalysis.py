@@ -14,8 +14,9 @@ class TreeAnalysis(Analysis):
     """
     TODO
     """
-    def __init__(self, generator: Generation, executor: Execution, visualizer: Visualization, regenerate=False, reexecute=False, debug=0, step_size=1):
+    def __init__(self, generator: Generation, executor: Execution, visualizer: Visualization, regenerate=False, reexecute=False, debug=0, step_size=1, die_if_setup_fails=False):
         super().__init__(generator, executor, visualizer)
+        self.die_if_setup_fails = die_if_setup_fails
         self.reexecute = reexecute or regenerate
         self.step_size = step_size
         self.regenerate = regenerate
@@ -35,7 +36,9 @@ class TreeAnalysis(Analysis):
 
         # allows setting up requirements needed in every step of the execution (i.e. load docker images )
         print("Set up started")
-        self.executor.set_up(data, output_path)
+        if not self.executor.set_up(data, output_path) and self.die_if_setup_fails:
+            print("Set up failed")
+            return
         print("Set up finished")
 
         #  loop through data
