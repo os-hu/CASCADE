@@ -49,15 +49,17 @@ class DockerizedWrapper:
         container = None
         client = docker.from_env()
         images = client.images.list(context["new_image"])
+        exit_code = False
         try:
             if images:
                 self.remove_image(context)
             container = self.setup(context)
-            self.run(container, context, output_path)
+            exit_code = self.run(container, context, output_path)
             container.commit(context["new_image"])
         finally:
             if not images and container:
                 self.kill(container)
+            return exit_code
 
     def remove_image(self, context: dict):
         client = docker.from_env()
@@ -86,6 +88,7 @@ class DockerizedWrapper:
             print("Command:", context["command"])
             print(res.exit_code)
             print(str(res.output, "utf-8"))
+        return res.exit_code == 0
 
     def eval(self, container: Container, context: dict, path) -> (succeeded, failed, errored):
         res = container.exec_run('bash -c - "cd ~; ' + context["eval_command"].replace('"', "\\\"") + '"')

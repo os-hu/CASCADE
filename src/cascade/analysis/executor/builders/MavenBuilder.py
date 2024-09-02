@@ -56,7 +56,7 @@ class MavenBuilder(Builder):
             "directory": temp_dir,
             "command": f"mvn {self.set_up_maven_command} {self.set_up_maven_args}; rm -rf ../root/*;",
         }
-        wrapper.setup_image(dock_context, output_path)
+        return wrapper.setup_image(dock_context, output_path)
 
     def tear_down(self, _):
         wrapper = DockerizedWrapper(debug=True)

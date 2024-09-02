@@ -7,7 +7,7 @@ class MavenJavaExecutor(JavaExecutor):
                  debug=False,
                  new_image_name="maven_modified",
                  maven_args="",
-                 set_up_maven_command="dependency:go-offline",
+                 set_up_maven_command="test",
                  set_up_maven_args="",
                  image="maven"
                  ):
