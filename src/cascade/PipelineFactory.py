@@ -48,10 +48,13 @@ class PipelineFactory:
             return instance
         except ModuleNotFoundError as e:
             print(f"Module '{module_path}' not found: {e}")
+            sys.exit(-1)
         except AttributeError as e:
             print(f"Class '{class_name}' not found in '{module_path}': {e}")
+            sys.exit(-1)
         except Exception as e:
             print(f"Error instantiating class '{class_name}': {e}")
+            sys.exit(-1)
 
     def build(self, pipeline_path, kwargs=None):
         """

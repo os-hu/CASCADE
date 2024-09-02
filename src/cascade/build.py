@@ -13,20 +13,20 @@ def build(args):
     out_path = args.output_path
     id_ = args.id
 
-    code = args.code
-    tests = args.tests
+    code = args.code_key
+    tests = args.tests_key
 
     data = load_json_from_path(analyzed_path)
 
     context = next(item for item in data if item["id"] == id_)
     print(context["package"], context["parent"]["name"])
     print(context["signature"])
-    if args.code + "_response" in context:
-        print(context[args.code + "_response"])
-    if args.tests + "_response" in context:
-        print(context[args.tests + "_response"])
+    if args.code_key + "_response" in context:
+        print(context[args.code_key + "_response"])
+    if args.tests_key + "_response" in context:
+        print(context[args.tests_key + "_response"])
 
-    if context["lang"] != "Java":
+    if context["language"] != "Java":
         sys.stderr.write("Can only build Java projects right now!")
         exit(-1)
 
