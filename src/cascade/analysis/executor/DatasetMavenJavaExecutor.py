@@ -8,10 +8,10 @@ class DatasetMavenJavaExecutor(MavenJavaExecutor):
         super().__init__()
         self.args = ["", "-Dskip.rat=true"]
 
-    def execute(self, code: str, tests: str, context: dict) -> (succeeded, failed, errored):
+    def execute(self, code: str, tests: str, context: dict, output_path) -> (succeeded, failed, errored):
 
         # buidl looop
 
-        super().execute(code, tests, context)
+        super().execute(code, tests, context, output_path)
 
         # if it wokred set args to the working arg

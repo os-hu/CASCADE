@@ -15,7 +15,7 @@ class JavaExecutor(AnalysisExecutor):
         self.debug = debug
         self.builder = builder
 
-    def execute(self, code: str, tests: str, context: dict) -> (succeeded, failed, errored):
+    def execute(self, code: str, tests: str, context: dict, output_path) -> (succeeded, failed, errored):
         result = ([], [], [])
 
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -42,6 +42,10 @@ class JavaExecutor(AnalysisExecutor):
 
             os.remove(entry)
 
+            with open(os.path.join(output_path, "log.txt"), "a") as file:
+                file.write(str(context["id"]) + "\n")
+                file.write(p.stdout + "\n")
+                file.write(p.stderr + "\n")
             if p.stderr:
                 if self.debug:
                     print(p.stdout)
@@ -64,11 +68,11 @@ class JavaExecutor(AnalysisExecutor):
                 "eval_function" : self.builder.eval_function
             }
 
-            result = dock_ex.execute(dock_context)
+            result = dock_ex.execute(dock_context, output_path)
 
         return result
 
-    def set_up(self, data):
+    def set_up(self, data, output_path):
         context = data[0]
 
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -80,7 +84,7 @@ class JavaExecutor(AnalysisExecutor):
                 print(e)
 
             if self.builder:
-                self.builder.set_up(temp_dir, context)
+                self.builder.set_up(temp_dir, output_path)
 
     def tear_down(self, data):
         context = data[0]

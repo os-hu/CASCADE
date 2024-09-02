@@ -28,7 +28,7 @@ class UnittestExecutor(AnalysisExecutor):
             # Return the modified node
             return node
 
-    def execute(self, code: str, tests: str, context: dict) -> (succeeded, failed, errored):
+    def execute(self, code: str, tests: str, context: dict, output_path) -> (succeeded, failed, errored):
 
         # copy project
         my_path = os.path.dirname(__file__)
@@ -78,11 +78,11 @@ class UnittestExecutor(AnalysisExecutor):
                 "eval_function" : lambda x : [ast.literal_eval(l) for l in x.split(";")]
             }
 
-            result = dock_ex.execute(dock_context)
+            result = dock_ex.execute(dock_context, output_path)
 
         return result
 
-    def set_up(self, context):
+    def set_up(self, context, output_path):
         pass
 
     def tear_down(self, context):

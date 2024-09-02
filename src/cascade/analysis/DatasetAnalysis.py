@@ -51,7 +51,7 @@ class DatasetAnalysis(Analysis):
 
         print("execute new tests")
 
-        res2 = self.executor.execute("code", "new_tests", d)
+        res2 = self.executor.execute("code", "new_tests", d, output_path)
         # TODO what if this does not work?
         d["results"]["(code, new_tests)"] = list(res2)
 
@@ -65,7 +65,7 @@ class DatasetAnalysis(Analysis):
         d["new_code"] = new_code
 
         # execute new code
-        res3 = self.executor.execute("new_code", "new_tests", d)
+        res3 = self.executor.execute("new_code", "new_tests", d, output_path)
         d["results"]["(new_code, new_tests)"] = list(res3)
 
 

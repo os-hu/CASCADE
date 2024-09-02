@@ -14,11 +14,12 @@ class AnalysisExecutor(ABC):
         self.analysis_requirements = Requirements(Requirements.Kind.EXPECTED, name="Executor-Analysis-Expected")
 
     @abstractmethod
-    def execute(self, code: str, tests: str, context: dict) -> (succeeded, failed, errored):
+    def execute(self, code: str, tests: str, context: dict, output_path: str) -> (succeeded, failed, errored):
         """
         This executes the provided tests against the code.
         This should be done in some kind of sandbox as the passed code and tests can not be guaranteed to be safe
 
+        :param output_path:
         :param code:
         :param tests:
         :param context:
@@ -28,7 +29,7 @@ class AnalysisExecutor(ABC):
         pass
 
     @abstractmethod
-    def set_up(self, context):
+    def set_up(self, context, output_path):
         pass
 
     @abstractmethod

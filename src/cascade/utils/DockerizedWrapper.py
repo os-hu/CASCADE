@@ -1,3 +1,6 @@
+import os.path
+from unittest.mock import open_spec
+
 import docker
 import tarfile
 import io
@@ -30,19 +33,19 @@ class DockerizedWrapper:
         self.debug=debug
         pass
 
-    def execute(self, context: dict) -> (succeeded, failed, errored):
+    def execute(self, context: dict, output_path: str) -> (succeeded, failed, errored):
         container = None
         try:
             container = self.setup(context)
-            self.run(container, context)
-            succeeded, failed, errored = self.eval(container, context)
+            self.run(container, context, output_path)
+            succeeded, failed, errored = self.eval(container, context, output_path)
         finally:
             if container:
                 self.kill(container)
 
         return succeeded, failed, errored
 
-    def setup_image(self, context: dict):
+    def setup_image(self, context: dict, output_path: str):
         container = None
         client = docker.from_env()
         images = client.images.list(context["new_image"])
@@ -50,7 +53,7 @@ class DockerizedWrapper:
             if images:
                 self.remove_image(context)
             container = self.setup(context)
-            self.run(container, context)
+            self.run(container, context, output_path)
             container.commit(context["new_image"])
         finally:
             if not images and container:
@@ -73,15 +76,23 @@ class DockerizedWrapper:
         container.put_archive("/root/", buffer)
         return container
 
-    def run(self, container: Container, context: dict):
+    def run(self, container: Container, context: dict, path):
         res = container.exec_run('bash -c - "cd ~; ' + context["command"].replace('"', "\\\"") + '"')
+        with open(os.path.join(path, "log.txt"), "a") as file:
+            file.write("Command: " + context["command"] + "\n")
+            file.write(str(res.exit_code) + "\n")
+            file.write(str(res.output, "utf-8") + "\n")
         if self.debug:
             print("Command:", context["command"])
             print(res.exit_code)
             print(str(res.output, "utf-8"))
 
-    def eval(self, container: Container, context: dict):
+    def eval(self, container: Container, context: dict, path) -> (succeeded, failed, errored):
         res = container.exec_run('bash -c - "cd ~; ' + context["eval_command"].replace('"', "\\\"") + '"')
+        with open(os.path.join(path, "log.txt"), "a") as file:
+            file.write("Eval Command: " + context["eval_command"] + "\n")
+            file.write(str(res.exit_code) + "\n")
+            file.write(str(res.output, "utf-8") + "\n")
         if self.debug:
             print(res.exit_code)
             print(str(res.output, "utf-8"))
