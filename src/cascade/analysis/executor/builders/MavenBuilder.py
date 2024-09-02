@@ -48,7 +48,7 @@ class MavenBuilder(Builder):
             counter += 1
         return result
 
-    def set_up(self, temp_dir, _):
+    def set_up(self, temp_dir, _, output_path):
         wrapper = DockerizedWrapper(debug=True)
         dock_context = {
             "image": self.old_image_name,
