@@ -3,6 +3,7 @@ import os
 from cascade.extraction.Extraction import Extraction
 from cascade.filters.Filter import Filter
 from cascade.analysis.Analysis import Analysis
+from cascade.utils.Utils import load_json_from_path
 
 
 class Pipeline():
@@ -33,11 +34,11 @@ class Pipeline():
         if not os.path.exists(os.path.join(output_path, "analyzed.json")):
             print("Extraction started")
             data = self.extraction.extract(input_path, output_path)
-            print("Extraction finished")
+            print("Extraction finished", len(data))
 
             print("Filtering started")
             filtered_data = self.filter.filter_all(data)
-            print("Filtering finished")
+            print("Filtering finished", len(filtered_data))
 
             can_work = True
             can_work &= self.analysis.extraction_requirements.verify(filtered_data)
@@ -48,7 +49,15 @@ class Pipeline():
             can_work &= self.analysis.visualizer.visualizer.extraction_requirements.verify(filtered_data)
         else:
             print("Found analyzed results, will skip extraction and filtering")
+            # generated artifacts for the same dataset can be saved to avoid repeated generation of code and tests.
+            temp_data = load_json_from_path(os.path.join(output_path, "analyzed.json"))
             filtered_data = []
+            if temp_data:
+                filtered_data = temp_data
+
+        if not filtered_data:
+            print("No data to analyze")
+            return
 
         print("Analysis started")
         self.analysis.analyse(filtered_data, output_path)

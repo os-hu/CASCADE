@@ -33,12 +33,6 @@ class TreeAnalysis(Analysis):
         :return:
         """
 
-        # generated artifacts for the same dataset can be saved to avoid repeated generation of code and tests.
-        temp_data = load_json_from_path(os.path.join(output_path, "analyzed.json"))
-        if temp_data:
-            del data
-            data = temp_data
-
         # allows setting up requirements needed in every step of the execution (i.e. load docker images )
         print("Set up started")
         self.executor.set_up(data, output_path)
