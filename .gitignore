@@ -7,7 +7,7 @@
 /tests/resources/temp/*
 /tests/resources/humanevaltest/output/*
 
-/eval/commons*
+/eval/*
 
 # dotenv
 .env
