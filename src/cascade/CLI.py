@@ -108,7 +108,7 @@ def run(args):
 
     factory = PipelineFactory()
     pipeline = factory.build(args.setup_file, kwargs_)
-    pipeline.execute(args.input_path, args.output_path,, input_path,, input_path,
+    pipeline.execute(args.input_path, args.output_path)
 
 
 if __name__ == '__main__':
