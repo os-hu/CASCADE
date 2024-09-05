@@ -1,0 +1,13 @@
+{
+   "Extraction"    : { "name": "JavaExtraction",  "kwargs" : {}},
+   "CodeGenerator": { "name": "GPT35JavaCodeGenerator", "kwargs" : {}},
+   "TestGenerator": { "name": "GPT35JavaTestGenerator", "kwargs" : {}},
+   "Analysis"      : { "name": "DatasetAnalysis",  "kwargs" : {"debug": 1}},
+   "Executor"      : { "name": "DatasetMavenJavaExecutor",   "kwargs" : {}},
+   "Visualizer"    : { "name": "DatasetVisualizer",  "kwargs" : {}}
+}
+
+
+
+
+

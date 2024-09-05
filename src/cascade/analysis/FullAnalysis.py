@@ -5,9 +5,10 @@ class FullAnalysis(Analysis):
     """
     TODO
     """
-    def analyse(self, data, output_path):
+    def analyse(self, data, input_path, output_path):
         """
         TODO
+        :param input_path:
         :param data:
         :return:
         """

@@ -28,7 +28,7 @@ class UnittestExecutor(AnalysisExecutor):
             # Return the modified node
             return node
 
-    def execute(self, code: str, tests: str, context: dict, output_path) -> (succeeded, failed, errored):
+    def execute(self, code: str, tests: str, context: dict, input_path, output_path) -> (succeeded, failed, errored):
 
         # copy project
         my_path = os.path.dirname(__file__)
@@ -82,7 +82,7 @@ class UnittestExecutor(AnalysisExecutor):
 
         return result
 
-    def set_up(self, context, output_path):
+    def set_up(self, data, input_path, output_path):
         pass
 
     def tear_down(self, context):

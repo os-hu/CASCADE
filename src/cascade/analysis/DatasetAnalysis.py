@@ -26,10 +26,11 @@ class DatasetAnalysis(Analysis):
 
 
 
-    def analyse(self, data: list, output_path):
+    def analyse(self, data: list, input_path, output_path):
         """
         this is the specific analysis for the dataset benchmark. it only executes level 2 and 3 of a normal tree analysis.
         it does not visualize anything. it does however safe the results in a file called result_CASCADE.txt
+        :param input_path:
         """
         # print("Set up started")
         # if not self.executor.set_up(data, output_path) and self.die_if_setup_fails:
@@ -54,7 +55,7 @@ class DatasetAnalysis(Analysis):
         print("execute new tests")
 
         # only executes level 2 and 3
-        res2 = list(self.executor.execute("code", "new_tests", d, output_path))
+        res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
 
         # check if it passed failed or errored
         evaluated = self.evaluate(res2)
@@ -70,7 +71,7 @@ class DatasetAnalysis(Analysis):
             d["new_code"] = new_code
 
             # execute new code
-            res3 = list(self.executor.execute("new_code", "new_tests", d, output_path))
+            res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
             evaluated = self.evaluate(res3)
             if evaluated <= 0:
                 output += "False"

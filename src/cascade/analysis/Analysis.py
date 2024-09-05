@@ -19,9 +19,11 @@ class Analysis(ABC):
 
 
     @abstractmethod
-    def analyse(self, data, output_path):
+    def analyse(self, data, input_path, output_path):
         """
-        This is the main analysis method.
-        :return:
+        TODO
+        :param data:
+        :param input_path:
+        :param output_path:
         """
         pass

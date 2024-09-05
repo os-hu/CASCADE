@@ -53,6 +53,10 @@ class JavaExtraction(Extraction):
             e["id"] = count
             count += 1
 
+            # TODO remove this later when it is fixed in the jar
+            del e["root_path"]
+
+
         save_dicts_list_to_json(extracted, os.path.join(output_path, "extracted.json"))
 
         return extracted

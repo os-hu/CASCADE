@@ -9,7 +9,7 @@ class DatasetMavenJavaExecutor(MavenJavaExecutor):
         # this can be changed to include more arguments that might be used for executing maven
         self.args = ["", "-Dskip.rat=true"]
 
-    def execute(self, code: str, tests: str, context: dict, output_path) -> (succeeded, failed, errored):
+    def execute(self, code: str, tests: str, context: dict, input_path, output_path) -> (succeeded, failed, errored):
 
         # TODO? get mven to display all possbile paramters that migth be used here
 
@@ -25,7 +25,7 @@ class DatasetMavenJavaExecutor(MavenJavaExecutor):
                 timeout=180
             )
 
-            result = super().execute(code, tests, context, output_path)
+            result = super().execute(code, tests, context, input_path, output_path)
 
             if not result == ([],[],[]):
                 # if it worked set args to the working arg
