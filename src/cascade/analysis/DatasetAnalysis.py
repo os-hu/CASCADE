@@ -1,4 +1,5 @@
 import os
+from doctest import debug
 
 from tqdm import tqdm
 
@@ -27,17 +28,21 @@ class DatasetAnalysis(Analysis):
 
     def analyse(self, data: list, output_path):
         """
-        TODO
-        :param output_path:
-        :param data:
-        :return:
+        this is the specific analysis for the dataset benchmark. it only executes level 2 and 3 of a normal tree analysis.
+        it does not visualize anything. it does however safe the results in a file called result_CASCADE.txt
         """
+        # print("Set up started")
+        # if not self.executor.set_up(data, output_path) and self.die_if_setup_fails:
+        #     print("Set up failed")
+        #     return
+        # print("Set up finished")
+
+
+
+        output = ""
 
         # load data for this specific run.
-        temp_data = load_json_from_path(os.path.join(output_path, "analyzed.json"))
-        if temp_data:
-            del data
-            data = temp_data
+        data = load_json_from_path(os.path.join(output_path, "analyzed.json"))
 
         d = data[0]
 
@@ -48,48 +53,54 @@ class DatasetAnalysis(Analysis):
         print("generate new tests")
         new_tests, response = self.generator.generate_tests(d, output_path)
         d["new_tests"] = new_tests
-
         print("execute new tests")
 
-        res2 = self.executor.execute("code", "new_tests", d, output_path)
-        # TODO what if this does not work?
-        d["results"]["(code, new_tests)"] = list(res2)
+        # only executes level 2 and 3
+        res2 = list(self.executor.execute("code", "new_tests", d, output_path))
 
-        # save
-        save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
+        # check if it passsed failed or errored
+        evaluated = self.evaluate(res2)
+        if evaluated >= 0:
+            output += "False"
+            if self.debug >= 1:
+                output += ", error in layer 2: code, new_tests" if evaluated == 0 else ", pass in layer 2: code, new_tests"
+
+        else:
+            # generate new code
+            new_code, response = self.generator.generate_code(d, output_path)
+
+            d["new_code"] = new_code
+
+            # execute new code
+            res3 = list(self.executor.execute("new_code", "new_tests", d, output_path))
+            evaluated = self.evaluate(res3)
+            if evaluated <= 0:
+                output += "False"
+                if self.debug >= 1:
+                    output += ", error in layer 3: new_code, new_tests" if evaluated == 0 else ", fail in layer 3: new_code, new_tests"
+
+            else:
+                output += "True"
+
+        with open("result_CASCADE.txt", "w") as f:
+            f.write(output)
+        if self.debug >= 1:
+            print("result:" , output)
 
 
-        # generate new code
-        new_code, response = self.generator.generate_code(d, output_path)
-
-        d["new_code"] = new_code
-
-        # execute new code
-        res3 = self.executor.execute("new_code", "new_tests", d, output_path)
-        d["results"]["(new_code, new_tests)"] = list(res3)
-
-
-
-        save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
-
-        # what does that do`
-        self.executor.tear_down(data)
-        self.visualizer.visualize(data, output_path, full=True)
-
-
-    def should_skip(self, res, skip_on_passed):
+    def evaluate(self, res):
         if res[0] == [] and res[1] == []:
             if self.debug >= 1:
                 log("        Error", logger="tqdm")
             # error
-            return True
+            return 0
         elif res[1] == [] and res[2] == []:
             if self.debug >= 1:
                 log("        Passed", logger="tqdm")
             # if no errors or failures  then passed
-            return skip_on_passed
+            return 1
         else:
             if self.debug >= 1:
                 log("        Failed", logger="tqdm")
             # failed
-            return not skip_on_passed
+            return -1

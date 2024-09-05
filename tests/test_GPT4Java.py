@@ -2,14 +2,15 @@ import unittest
 
 from cascade.filters.Filter import Filter
 from cascade.filters.NoTestsFilterFunction import NoTestsFilterFunction
-from cascade.generation.test.GPT4JavaTestGenerator import GPT4JavaTestGenerator
+from cascade.generation.code.GPT4JavaCodeGenerator import GPT4JavaCodeGenerator
 from cascade.utils.Utils import load_json_from_path
 
 class test_GPT4Java(unittest.TestCase):
 
 
     def test_prompt(self):
-        generator = GPT4JavaTestGenerator()
+        generator = GPT4JavaCodeGenerator()
+
         data = load_json_from_path("./resources/extracted.json")
 
         _filter = Filter([NoTestsFilterFunction()])
@@ -17,11 +18,16 @@ class test_GPT4Java(unittest.TestCase):
         data = _filter.filter_all(data)
         context = data[1]
 
-        nt , response = generator.generate(context, "./resources", "")
-        print(nt)
+
+        prompt = generator.build_prompt(context)
+        #print(prompt[1]["content"])
+        print(prompt)
+
+        nc , response = generator.generate(context, "./resources", "")
+        print(nc)
         print("-------")
         print(response)
-        #self.assertEqual(True, False)  # add assertion here
+         #self.assertEqual(True, False)  # add assertion here
 
 
 if __name__ == '__main__':

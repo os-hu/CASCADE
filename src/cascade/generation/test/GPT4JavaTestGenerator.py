@@ -68,7 +68,6 @@ class GPT4JavaTestGenerator(Generator):
 
     def generate(self, context, output_path, safety_copy_prefix):
         prompt = self.build_prompt(context)
-        print(prompt)
         test_safety_copy_path = os.path.join(output_path, safety_copy_prefix + "test_generator_current.json")
 
         response = None
@@ -93,6 +92,7 @@ class GPT4JavaTestGenerator(Generator):
                 json.dump(safety_copy, file)
 
         new_test = response["choices"][0]["message"]["content"]
+
         if response["choices"][0]["finish_reason"] == "length":
             new_test = self.try_to_fix(new_test)
 

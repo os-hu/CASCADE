@@ -6,6 +6,7 @@ from cascade.analysis.executor.builders.MavenBuilder import MavenBuilder
 class DatasetMavenJavaExecutor(MavenJavaExecutor):
     def __init__(self):
         super().__init__()
+        # this can be changed to include more arguments that might be used for executing maven
         self.args = ["", "-Dskip.rat=true"]
 
     def execute(self, code: str, tests: str, context: dict, output_path) -> (succeeded, failed, errored):
