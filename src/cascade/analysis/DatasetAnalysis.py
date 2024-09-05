@@ -45,9 +45,13 @@ class DatasetAnalysis(Analysis):
 
         d = data[0]
 
-        print(f"Starting analysis of {d['signature']['name']}")
+        if "test_package" not in d:
+            print("no tests were extracted for this method")
+            d["test_package"] = d["package"]
+            d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
+            d["test_imports"] = []
 
-        d["results"] = {}
+        print(f"Starting analysis of {d['signature']['name']}")
 
         print("generate new tests")
         new_tests, response = self.generator.generate_tests(d, output_path)

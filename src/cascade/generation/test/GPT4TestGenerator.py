@@ -41,7 +41,6 @@ class GPT4TestGenerator(Generator):
 
             response = context2["response"]
             del context2["response"]
-            context2["root_path"] = context["root_path"]
 
             if context != context2:
                 response = None
