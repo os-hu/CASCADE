@@ -21,7 +21,8 @@ class DatasetMavenJavaExecutor(MavenJavaExecutor):
                 maven_args=arg,
                 set_up_maven_command="test",
                 set_up_maven_args=arg,
-                image="maven"
+                image="maven",
+                timeout=180
             )
 
             result = super().execute(code, tests, context, output_path)

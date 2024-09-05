@@ -37,8 +37,6 @@ class DatasetAnalysis(Analysis):
         #     return
         # print("Set up finished")
 
-
-
         output = ""
 
         # load data for this specific run.
@@ -58,7 +56,7 @@ class DatasetAnalysis(Analysis):
         # only executes level 2 and 3
         res2 = list(self.executor.execute("code", "new_tests", d, output_path))
 
-        # check if it passsed failed or errored
+        # check if it passed failed or errored
         evaluated = self.evaluate(res2)
         if evaluated >= 0:
             output += "False"
@@ -82,7 +80,7 @@ class DatasetAnalysis(Analysis):
             else:
                 output += "True"
 
-        with open("result_CASCADE.txt", "w") as f:
+        with open("result.txt", "w") as f:
             f.write(output)
         if self.debug >= 1:
             print("result:" , output)

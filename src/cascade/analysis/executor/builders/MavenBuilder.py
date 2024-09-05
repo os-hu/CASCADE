@@ -10,8 +10,9 @@ class MavenBuilder(Builder):
                  maven_args,
                  set_up_maven_command,
                  set_up_maven_args,
-                 image):
-        super().__init__(f"echo \"[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0\" > out; timeout 120 mvn test {maven_args} -Dtest=\"%t\" -DfailIfNoTests=false 2>&1 > output; cat output > out; cat output",
+                 image, timeout=120
+                 ):
+        super().__init__(f"echo \"[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0\" > out; timeout {timeout} mvn test {maven_args} -Dtest=\"%t\" -DfailIfNoTests=false 2>&1 > output; cat output > out; cat output",
                          self.eval_function, new_image_name)
         self.old_image_name = image
         self.set_up_maven_args = set_up_maven_args
