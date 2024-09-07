@@ -47,7 +47,7 @@ class DockerizedWrapper:
 
     def setup_image(self, context: dict, output_path: str):
         container = None
-        client = docker.from_env()
+        client = docker.from_env(timeout=240)
         images = client.images.list(context["new_image"])
         exit_code = False
         try:
@@ -62,14 +62,14 @@ class DockerizedWrapper:
             return exit_code
 
     def remove_image(self, context: dict):
-        client = docker.from_env()
+        client = docker.from_env(timeout=240)
         try:
             client.images.remove(context["new_image"], force=True)
         except Exception as e:
             print(f"Could not remove image because of Exception: {e}")
 
     def setup(self, context: dict):
-        client = docker.from_env()
+        client = docker.from_env(timeout=240)
         container = client.containers.run(context["image"], "tail -f /dev/null", detach=True)
         buffer = io.BytesIO()
         with tarfile.open(mode="w", fileobj=buffer) as tar:
