@@ -17,7 +17,7 @@ class DatasetMavenJavaExecutor(MavenJavaExecutor):
             # try to run maven with the arg
             print("Trying arg: ", arg)
             self.builder = MavenBuilder(
-                new_image_name="maven_modified",
+                new_image_name="maven", # should be maven_modified but we dont do a setup here so this is a workaround
                 maven_args=arg,
                 set_up_maven_command="test",
                 set_up_maven_args=arg,
