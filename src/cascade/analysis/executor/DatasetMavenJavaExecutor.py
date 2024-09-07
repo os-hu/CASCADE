@@ -22,7 +22,7 @@ class DatasetMavenJavaExecutor(MavenJavaExecutor):
                 set_up_maven_command="test",
                 set_up_maven_args=arg,
                 image="maven",
-                timeout=180
+                timeout=240
             )
 
             result = super().execute(code, tests, context, input_path, output_path)
