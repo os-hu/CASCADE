@@ -70,7 +70,7 @@ class DockerizedWrapper:
 
     def setup(self, context: dict):
         client = docker.from_env()
-        container = client.containers.run(context["image"], "tail -f /dev/null", detach=True, timeout=120)
+        container = client.containers.run(context["image"], "tail -f /dev/null", detach=True)
         buffer = io.BytesIO()
         with tarfile.open(mode="w", fileobj=buffer) as tar:
             tar.add(context["directory"], arcname="")
