@@ -97,7 +97,7 @@ class GPT4JavaTestGenerator(Generator):
         if response["choices"][0]["finish_reason"] == "length":
             new_test = self.try_to_fix(new_test)
 
-        new_test = self.build_tests(context) + "/n" + new_test
+        new_test = self.build_tests(context) + "\n" + new_test
 
         return new_test , response
 
