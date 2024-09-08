@@ -58,7 +58,7 @@ class GPT4JavaTestGenerator(Generator):
     def build_tests(self, context, primer=""):
         packg_declaration = f"package {context['test_package']};\n\n"
         imports = "".join(context["test_imports"]) + "\n"
-        imports += "import org.junit;\n"
+        imports += "import org.junit.* ;\n"
 
         classdefinition = "public class " + context["test_file_path"].split("/")[-1].split(".")[0] + "{"
         name = str(context["signature"]["name"])
