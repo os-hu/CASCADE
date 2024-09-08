@@ -56,10 +56,16 @@ class DatasetAnalysis(Analysis):
         print("generate new tests")
         new_tests, response = self.generator.generate_tests(d, output_path)
         d["new_tests"] = new_tests
+        d["new_tests_response"] = response
         print("execute new tests")
+
 
         # only executes level 2 and 3
         res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
+
+        d["results"]["(code, new_tests)"] = res2
+        save_dicts_list_to_json([d], os.path.join(output_path, "analyzed.json"))
+
 
         # check if it passed failed or errored
         evaluated = self.evaluate(res2)
@@ -73,9 +79,15 @@ class DatasetAnalysis(Analysis):
             new_code, response = self.generator.generate_code(d, output_path)
 
             d["new_code"] = new_code
+            d["new_code_response"] = response
 
             # execute new code
             res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
+
+            d["results"]["(new_code, new_tests)"] = res3
+            save_dicts_list_to_json([d], os.path.join(output_path, "analyzed.json"))
+
+
             evaluated = self.evaluate(res3)
             if evaluated <= 0:
                 output += "False"
