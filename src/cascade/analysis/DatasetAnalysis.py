@@ -40,8 +40,10 @@ class DatasetAnalysis(Analysis):
 
         output = ""
 
+        ana_path = os.path.join(output_path, "analyzed.json")
+
         # load data for this specific run.
-        data = load_json_from_path(os.path.join(output_path, "analyzed.json"))
+        data = load_json_from_path(ana_path)
 
         d = data[0]
 
@@ -55,17 +57,19 @@ class DatasetAnalysis(Analysis):
 
         print("generate new tests")
         new_tests, response = self.generator.generate_tests(d, output_path)
+
         d["new_tests"] = new_tests
         d["new_tests_response"] = response
+
         print("execute new tests")
-
-
-        # only executes level 2 and 3
         res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
 
         d["results"]["(code, new_tests)"] = res2
-        save_dicts_list_to_json([d], os.path.join(output_path, "analyzed.json"))
 
+        print("saving analyzed file")
+        for k, _ in d["results"].items():
+            print(k)
+        save_dicts_list_to_json([d], ana_path)
 
         # check if it passed failed or errored
         evaluated = self.evaluate(res2)
@@ -85,8 +89,7 @@ class DatasetAnalysis(Analysis):
             res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
 
             d["results"]["(new_code, new_tests)"] = res3
-            save_dicts_list_to_json([d], os.path.join(output_path, "analyzed.json"))
-
+            save_dicts_list_to_json([d], ana_path)
 
             evaluated = self.evaluate(res3)
             if evaluated <= 0:
