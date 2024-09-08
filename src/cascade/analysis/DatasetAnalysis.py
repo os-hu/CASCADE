@@ -64,6 +64,7 @@ class DatasetAnalysis(Analysis):
         print("execute new tests")
         res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
 
+        d["results"] = {}
         d["results"]["(code, new_tests)"] = res2
 
         save_dicts_list_to_json([d], ana_path)
