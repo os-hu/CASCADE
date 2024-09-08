@@ -47,11 +47,20 @@ class DatasetAnalysis(Analysis):
 
         d = data[0]
 
-        if "test_package" not in d:
+        if "test_package" in d:
+            found_junit = False
+            for imp in d["test_imports"]:
+                if "junit" in imp:
+                    found_junit = True
+                    break
+            if not found_junit:
+                d["test_imports"].append("import org.junit.* ;")
+
+        else:
             print("no tests were extracted for this method")
             d["test_package"] = d["package"]
             d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
-            d["test_imports"] = []
+            d["test_imports"] = ["import org.junit.* ;"]
 
         print(f"Starting analysis of {d['signature']['name']}")
 
