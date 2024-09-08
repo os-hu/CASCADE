@@ -66,9 +66,6 @@ class DatasetAnalysis(Analysis):
 
         d["results"]["(code, new_tests)"] = res2
 
-        print("saving analyzed file")
-        for k, _ in d["results"].items():
-            print(k)
         save_dicts_list_to_json([d], ana_path)
 
         # check if it passed failed or errored
