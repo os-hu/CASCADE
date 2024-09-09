@@ -92,12 +92,6 @@ class DatasetAnalysis(Analysis):
         it does not visualize anything. it does however safe the results in a file called result_CASCADE.txt
         :param input_path:
         """
-        print("Set up started")
-        if not self.executor.set_up(data, output_path) and self.die_if_setup_fails:
-            print("Set up failed")
-            return
-        print("Set up finished")
-
         output = ""
 
         ana_path = os.path.join(output_path, "analyzed.json")
