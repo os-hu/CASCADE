@@ -115,6 +115,7 @@ class DatasetAnalysis(Analysis):
         junit_version, source_dir, test_source_dir = self.extract_junit_version( input_path, output_path )
 
         if not "test_package" in d:
+            output += "T "
             print("no tests were extracted for this method")
             d["test_package"] = d["package"]
 
@@ -134,7 +135,7 @@ class DatasetAnalysis(Analysis):
             else:
                 d["test_imports"] = ["import org.junit.jupiter.api.*;"]
 
-        output = junit_version + ", " + source_dir + ", " + test_source_dir
+        output += junit_version + ", " + source_dir + ", " + test_source_dir
 
         # print(f"Starting analysis of {d['signature']['name']}")
         #
