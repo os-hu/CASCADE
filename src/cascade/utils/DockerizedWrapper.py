@@ -122,13 +122,20 @@ class DockerizedWrapper:
     def copy(self, container: Container, context: dict, path):
         bits, stat = container.get_archive(context["path"])
         print(bits)
-        # Convert the tar data (byte stream) into a BytesIO object
-        tar_stream = io.BytesIO(bytes(bits))
+        tar_path = os.path.join(path, "temp_archive.tar")
+
+
         try:
-            # Open the tar file from the stream
-            with tarfile.open(fileobj=tar_stream) as tar:
-                # Extract all the files into the specified directory
+            with open(tar_path, 'wb') as f:
+                for chunk in bits:
+                    f.write(chunk)
+
+            # Extract the tar file to the desired host path
+            with tarfile.open(tar_path) as tar:
                 tar.extractall(path=path)
+
+            os.remove(tar_path)
+
         except Exception as e:
             with open(os.path.join(path, "log.txt"), "a") as file:
                 file.write(f"Could not extract tar file because of Exception: {e}")
