@@ -112,9 +112,9 @@ class DatasetAnalysis(Analysis):
 
             if not "test_file_path" in d:
                 if test_source_dir is not None and source_dir is not None:
-                    print("-----------------------------------------------...........---.-...-----..")
                     print(d["code_file_path"])
-                    d["test_file_path"] = d["code_file_path"].replace(source_dir, test_source_dir)
+
+                    d["test_file_path"] = d["code_file_path"].replace(source_dir.replace("/root/" , ""), test_source_dir.replace("/root/" , ""))
                     print(d["test_file_path"])
                 else:
                     d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")

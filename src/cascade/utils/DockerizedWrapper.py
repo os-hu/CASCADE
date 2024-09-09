@@ -121,9 +121,7 @@ class DockerizedWrapper:
 
     def copy(self, container: Container, context: dict, path):
         bits, stat = container.get_archive(context["path"])
-        print(bits)
         tar_path = os.path.join(path, "temp_archive.tar")
-
 
         try:
             with open(tar_path, 'wb') as f:
