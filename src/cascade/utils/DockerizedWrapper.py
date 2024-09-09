@@ -121,9 +121,9 @@ class DockerizedWrapper:
 
     def copy(self, container: Container, context: dict, path):
         bits, stat = container.get_archive(context["path"])
-
+        print(bits)
         # Convert the tar data (byte stream) into a BytesIO object
-        tar_stream = io.BytesIO(bits)
+        tar_stream = io.BytesIO(bytes(bits))
         try:
             # Open the tar file from the stream
             with tarfile.open(fileobj=tar_stream) as tar:
