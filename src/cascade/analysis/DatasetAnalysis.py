@@ -136,7 +136,7 @@ class DatasetAnalysis(Analysis):
             else:
                 d["test_imports"] = ["import org.junit.jupiter.api.*;"]
 
-        prompt = generator.build_prompt(d)
+        prompt = self.generator.build_prompt(d)
 
         output += junit_version + ", " + source_dir + ", " + test_source_dir + prompt
 
