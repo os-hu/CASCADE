@@ -58,10 +58,18 @@ class GPT4JavaTestGenerator(Generator):
     def build_tests(self, context, primer=""):
         packg_declaration = f"package {context['test_package']};\n\n"
         imports = "".join(context["test_imports"]) + "\n"
-
-        classdefinition = "public class " + context["test_file_path"].split("/")[-1].split(".")[0] + "{"
+        is_three = False
+        for import_ in context["test_imports"]:
+            if import_.startswith("import junit.framework"):
+                is_three = True
+                break
         name = str(context["signature"]["name"])
-        func_definition = "\n    @Test\n    public void test" + name[0].upper() + name[1:] + "1(){"
+        if is_three:
+            classdefinition = "public class " + context["test_file_path"].split("/")[-1].split(".")[0] + " extends TestCase {"
+            func_definition = "\n    public void test" + name[0].upper() + name[1:] + "1(){"
+        else:
+            classdefinition = "public class " + context["test_file_path"].split("/")[-1].split(".")[0] + "{"
+            func_definition = "\n    @Test\n    public void test" + name[0].upper() + name[1:] + "1(){"
         return packg_declaration + imports + classdefinition + primer + func_definition
 
 

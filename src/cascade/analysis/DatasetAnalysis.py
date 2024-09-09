@@ -76,14 +76,6 @@ class DatasetAnalysis(Analysis):
 
 
 
-
-
-
-
-
-
-
-
     def analyse(self, data: list, input_path, output_path):
         """
         this is the specific analysis for the dataset benchmark. it only executes level 2 and 3 of a normal tree analysis.
@@ -109,20 +101,16 @@ class DatasetAnalysis(Analysis):
         output += d["signature"]["name"] + ": " + t
 
 
-        # if "test_package" in d:
-        #     found_junit = False
-        #     for imp in d["test_imports"]:
-        #         if "junit" in imp:
-        #             found_junit = True
-        #             break
-        #     if not found_junit:
-        #         d["test_imports"].append("import org.junit.* ;")
-        #
-        # else:
-        #     print("no tests were extracted for this method")
-        #     d["test_package"] = d["package"]
-        #     d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
-        #     d["test_imports"] = ["import org.junit.* ;"]
+        if not "test_package" in d:
+            print("no tests were extracted for this method")
+            d["test_package"] = d["package"]
+            d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
+            if t.startswith("3.8"):
+                d["test_imports"] = ["import junit.framework.*;"]
+            elif t.startswith("4."):
+                d["test_imports"] = ["import org.junit.*;"]
+            else:
+                d["test_imports"] = ["import org.junit.jupiter.api.*;"]
         #
         # print(f"Starting analysis of {d['signature']['name']}")
         #
