@@ -101,7 +101,9 @@ class DatasetAnalysis(Analysis):
 
         d = data[0]
 
+        print("extracting Junit version")
         junit_version, source_dir, test_source_dir = self.extract_junit_version( input_path, output_path )
+        print("Junit version: ", junit_version)
 
         if not "test_package" in d:
             output += "T "
@@ -124,11 +126,11 @@ class DatasetAnalysis(Analysis):
             else:
                 d["test_imports"] = ["import org.junit.jupiter.api.*;"]
 
-        prompt = self.generator.build_prompt(d)
+        prompt = self.generator.test_generator.build_prompt(d)
 
         output += junit_version + ", " + source_dir + ", " + test_source_dir + prompt
 
-        # print(f"Starting analysis of {d['signature']['name']}")
+        # print(f"Starting analysis of function: {d['signature']['name']}")
         #
         # print("generate new tests")
         # new_tests, response = self.generator.generate_tests(d, output_path)
