@@ -51,51 +51,45 @@ class DatasetAnalysis(Analysis):
             dock_ex.copy_path(dock_context, output_path)
 
         try:
-            try:
-                tree = ET.parse(os.path.join(output_path, "effective-pom.xml"))
-                root = tree.getroot()
+            tree = ET.parse(os.path.join(output_path, "effective-pom.xml"))
+            root = tree.getroot()
 
-                # Define namespaces, if they exist in your pom.xml
-                namespaces = {'m': 'http://maven.apache.org/POM/4.0.0'}  # Default Maven namespace
+            # Define namespaces, if they exist in your pom.xml
+            namespaces = {'m': 'http://maven.apache.org/POM/4.0.0'}  # Default Maven namespace
 
-                # Initialize variables for return values
-                junit_version = "JUnit dependency not found"
-                source_dir = "Source directory not specified"
-                test_source_dir = "Test source directory not specified"
+            # Initialize variables for return values
+            junit_version = "JUnit dependency not found"
+            source_dir = "Source directory not specified"
+            test_source_dir = "Test source directory not specified"
 
-                # Search for JUnit dependency
-                for dependency in root.findall(".//m:dependency", namespaces):
-                    group_id = dependency.find("m:groupId", namespaces)
-                    artifact_id = dependency.find("m:artifactId", namespaces)
-                    if group_id is not None and artifact_id is not None:
-                        if group_id.text == "junit" and artifact_id.text == "junit":
-                            version = dependency.find("m:version", namespaces)
-                            if version is not None:
-                                junit_version = version.text
-                            else:
-                                junit_version = "Version not specified"
+            # Search for JUnit dependency
+            for dependency in root.findall(".//m:dependency", namespaces):
+                group_id = dependency.find("m:groupId", namespaces)
+                artifact_id = dependency.find("m:artifactId", namespaces)
+                if group_id is not None and artifact_id is not None:
+                    if group_id.text == "junit" and artifact_id.text == "junit":
+                        version = dependency.find("m:version", namespaces)
+                        if version is not None:
+                            junit_version = version.text
+                        else:
+                            junit_version = "Version not specified"
 
-                # Extract source and test source directories
-                build = root.find(".//m:build", namespaces)
-                if build is not None:
-                    source_directory = build.find("m:sourceDirectory", namespaces)
-                    test_source_directory = build.find("m:testSourceDirectory", namespaces)
+            # Extract source and test source directories
+            build = root.find(".//m:build", namespaces)
+            if build is not None:
+                source_directory = build.find("m:sourceDirectory", namespaces)
+                test_source_directory = build.find("m:testSourceDirectory", namespaces)
 
-                    if source_directory is not None:
-                        source_dir = source_directory.text
-                    if test_source_directory is not None:
-                        test_source_dir = test_source_directory.text
+                if source_directory is not None:
+                    source_dir = source_directory.text
+                if test_source_directory is not None:
+                    test_source_dir = test_source_directory.text
 
-                # Return a 3-tuple with JUnit version, source directory, and test source directory
-                return junit_version, source_dir, test_source_dir
+            # Return a 3-tuple with JUnit version, source directory, and test source directory
+            return junit_version, source_dir, test_source_dir
 
-            except ET.ParseError as e:
-                return f"Error parsing pom.xml: {e}", None, None
-
-
-
-
-
+        except ET.ParseError as e:
+            return f"Error parsing pom.xml: {e}", None, None
 
     def analyse(self, data: list, input_path, output_path):
         """
@@ -103,11 +97,11 @@ class DatasetAnalysis(Analysis):
         it does not visualize anything. it does however safe the results in a file called result_CASCADE.txt
         :param input_path:
         """
-        # print("Set up started")
-        # if not self.executor.set_up(data, output_path) and self.die_if_setup_fails:
-        #     print("Set up failed")
-        #     return
-        # print("Set up finished")
+        print("Set up started")
+        if not self.executor.set_up(data, output_path) and self.die_if_setup_fails:
+            print("Set up failed")
+            return
+        print("Set up finished")
 
         output = ""
 
@@ -119,8 +113,6 @@ class DatasetAnalysis(Analysis):
         d = data[0]
 
         junit_version, source_dir, test_source_dir = self.extract_junit_version( input_path, output_path )
-        output += d["signature"]["name"] + ": " + t
-
 
         if not "test_package" in d:
             print("no tests were extracted for this method")
@@ -128,7 +120,10 @@ class DatasetAnalysis(Analysis):
 
             if not "test_file_path" in d:
                 if test_source_dir is not None and source_dir is not None:
+                    print("-----------------------------------------------...........---.-...-----..")
+                    print(d["code_file_path"])
                     d["test_file_path"] = d["code_file_path"].replace(source_dir, test_source_dir)
+                    print(d["test_file_path"])
                 else:
                     d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
 
@@ -139,53 +134,54 @@ class DatasetAnalysis(Analysis):
             else:
                 d["test_imports"] = ["import org.junit.jupiter.api.*;"]
 
+        output = junit_version + ", " + source_dir + ", " + test_source_dir
 
-        print(f"Starting analysis of {d['signature']['name']}")
-
-        print("generate new tests")
-        new_tests, response = self.generator.generate_tests(d, output_path)
-
-        d["new_tests"] = new_tests
-        d["new_tests_response"] = response
-
-        print("execute new tests")
-        res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
-
-        d["results"] = {}
-        d["results"]["(code, new_tests)"] = res2
-
-        save_dicts_list_to_json([d], ana_path)
-
-        # check if it passed failed or errored
-        evaluated = self.evaluate(res2)
-        if evaluated >= 0:
-            output += "False"
-            if self.debug >= 1:
-                output += ", error in layer 2: code, new_tests" if evaluated == 0 else ", pass in layer 2: code, new_tests"
-
-        else:
-            # generate new code
-            new_code, response = self.generator.generate_code(d, output_path)
-
-
-            d["new_code"] = new_code
-            d["new_code_response"] = response
-
-            # execute new code
-            res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
-
-
-            d["results"]["(new_code, new_tests)"] = res3
-            save_dicts_list_to_json([d], ana_path)
-
-            evaluated = self.evaluate(res3)
-            if evaluated <= 0:
-                output += "False"
-                if self.debug >= 1:
-                    output += ", error in layer 3: new_code, new_tests" if evaluated == 0 else ", fail in layer 3: new_code, new_tests"
-
-            else:
-                output += "True"
+        # print(f"Starting analysis of {d['signature']['name']}")
+        #
+        # print("generate new tests")
+        # new_tests, response = self.generator.generate_tests(d, output_path)
+        #
+        # d["new_tests"] = new_tests
+        # d["new_tests_response"] = response
+        #
+        # print("execute new tests")
+        # res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
+        #
+        # d["results"] = {}
+        # d["results"]["(code, new_tests)"] = res2
+        #
+        # save_dicts_list_to_json([d], ana_path)
+        #
+        # # check if it passed failed or errored
+        # evaluated = self.evaluate(res2)
+        # if evaluated >= 0:
+        #     output += "False"
+        #     if self.debug >= 1:
+        #         output += ", error in layer 2: code, new_tests" if evaluated == 0 else ", pass in layer 2: code, new_tests"
+        #
+        # else:
+        #     # generate new code
+        #     new_code, response = self.generator.generate_code(d, output_path)
+        #
+        #
+        #     d["new_code"] = new_code
+        #     d["new_code_response"] = response
+        #
+        #     # execute new code
+        #     res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
+        #
+        #
+        #     d["results"]["(new_code, new_tests)"] = res3
+        #     save_dicts_list_to_json([d], ana_path)
+        #
+        #     evaluated = self.evaluate(res3)
+        #     if evaluated <= 0:
+        #         output += "False"
+        #         if self.debug >= 1:
+        #             output += ", error in layer 3: new_code, new_tests" if evaluated == 0 else ", fail in layer 3: new_code, new_tests"
+        #
+        #     else:
+        #         output += "True"
 
         with open("result.txt", "w") as f:
             f.write(output)
