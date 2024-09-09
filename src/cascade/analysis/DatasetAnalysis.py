@@ -128,7 +128,11 @@ class DatasetAnalysis(Analysis):
 
         prompt = self.generator.test_generator.build_prompt(d)
 
-        output += junit_version + ", " + source_dir + ", " + test_source_dir + prompt
+        # for testing only ----------------------
+        output += junit_version + ", " + source_dir + ", " + test_source_dir
+        for p in prompt:
+            output += ", " + p["content"]
+        # ---------------------------------------
 
         # print(f"Starting analysis of function: {d['signature']['name']}")
         #
