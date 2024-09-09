@@ -34,7 +34,7 @@ class DatasetAnalysis(Analysis):
                 print("could not copy root path")
                 print(e)
 
-            dock_ex = DockerizedWrapper(debug=self.debug)
+            dock_ex = DockerizedWrapper(debug=0)
 
             dock_context = {
                 "image" : "maven",
@@ -126,12 +126,9 @@ class DatasetAnalysis(Analysis):
             else:
                 d["test_imports"] = ["import org.junit.jupiter.api.*;"]
 
-        prompt = self.generator.test_generator.build_prompt(d)
 
         # for testing only ----------------------
         output += junit_version + ", " + source_dir + ", " + test_source_dir
-        for p in prompt:
-            output += ", " + p["content"]
         # ---------------------------------------
 
         # print(f"Starting analysis of function: {d['signature']['name']}")
