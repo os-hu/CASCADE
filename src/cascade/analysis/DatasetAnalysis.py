@@ -3,6 +3,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+from collections.abc import generator
 from doctest import debug
 
 from tqdm import tqdm
@@ -135,7 +136,9 @@ class DatasetAnalysis(Analysis):
             else:
                 d["test_imports"] = ["import org.junit.jupiter.api.*;"]
 
-        output += junit_version + ", " + source_dir + ", " + test_source_dir
+        prompt = generator.build_prompt(d)
+
+        output += junit_version + ", " + source_dir + ", " + test_source_dir + prompt
 
         # print(f"Starting analysis of {d['signature']['name']}")
         #
