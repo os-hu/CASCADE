@@ -1,4 +1,8 @@
+import json
 import os
+import shutil
+import subprocess
+import tempfile
 from doctest import debug
 
 from tqdm import tqdm
@@ -9,6 +13,8 @@ from cascade.analysis.visualizer.Visualization import Visualization
 
 from cascade.generation.Generation import Generation
 from cascade.utils.Utils import load_json_from_path, log, save_dicts_list_to_json
+
+from cascade.utils.DockerizedWrapper import DockerizedWrapper
 import xml.etree.ElementTree as ET
 
 class DatasetAnalysis(Analysis):
@@ -24,10 +30,28 @@ class DatasetAnalysis(Analysis):
         self.visualizer.logger = "tqdm"
 
 
+    def extract_junit_version(self, input_path, output_path):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                shutil.copytree(input_path, temp_dir, dirs_exist_ok=True)
 
-    def extract_junit_version(self, pom_file):
+            except Exception as e:
+                print("could not copy root path")
+                print(e)
+
+            dock_ex = DockerizedWrapper(debug=self.debug)
+
+            dock_context = {
+                "image" : "maven",
+                "directory" : temp_dir,
+                "command" : "mvn help:effective-pom -Doutput=effective-pom.xml",
+                "path" : "/root/effective-pom.xml"
+            }
+
+            dock_ex.copy_path(dock_context, output_path)
+
         try:
-            tree = ET.parse(pom_file)
+            tree = ET.parse( os.path.join(output_path, "effective-pom.xml") )
             root = tree.getroot()
 
             # Define namespaces, if they exist in your pom.xml
@@ -55,6 +79,11 @@ class DatasetAnalysis(Analysis):
 
 
 
+
+
+
+
+
     def analyse(self, data: list, input_path, output_path):
         """
         this is the specific analysis for the dataset benchmark. it only executes level 2 and 3 of a normal tree analysis.
@@ -76,42 +105,41 @@ class DatasetAnalysis(Analysis):
 
         d = data[0]
 
-        t = self.extract_junit_version(os.path.join( "./repository" ,"pom.xml"))
+        t = self.extract_junit_version( input_path, output_path )
         output += d["signature"]["name"] + ": " + t
 
-        if "test_package" in d:
-            found_junit = False
-            for imp in d["test_imports"]:
-                if "junit" in imp:
-                    found_junit = True
-                    break
-            if not found_junit:
-                d["test_imports"].append("import org.junit.* ;")
 
-        else:
-            print("no tests were extracted for this method")
-            d["test_package"] = d["package"]
-            d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
-            d["test_imports"] = ["import org.junit.* ;"]
-
-        print(f"Starting analysis of {d['signature']['name']}")
-
-        print("generate new tests")
-        #new_tests, response = self.generator.generate_tests(d, output_path)
-        new_tests, response = "test", []
-
-        d["new_tests"] = new_tests
-        d["new_tests_response"] = response
-
-        print("execute new tests")
+        # if "test_package" in d:
+        #     found_junit = False
+        #     for imp in d["test_imports"]:
+        #         if "junit" in imp:
+        #             found_junit = True
+        #             break
+        #     if not found_junit:
+        #         d["test_imports"].append("import org.junit.* ;")
+        #
+        # else:
+        #     print("no tests were extracted for this method")
+        #     d["test_package"] = d["package"]
+        #     d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
+        #     d["test_imports"] = ["import org.junit.* ;"]
+        #
+        # print(f"Starting analysis of {d['signature']['name']}")
+        #
+        # print("generate new tests")
+        # new_tests, response = self.generator.generate_tests(d, output_path)
+        #
+        # d["new_tests"] = new_tests
+        # d["new_tests_response"] = response
+        #
+        # print("execute new tests")
         # res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
-        res2 = [[], [], []]
-
-        d["results"] = {}
-        d["results"]["(code, new_tests)"] = res2
-
-        save_dicts_list_to_json([d], ana_path)
-
+        #
+        # d["results"] = {}
+        # d["results"]["(code, new_tests)"] = res2
+        #
+        # save_dicts_list_to_json([d], ana_path)
+        #
         # check if it passed failed or errored
         # evaluated = self.evaluate(res2)
         # if evaluated >= 0:
@@ -121,15 +149,15 @@ class DatasetAnalysis(Analysis):
         #
         # else:
         #     # generate new code
-        #     #new_code, response = self.generator.generate_code(d, output_path)
-        #     new_code , response = "test" , []
+        #     new_code, response = self.generator.generate_code(d, output_path)
+        #
         #
         #     d["new_code"] = new_code
         #     d["new_code_response"] = response
         #
         #     # execute new code
-        #     # res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
-        #     res3 = [[],[],[]]
+        #     res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
+        #
         #
         #     d["results"]["(new_code, new_tests)"] = res3
         #     save_dicts_list_to_json([d], ana_path)

@@ -1,5 +1,4 @@
 import os.path
-from unittest.mock import open_spec
 
 import docker
 import tarfile
@@ -33,17 +32,30 @@ class DockerizedWrapper:
         self.debug=debug
         pass
 
-    def execute(self, context: dict, output_path: str) -> (succeeded, failed, errored):
+    def execute(self, context: dict, output_path: str):
         container = None
         try:
             container = self.setup(context)
             self.run(container, context, output_path)
-            succeeded, failed, errored = self.eval(container, context, output_path)
+            result = self.eval(container, context, output_path)
         finally:
             if container:
                 self.kill(container)
 
-        return succeeded, failed, errored
+        return result
+
+
+    def copy_path(self, context: dict, output_path: str):
+        container = None
+        try:
+            container = self.setup(context)
+            self.run(container, context, output_path)
+            self.copy(container, context, output_path)
+        finally:
+            if container:
+                self.kill(container)
+
+
 
     def setup_image(self, context: dict, output_path: str):
         container = None
@@ -90,7 +102,7 @@ class DockerizedWrapper:
             print(str(res.output, "utf-8"))
         return res.exit_code == 0
 
-    def eval(self, container: Container, context: dict, path) -> (succeeded, failed, errored):
+    def eval(self, container: Container, context: dict, path):
         res = container.exec_run('bash -c - "cd ~; ' + context["eval_command"].replace('"', "\\\"") + '"')
         with open(os.path.join(path, "log.txt"), "a") as file:
             file.write("Eval Command: " + context["eval_command"] + "\n")
@@ -104,3 +116,23 @@ class DockerizedWrapper:
     def kill(self, container: Container):
         container.kill()
         container.remove()
+
+
+
+    def copy(self, container: Container, context: dict, path):
+        bits, stat = container.get_archive(context["path"])
+
+        # Convert the tar data (byte stream) into a BytesIO object
+        tar_stream = io.BytesIO(bits)
+        try:
+            # Open the tar file from the stream
+            with tarfile.open(fileobj=tar_stream) as tar:
+                # Extract all the files into the specified directory
+                tar.extractall(path=path)
+        except Exception as e:
+            with open(os.path.join(path, "log.txt"), "a") as file:
+                file.write(f"Could not extract tar file because of Exception: {e}")
+
+        with open(os.path.join(path, "log.txt"), "a") as file:
+            file.write(f"copied file {context['path']} to {path}\n")
+            file.write(str(stat) + "\n")
