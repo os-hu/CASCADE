@@ -9,7 +9,7 @@ from cascade.analysis.visualizer.Visualization import Visualization
 
 from cascade.generation.Generation import Generation
 from cascade.utils.Utils import load_json_from_path, log, save_dicts_list_to_json
-
+import xml.etree.ElementTree as ET
 
 class DatasetAnalysis(Analysis):
     """
@@ -22,6 +22,35 @@ class DatasetAnalysis(Analysis):
         self.regenerate = regenerate
         self.debug = debug
         self.visualizer.logger = "tqdm"
+
+
+
+    def extract_junit_version(self, pom_file):
+        try:
+            tree = ET.parse(pom_file)
+            root = tree.getroot()
+
+            # Define namespaces, if they exist in your pom.xml
+            namespaces = {'m': 'http://maven.apache.org/POM/4.0.0'}  # Default Maven namespace
+
+            # Search for JUnit dependency
+            for dependency in root.findall(".//m:dependency", namespaces):
+                group_id = dependency.find("m:groupId", namespaces)
+                artifact_id = dependency.find("m:artifactId", namespaces)
+                if group_id is not None and artifact_id is not None:
+                    if group_id.text == "junit" and artifact_id.text == "junit":
+                        version = dependency.find("m:version", namespaces)
+                        if version is not None:
+                            return version.text
+                        else:
+                            return "Version not specified for JUnit"
+
+            return "JUnit dependency not found"
+
+        except ET.ParseError as e:
+            return f"Error parsing pom.xml: {e}"
+
+
 
 
 
@@ -47,6 +76,9 @@ class DatasetAnalysis(Analysis):
 
         d = data[0]
 
+        t = self.extract_junit_version(os.path.join( "./repository" ,"pom.xml"))
+        output += d["signature"]["name"] + ": " + t
+
         if "test_package" in d:
             found_junit = False
             for imp in d["test_imports"]:
@@ -65,13 +97,15 @@ class DatasetAnalysis(Analysis):
         print(f"Starting analysis of {d['signature']['name']}")
 
         print("generate new tests")
-        new_tests, response = self.generator.generate_tests(d, output_path)
+        #new_tests, response = self.generator.generate_tests(d, output_path)
+        new_tests, response = "test", []
 
         d["new_tests"] = new_tests
         d["new_tests_response"] = response
 
         print("execute new tests")
-        res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
+        # res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
+        res2 = [[], [], []]
 
         d["results"] = {}
         d["results"]["(code, new_tests)"] = res2
@@ -79,33 +113,35 @@ class DatasetAnalysis(Analysis):
         save_dicts_list_to_json([d], ana_path)
 
         # check if it passed failed or errored
-        evaluated = self.evaluate(res2)
-        if evaluated >= 0:
-            output += "False"
-            if self.debug >= 1:
-                output += ", error in layer 2: code, new_tests" if evaluated == 0 else ", pass in layer 2: code, new_tests"
-
-        else:
-            # generate new code
-            new_code, response = self.generator.generate_code(d, output_path)
-
-            d["new_code"] = new_code
-            d["new_code_response"] = response
-
-            # execute new code
-            res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
-
-            d["results"]["(new_code, new_tests)"] = res3
-            save_dicts_list_to_json([d], ana_path)
-
-            evaluated = self.evaluate(res3)
-            if evaluated <= 0:
-                output += "False"
-                if self.debug >= 1:
-                    output += ", error in layer 3: new_code, new_tests" if evaluated == 0 else ", fail in layer 3: new_code, new_tests"
-
-            else:
-                output += "True"
+        # evaluated = self.evaluate(res2)
+        # if evaluated >= 0:
+        #     output += "False"
+        #     if self.debug >= 1:
+        #         output += ", error in layer 2: code, new_tests" if evaluated == 0 else ", pass in layer 2: code, new_tests"
+        #
+        # else:
+        #     # generate new code
+        #     #new_code, response = self.generator.generate_code(d, output_path)
+        #     new_code , response = "test" , []
+        #
+        #     d["new_code"] = new_code
+        #     d["new_code_response"] = response
+        #
+        #     # execute new code
+        #     # res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
+        #     res3 = [[],[],[]]
+        #
+        #     d["results"]["(new_code, new_tests)"] = res3
+        #     save_dicts_list_to_json([d], ana_path)
+        #
+        #     evaluated = self.evaluate(res3)
+        #     if evaluated <= 0:
+        #         output += "False"
+        #         if self.debug >= 1:
+        #             output += ", error in layer 3: new_code, new_tests" if evaluated == 0 else ", fail in layer 3: new_code, new_tests"
+        #
+        #     else:
+        #         output += "True"
 
         with open("result.txt", "w") as f:
             f.write(output)
