@@ -16,14 +16,15 @@ class DatasetAnalysis(Analysis):
     """
     TODO
     """
-    def __init__(self, generator: Generation, executor: Execution, visualizer: Visualization, regenerate=False, reexecute=False, debug=0, step_size=1):
+    def __init__(self, generator: Generation, executor: Execution, visualizer: Visualization, regenerate=False, reexecute=False, image="maven" , debug=0, step_size=1):
         super().__init__(generator, executor, visualizer)
         self.reexecute = reexecute or regenerate
+
         self.step_size = step_size
         self.regenerate = regenerate
         self.debug = debug
         self.visualizer.logger = "tqdm"
-
+        self.image = image
 
     def extract_junit_version(self, input_path, output_path):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -37,7 +38,7 @@ class DatasetAnalysis(Analysis):
             dock_ex = DockerizedWrapper(debug=0)
 
             dock_context = {
-                "image" : "maven",
+                "image" : self.image,
                 "directory" : temp_dir,
                 "command" : "mvn help:effective-pom -Doutput=effective-pom.xml",
                 "path" : "/root/effective-pom.xml"
@@ -107,52 +108,54 @@ class DatasetAnalysis(Analysis):
 
         junit_found = False
 
-        if not "test_package" in d:
-            print("no tests were extracted for this method")
-            d["test_package"] = d["package"]
+        if not "new_tests" in d:
 
-            if not "test_file_path" in d:
-                if test_source_dir is not None and source_dir is not None:
-                    print(d["code_file_path"])
+            if not "test_package" in d:
+                print("no tests were extracted for this method")
+                d["test_package"] = d["package"]
 
-                    d["test_file_path"] = d["code_file_path"].replace(source_dir.replace("/root/" , ""), test_source_dir.replace("/root/" , ""))
-                    d["test_file_path"] = d["test_file_path"].replace(".java", "Test.java")
-                    print(d["test_file_path"])
-                else:
-                    d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
-        else:
-            for imp in d["test_imports"]:
-                if "junit" in imp:
-                    junit_found = True
-                    break
+                if not "test_file_path" in d:
+                    if test_source_dir is not None and source_dir is not None:
+                        print(d["code_file_path"])
 
-        if not junit_found:
-            if junit_version.startswith("3.8"):
-                d["test_imports"] = ["import junit.framework.*;"]
-            elif junit_version.startswith("4."):
-                d["test_imports"] = ["import org.junit.*;"]
+                        d["test_file_path"] = d["code_file_path"].replace(source_dir.replace("/root/" , ""), test_source_dir.replace("/root/" , ""))
+                        d["test_file_path"] = d["test_file_path"].replace(".java", "Test.java")
+                        print(d["test_file_path"])
+                    else:
+                        d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
             else:
-                d["test_imports"] = ["import org.junit.jupiter.api.*;"]
+                for imp in d["test_imports"]:
+                    if "junit" in imp:
+                        junit_found = True
+                        break
+
+            if not junit_found:
+                if junit_version.startswith("3.8"):
+                    d["test_imports"] = ["import junit.framework.*;"]
+                elif junit_version.startswith("4."):
+                    d["test_imports"] = ["import org.junit.*;"]
+                else:
+                    d["test_imports"] = ["import org.junit.jupiter.api.*;"]
 
 
-        print(f"Starting analysis of function: {d['signature']['name']}")
+            print(f"Starting analysis of function: {d['signature']['name']}")
 
-        print("generate new tests")
-        new_tests, response = self.generator.generate_tests(d, output_path)
+            print("generate new tests")
+            new_tests, response = self.generator.generate_tests(d, output_path)
 
-        d["new_tests"] = new_tests
-        d["new_tests_response"] = response
+            d["new_tests"] = new_tests
+            d["new_tests_response"] = response
 
-        print("execute new tests")
-        res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
+            print("execute new tests")
+            res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
 
-        d["results"] = {}
-        d["results"]["(code, new_tests)"] = res2
+            d["results"] = {}
+            d["results"]["(code, new_tests)"] = res2
 
-        save_dicts_list_to_json([d], ana_path)
+            save_dicts_list_to_json([d], ana_path)
 
         # check if it passed failed or errored
-        evaluated = self.evaluate(res2)
+        evaluated = self.evaluate(d["results"]["(code, new_tests)"])
         if evaluated >= 0:
             output += "False"
             if self.debug >= 1:
@@ -161,7 +164,6 @@ class DatasetAnalysis(Analysis):
         else:
             # generate new code
             new_code, response = self.generator.generate_code(d, output_path)
-
 
             d["new_code"] = new_code
             d["new_code_response"] = response

@@ -57,8 +57,7 @@ class JavaExecutor(AnalysisExecutor):
 
             dock_ex = DockerizedWrapper(debug=self.debug)
 
-            test_class_name = (self.builder.test_pattern
-                               .replace('%t', context['test_file_path'].split('/')[-1].split('.')[0]))
+            test_class_name = (self.builder.test_pattern.replace('%t', context['test_file_path']))
             dock_context = {
                 "image" : self.builder.image,
                 "directory" : temp_dir,

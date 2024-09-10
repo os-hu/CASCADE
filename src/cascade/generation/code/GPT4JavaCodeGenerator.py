@@ -1,3 +1,5 @@
+import re
+
 from cascade.generation.Generator import Generator
 from cascade.generation.executor.GPT4Executor import GPT4Executor
 from cascade.utils.JavaUtils import build_context
@@ -17,7 +19,7 @@ class GPT4JavaCodeGenerator(Generator):
     def build_prompt(self, context):
         enc = tiktoken.encoding_for_model("gpt-4")
 
-        system_prompt = f"Write the body of one Java function for {context['signature']['name']}."
+        system_prompt = f"Write the body of one Java function for {context['signature']['name']}. Respond only with the completion of the function body."
 
         packg_declaration = f"package {context['package']};\n\n"
 
@@ -25,7 +27,7 @@ class GPT4JavaCodeGenerator(Generator):
 
         code = build_context(context, doc=True)
 
-        primer =  "{\n// write the function body here\n"
+        primer =  "{\n// write only the function body here\n"
 
         prompt = packg_declaration + imports + code + primer
 
@@ -46,7 +48,7 @@ class GPT4JavaCodeGenerator(Generator):
             prompt = packg_declaration + imports + code + primer
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
-            return ""
+            return []
 
 
         promptlist = []
@@ -86,6 +88,25 @@ class GPT4JavaCodeGenerator(Generator):
 
         new_code = response["choices"][0]["message"]["content"]
 
+
+
+        pattern = r"```java(.*?)```"
+        code_blocks = re.findall(pattern, new_code, flags=re.DOTALL)
+        if code_blocks == []:
+            print("No explicit code block found in response")
+        else:
+            # now we have to cut out the actual function inside of the code block
+            new_code = code_blocks[0].strip()
+            pattern = r"\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}"  # should match only outermost brackets
+
+            code_blocks = re.findall(pattern, new_code, flags=re.DOTALL)
+
+            if code_blocks == []:
+                print("No explicit code block found in response")
+            else:
+                new_code = code_blocks[0]
+
+
         if response["choices"][0]["finish_reason"] == "stop":
             new_code = self.try_to_fix(new_code)
 
@@ -95,6 +116,7 @@ class GPT4JavaCodeGenerator(Generator):
 
 
     def try_to_fix(self, new_code):
+        # sometimes the llm starts generating new functiosn after the first one so we catch those by checkign for a next startign doccomment
         lines = new_code.splitlines()
         doc_comment = len(lines)
         for num, line in enumerate(lines):
@@ -111,3 +133,10 @@ class GPT4JavaCodeGenerator(Generator):
         except:
             pass
         return "{" + new_code + "}"
+
+
+
+
+
+
+
