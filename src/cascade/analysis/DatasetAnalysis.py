@@ -102,9 +102,16 @@ class DatasetAnalysis(Analysis):
 
         d = data[0]
 
-        print("extracting Junit version")
-        junit_version, source_dir, test_source_dir = self.extract_junit_version( input_path, output_path )
-        print("Junit version: ", junit_version)
+
+        #remove this if later
+        if "junit_version" not in d:
+
+            print("extracting Junit version")
+            junit_version, source_dir, test_source_dir = self.extract_junit_version( input_path, output_path )
+            print("Junit version: ", junit_version)
+
+            #remove that later
+            d["junit_version"] = junit_version
 
         junit_found = False
 
