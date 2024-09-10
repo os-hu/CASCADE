@@ -105,6 +105,8 @@ class DatasetAnalysis(Analysis):
         junit_version, source_dir, test_source_dir = self.extract_junit_version( input_path, output_path )
         print("Junit version: ", junit_version)
 
+        junit_found = False
+
         if not "test_package" in d:
             print("no tests were extracted for this method")
             d["test_package"] = d["package"]
@@ -118,12 +120,11 @@ class DatasetAnalysis(Analysis):
                     print(d["test_file_path"])
                 else:
                     d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
-
-        junit_found = False
-        for imp in d["test_imports"]:
-            if "junit" in imp:
-                junit_found = True
-                break
+        else:
+            for imp in d["test_imports"]:
+                if "junit" in imp:
+                    junit_found = True
+                    break
 
         if not junit_found:
             if junit_version.startswith("3.8"):
