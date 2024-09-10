@@ -15,6 +15,8 @@ class GPT4JavaTestGenerator(Generator):
         self.prompt_executor = GPT4Executor(max_attempts=max_attempts, max_tokens=max_tokens, temperature=temperature,
                                             delay=delay, freq_penalty=freq_penalty, dummy=dummy)
 
+        self.is_three = False
+
     def build_prompt(self, context):
         enc = tiktoken.encoding_for_model("gpt-4")
 
@@ -58,13 +60,14 @@ class GPT4JavaTestGenerator(Generator):
     def build_tests(self, context, primer=""):
         packg_declaration = f"package {context['test_package']};\n\n"
         imports = "".join(context["test_imports"]) + "\n"
-        is_three = False
+
         for import_ in context["test_imports"]:
             if import_.startswith("import junit.framework"):
-                is_three = True
+                self.is_three = True
                 break
+
         name = str(context["signature"]["name"])
-        if is_three:
+        if self.is_three:
             classdefinition = "public class " + context["test_file_path"].split("/")[-1].split(".")[0] + " extends TestCase {"
             func_definition = "\n    public void test" + name[0].upper() + name[1:] + "1(){"
         else:
@@ -112,7 +115,15 @@ class GPT4JavaTestGenerator(Generator):
     def try_to_fix(self, new_test):
         last_test = 0
         lines = new_test.splitlines()
+
         for num, line in enumerate(lines):
-            if "@Test" in line:
-                last_test = num
+            if not self.is_three:
+                if "@Test" in line:
+                    last_test = num
+            else:
+                if "public void test" in line:
+                    last_test = num
+
         return "\n".join(lines[:last_test]) + "\n}"
+
+
