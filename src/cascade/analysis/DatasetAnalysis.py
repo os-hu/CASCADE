@@ -112,10 +112,7 @@ class DatasetAnalysis(Analysis):
 
 
             d["junit_version"] = junit_version #remove that later
-
-
             save_dicts_list_to_json([d], ana_path)
-            return
 
 
         else:
@@ -125,8 +122,6 @@ class DatasetAnalysis(Analysis):
 
         # found in imports ?
         junit_found = False
-
-
 
 
         if not "test_package" in d:
