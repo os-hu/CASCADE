@@ -113,45 +113,53 @@ class DatasetAnalysis(Analysis):
 
             d["junit_version"] = junit_version #remove that later
 
+
+            save_dicts_list_to_json([d], ana_path)
+            return
+
+
         else:
             junit_version = d["junit_version"]
+
+
 
         # found in imports ?
         junit_found = False
 
 
-        if not "new_tests" in d:
 
-            if not "test_package" in d:
-                print("no tests were extracted for this method")
-                d["test_package"] = d["package"]
 
-                if not "test_file_path" in d:
-                    if test_source_dir is not None and source_dir is not None:
-                        print(d["code_file_path"])
+        if not "test_package" in d:
+            print("no tests were extracted for this method")
+            d["test_package"] = d["package"]
 
-                        d["test_file_path"] = d["code_file_path"].replace(source_dir.replace("/root/" , ""), test_source_dir.replace("/root/" , ""))
-                        d["test_file_path"] = d["test_file_path"].replace(".java", "Test.java")
-                        print(d["test_file_path"])
-                    else:
-                        d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
-            else:
-                for imp in d["test_imports"]:
-                    if "junit" in imp:
-                        junit_found = True
-                        break
+            if not "test_file_path" in d:
+                if test_source_dir is not None and source_dir is not None:
+                    print(d["code_file_path"])
 
-            if not junit_found:
-                if junit_version.startswith("3.8"):
-                    d["test_imports"] = ["import junit.framework.*;"]
-                elif junit_version.startswith("4."):
-                    d["test_imports"] = ["import org.junit.*;"]
+                    d["test_file_path"] = d["code_file_path"].replace(source_dir.replace("/root/" , ""), test_source_dir.replace("/root/" , ""))
+                    d["test_file_path"] = d["test_file_path"].replace(".java", "Test.java")
+                    print(d["test_file_path"])
                 else:
-                    d["test_imports"] = ["import org.junit.jupiter.api.*;"]
+                    d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
+        else:
+            for imp in d["test_imports"]:
+                if "junit" in imp:
+                    junit_found = True
+                    break
+
+        if not junit_found:
+            if junit_version.startswith("3.8"):
+                d["test_imports"] = ["import junit.framework.*;"]
+            elif junit_version.startswith("4."):
+                d["test_imports"] = ["import org.junit.*;"]
+            else:
+                d["test_imports"] = ["import org.junit.jupiter.api.*;"]
 
 
-            print(f"Starting analysis of function: {d['signature']['name']}")
+        print(f"Starting analysis of function: {d['signature']['name']}")
 
+        if not "new_tests" in d:
             print("generate new tests")
             if self.debug > 2:
                 new_tests, response = self.generator.generate_tests(d, output_path)
@@ -160,6 +168,7 @@ class DatasetAnalysis(Analysis):
                 d["new_tests_response"] = response
             else:
                 print("new tests already generated")
+
 
 
         if self.debug > 1:

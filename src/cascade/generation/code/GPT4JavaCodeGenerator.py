@@ -95,6 +95,12 @@ class GPT4JavaCodeGenerator(Generator):
         if code_blocks == []:
             print("No explicit code block found in response")
         else:
+
+            # search for siganture in code block if it does not exist use complemte code block
+
+
+
+
             # now we have to cut out the actual function inside of the code block
             new_code = code_blocks[0].strip()
             pattern = r"\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}"  # should match only outermost brackets

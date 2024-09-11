@@ -7,7 +7,7 @@ class DatasetMavenJavaExecutor(MavenJavaExecutor):
     def __init__(self):
         super().__init__()
         # this can be changed to include more arguments that might be used for executing maven
-        self.args = ["", "-Drat.skip=true", "-DforkMode=never"]
+        self.args = ["-Dsurefire.failIfNoSpecifiedTests=false", "-Drat.skip=true -Dsurefire.failIfNoSpecifiedTests=false", "-DforkMode=never -Dsurefire.failIfNoSpecifiedTests=false"]
 
     def execute(self, code: str, tests: str, context: dict, input_path, output_path) -> (succeeded, failed, errored):
 

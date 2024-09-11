@@ -4,13 +4,14 @@ import unittest
 from cascade.filters.Filter import Filter
 from cascade.filters.NoTestsFilterFunction import NoTestsFilterFunction
 from cascade.generation.code.GPT4JavaCodeGenerator import GPT4JavaCodeGenerator
+from cascade.generation.test.GPT4JavaTestGenerator import GPT4JavaTestGenerator
 from cascade.utils.Utils import load_json_from_path
 
 class test_GPT4Java(unittest.TestCase):
 
 
     def test_prompt(self):
-        generator = GPT4JavaCodeGenerator()
+        generator = GPT4JavaTestGenerator()
 
         data = load_json_from_path("./resources/extracted.json")
 
@@ -19,8 +20,9 @@ class test_GPT4Java(unittest.TestCase):
         data = _filter.filter_all(data)
         context = data[1]
 
+        generator.is_three = True
 
-        prompt = generator.build_prompt(context)
+        prompt = generator.build_tests(context)
         #print(prompt[1]["content"])
         print(prompt)
 
