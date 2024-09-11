@@ -2,7 +2,7 @@ import re
 
 from cascade.generation.Generator import Generator
 from cascade.generation.executor.GPT4Executor import GPT4Executor
-from cascade.utils.JavaUtils import build_context
+from cascade.utils.JavaUtils import build_context, build_signature
 
 import os
 import copy
@@ -88,57 +88,37 @@ class GPT4JavaCodeGenerator(Generator):
 
         new_code = response["choices"][0]["message"]["content"]
 
-
-
         pattern = r"```java(.*?)```"
         code_blocks = re.findall(pattern, new_code, flags=re.DOTALL)
         if code_blocks == []:
             print("No explicit code block found in response")
         else:
-
-            # search for siganture in code block if it does not exist use complemte code block
-
-
-
-
-            # now we have to cut out the actual function inside of the code block
             new_code = code_blocks[0].strip()
-            pattern = r"\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}"  # should match only outermost brackets
 
-            code_blocks = re.findall(pattern, new_code, flags=re.DOTALL)
-
-            if code_blocks == []:
-                print("No explicit code block found in response")
+            temp = new_code.split(build_signature(context , False) + "{")
+            if len(temp) > 1:
+                new_code = "".join(temp[1:])
             else:
-                new_code = code_blocks[0]
+                new_code = "".join(temp)
 
-
-        if response["choices"][0]["finish_reason"] == "stop":
-            new_code = self.try_to_fix(new_code)
-
-        # else:  will likely break later down the pipe anyway
+        new_code = self.try_to_fix(new_code)
 
         return new_code , response
 
-
     def try_to_fix(self, new_code):
-        # sometimes the llm starts generating new functiosn after the first one so we catch those by checkign for a next startign doccomment
-        lines = new_code.splitlines()
-        doc_comment = len(lines)
-        for num, line in enumerate(lines):
-            if "/**" in line:
-                doc_comment = num
+        fixed_code = ""
+        # First brace is already there
+        braces = 1
+        for letter in new_code:
+            if letter == "{":
+                braces += 1
+            elif letter == "}":
+                braces -= 1
+            if braces == 0:
                 break
-        new_code = "\n".join(lines[:doc_comment])
+            fixed_code += letter
 
-        try:
-            if doc_comment == len(lines):
-                new_code = new_code[:str(new_code).rindex("}")]
-            if new_code.rstrip()[-1] != ";":
-                new_code = new_code[:str(new_code).rindex("}")]
-        except:
-            pass
-        return "{" + new_code + "}"
+        return "{" + fixed_code + "}"
 
 
 

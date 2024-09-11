@@ -108,6 +108,15 @@ class GPT4JavaTestGenerator(Generator):
 
         new_test = response["choices"][0]["message"]["content"]
 
+        if len(context["test_imports"]) == 1 and "*" in context["test_imports"][0]:
+            prompt.append({"role" : "assistant", "content" : new_test})
+            prompt.append({"role" : "user", "content" : "What imports are necessary for this code?"})
+            imports_message = self.prompt_executor.execute(prompt).model_dump()["choices"][0]["message"]["content"]
+            for line in imports_message.splitlines():
+                if "import" in line and ";" in line:
+                    context["test_imports"].append(line)
+            context["test_imports"] = list(set(context["test_imports"]))
+
         if response["choices"][0]["finish_reason"] == "length":
             new_test = self.try_to_fix(new_test)
 
