@@ -103,17 +103,22 @@ class DatasetAnalysis(Analysis):
         d = data[0]
 
 
-        #remove this if later
-        if "junit_version" not in d:
+
+        if "junit_version" not in d:    #remove this if later
 
             print("extracting Junit version")
             junit_version, source_dir, test_source_dir = self.extract_junit_version( input_path, output_path )
             print("Junit version: ", junit_version)
 
-            #remove that later
-            d["junit_version"] = junit_version
 
+            d["junit_version"] = junit_version #remove that later
+
+        else:
+            junit_version = d["junit_version"]
+
+        # found in imports ?
         junit_found = False
+
 
         if not "new_tests" in d:
 
@@ -148,12 +153,18 @@ class DatasetAnalysis(Analysis):
             print(f"Starting analysis of function: {d['signature']['name']}")
 
             print("generate new tests")
-            new_tests, response = self.generator.generate_tests(d, output_path)
+            if self.debug > 2:
+                new_tests, response = self.generator.generate_tests(d, output_path)
 
-            d["new_tests"] = new_tests
-            d["new_tests_response"] = response
+                d["new_tests"] = new_tests
+                d["new_tests_response"] = response
+            else:
+                print("new tests already generated")
 
+
+        if self.debug > 1:
             print("execute new tests")
+
             res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
 
             d["results"] = {}
@@ -161,12 +172,15 @@ class DatasetAnalysis(Analysis):
 
             save_dicts_list_to_json([d], ana_path)
 
+        else:
+            print("new tests already executed")
+
+
         # check if it passed failed or errored
         evaluated = self.evaluate(d["results"]["(code, new_tests)"])
         if evaluated >= 0:
             output += "False"
-            if self.debug >= 1:
-                output += ", error in layer 2: code, new_tests" if evaluated == 0 else ", pass in layer 2: code, new_tests"
+            output += ", error in layer 2: code, new_tests" if evaluated == 0 else ", pass in layer 2: code, new_tests"
 
         else:
             # generate new code
@@ -185,8 +199,7 @@ class DatasetAnalysis(Analysis):
             evaluated = self.evaluate(res3)
             if evaluated <= 0:
                 output += "False"
-                if self.debug >= 1:
-                    output += ", error in layer 3: new_code, new_tests" if evaluated == 0 else ", fail in layer 3: new_code, new_tests"
+                output += ", error in layer 3: new_code, new_tests" if evaluated == 0 else ", fail in layer 3: new_code, new_tests"
 
             else:
                 output += "True"
@@ -194,7 +207,6 @@ class DatasetAnalysis(Analysis):
 
         with open("result.txt", "w") as f:
             f.write(output)
-        if self.debug >= 1:
             print("result:" , output)
 
 
