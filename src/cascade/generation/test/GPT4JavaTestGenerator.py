@@ -101,23 +101,27 @@ class GPT4JavaTestGenerator(Generator):
             response = self.prompt_executor.execute(prompt).model_dump()
 
             safety_copy = copy.deepcopy(context)
-            safety_copy["response"] = response
 
+            imports = dict()
+            if len(context["test_imports"]) == 1 and "*" in context["test_imports"][0]:
+                prompt.append({"role" : "assistant", "content" : response["choices"][0]["message"]["content"]})
+                prompt.append({"role" : "user", "content" : "What imports are necessary for this code?"})
+                imports = self.prompt_executor.execute(prompt).model_dump()
+                imports_message = imports["choices"][0]["message"]["content"]
+                for line in imports_message.splitlines():
+                    if "import" in line and ";" in line:
+                        context["test_imports"].append(line)
+                context["test_imports"] = list(set(context["test_imports"]))
+
+            response = {"response" : response, "imports" : imports}
+            safety_copy["response"] = response
             with open(test_safety_copy_path , "w") as file:
                 json.dump(safety_copy, file)
 
-        new_test = response["choices"][0]["message"]["content"]
+        new_test = response["response"]["choices"][0]["message"]["content"]
 
-        if len(context["test_imports"]) == 1 and "*" in context["test_imports"][0]:
-            prompt.append({"role" : "assistant", "content" : new_test})
-            prompt.append({"role" : "user", "content" : "What imports are necessary for this code?"})
-            imports_message = self.prompt_executor.execute(prompt).model_dump()["choices"][0]["message"]["content"]
-            for line in imports_message.splitlines():
-                if "import" in line and ";" in line:
-                    context["test_imports"].append(line)
-            context["test_imports"] = list(set(context["test_imports"]))
 
-        if response["choices"][0]["finish_reason"] == "length":
+        if response["response"]["choices"][0]["finish_reason"] == "length":
             new_test = self.try_to_fix(new_test)
 
         new_test = self.build_tests(context) + "\n" + new_test

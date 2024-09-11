@@ -181,7 +181,7 @@ class DatasetAnalysis(Analysis):
         # check if it passed failed or errored
         evaluated = self.evaluate(d["results"]["(code, new_tests)"])
         if evaluated >= 0:
-            output += "False"
+            output += "Negative"
             output += ", error in layer 2: code, new_tests" if evaluated == 0 else ", pass in layer 2: code, new_tests"
 
         else:
@@ -200,11 +200,11 @@ class DatasetAnalysis(Analysis):
 
             evaluated = self.evaluate(res3)
             if evaluated <= 0:
-                output += "False"
+                output += "Negative"
                 output += ", error in layer 3: new_code, new_tests" if evaluated == 0 else ", fail in layer 3: new_code, new_tests"
 
             else:
-                output += "True"
+                output += "Positive"
 
 
         with open("result.txt", "w") as f:
