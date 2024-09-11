@@ -156,28 +156,25 @@ class DatasetAnalysis(Analysis):
 
         if not "new_tests" in d:
             print("generate new tests")
-            if self.debug > 2:
-                new_tests, response = self.generator.generate_tests(d, output_path)
+            new_tests, response = self.generator.generate_tests(d, output_path)
 
-                d["new_tests"] = new_tests
-                d["new_tests_response"] = response
-            else:
-                print("new tests already generated")
-
-
-
-        if self.debug > 1:
-            print("execute new tests")
-
-            res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
-
-            d["results"] = {}
-            d["results"]["(code, new_tests)"] = res2
-
-            save_dicts_list_to_json([d], ana_path)
-
+            d["new_tests"] = new_tests
+            d["new_tests_response"] = response
         else:
-            print("new tests already executed")
+            print("new tests already generated")
+
+
+
+
+        print("execute new tests")
+
+        res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
+
+        d["results"] = {}
+        d["results"]["(code, new_tests)"] = res2
+
+        save_dicts_list_to_json([d], ana_path)
+
 
 
         # check if it passed failed or errored
