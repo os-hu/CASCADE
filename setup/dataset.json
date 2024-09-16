@@ -1,7 +1,7 @@
 {
    "Extraction"    : { "name": "JavaExtraction",  "kwargs" : {}},
-   "CodeGenerator": { "name": "GPT35JavaCodeGenerator", "kwargs" : {}},
-   "TestGenerator": { "name": "GPT35JavaTestGenerator", "kwargs" : {}},
+   "CodeGenerator": { "name": "GPT4JavaCodeGenerator", "kwargs" : {"model": "gpt-4o-mini-2024-07-18"}},
+   "TestGenerator": { "name": "GPT35JavaTestGenerator", "kwargs" : {"model": "gpt-4o-mini-2024-07-18"}},
    "Analysis"      : { "name": "DatasetAnalysis",  "kwargs" : {"debug": 1}},
    "Executor"      : { "name": "DatasetMavenJavaExecutor",   "kwargs" : {}},
    "Visualizer"    : { "name": "DatasetVisualizer",  "kwargs" : {}}

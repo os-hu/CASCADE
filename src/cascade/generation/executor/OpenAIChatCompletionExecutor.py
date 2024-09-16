@@ -6,13 +6,14 @@ import time
 from cascade.generation.executor.PromptExecutor import PromptExecutor
 
 
-class GPT4Executor(PromptExecutor):
-    def __init__(self, max_attempts=1, max_tokens=1200, temperature=0, delay=3, dummy=False, freq_penalty=0.0):
+class OpenAIChatCompletionExecutor(PromptExecutor):
+    def __init__(self, max_attempts=1, max_tokens=1200, temperature=0, delay=3, dummy=False, model="gpt-4", freq_penalty=0.0):
         self.max_attempts = max_attempts
         self.max_tokens = max_tokens
         self.temperature = temperature
         self.delay = delay
         self.freq_penalty = freq_penalty
+        self.model = model
         # read in api key
         if not dummy:
             if "OPENAI_API_KEY" in os.environ:
@@ -28,7 +29,7 @@ class GPT4Executor(PromptExecutor):
         while attempt < self.max_attempts:
             try:
                 response = self.client.chat.completions.create(
-                    model="gpt-4",
+                    model=self.model,
                     messages=prompt,
                     max_tokens=self.max_tokens,
                     temperature=self.temperature,

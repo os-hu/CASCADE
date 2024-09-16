@@ -1,24 +1,28 @@
 import copy
 import json
 import os
+import re
+
 import tiktoken
 
 from cascade.generation.Generator import Generator
-from cascade.generation.executor.GPT4Executor import GPT4Executor
+from cascade.generation.executor.OpenAIChatCompletionExecutor import OpenAIChatCompletionExecutor
 from cascade.utils.JavaUtils import build_context
 
 
 class GPT4JavaTestGenerator(Generator):
-    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, max_prompt_tokens=2000, freq_penalty=0.0, dummy=False):
+    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, max_prompt_tokens=2000, model="gpt-4", freq_penalty=0.0, dummy=False):
         super().__init__()
+        self.model = model
         self.max_prompt_tokens = max_prompt_tokens
-        self.prompt_executor = GPT4Executor(max_attempts=max_attempts, max_tokens=max_tokens, temperature=temperature,
+        self.prompt_executor = OpenAIChatCompletionExecutor(max_attempts=max_attempts, model=model, max_tokens=max_tokens, temperature=temperature,
                                             delay=delay, freq_penalty=freq_penalty, dummy=dummy)
 
         self.is_three = False
 
+
     def build_prompt(self, context):
-        enc = tiktoken.encoding_for_model("gpt-4")
+        enc = tiktoken.encoding_for_model(self.model)
 
         system_prompt = f"Write Java JUnit tests for the function {context['signature']['name']}."
 
@@ -118,15 +122,27 @@ class GPT4JavaTestGenerator(Generator):
             with open(test_safety_copy_path , "w") as file:
                 json.dump(safety_copy, file)
 
-        new_test = response["response"]["choices"][0]["message"]["content"]
+        new_tests = response["response"]["choices"][0]["message"]["content"]
+
+        self.extract_tests(new_tests, response)
+
+        new_tests = self.build_tests(context) + "\n" + new_tests
+
+        return new_tests , response
 
 
-        if response["response"]["choices"][0]["finish_reason"] == "length":
-            new_test = self.try_to_fix(new_test)
+    def extract_tests(self, new_tests, response):
+        pattern = r"```java(.*?)```"
+        code_blocks = re.findall(pattern, new_tests, flags=re.DOTALL)
+        if code_blocks == []:
+            if response["response"]["choices"][0]["finish_reason"] == "length":
+                new_tests = self.try_to_fix(new_tests)
 
-        new_test = self.build_tests(context) + "\n" + new_test
+        else:
+            # TODO add more parsing?
+            new_tests = code_blocks[0]
 
-        return new_test , response
+        return new_tests
 
 
     def try_to_fix(self, new_test):

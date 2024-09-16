@@ -3,14 +3,14 @@ import json
 import os
 
 from cascade.generation.Generator import Generator
-from cascade.generation.executor.GPT4Executor import GPT4Executor
+from cascade.generation.executor.OpenAIChatCompletionExecutor import OpenAIChatCompletionExecutor
 from cascade.utils.PythonUtils import build_signature
 
 
 class GPT4TestGenerator(Generator):
     def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, freq_penalty=0.0, dummy=False):
         super().__init__()
-        self.prompt_executor = GPT4Executor(max_attempts=max_attempts, max_tokens=max_tokens, temperature=temperature,
+        self.prompt_executor = OpenAIChatCompletionExecutor(max_attempts=max_attempts, max_tokens=max_tokens, temperature=temperature,
                                             delay=delay, freq_penalty=freq_penalty, dummy=dummy)
 
     def build_prompt(self, context):

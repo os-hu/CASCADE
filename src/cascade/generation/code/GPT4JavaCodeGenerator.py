@@ -1,7 +1,7 @@
 import re
 
 from cascade.generation.Generator import Generator
-from cascade.generation.executor.GPT4Executor import GPT4Executor
+from cascade.generation.executor.OpenAIChatCompletionExecutor import OpenAIChatCompletionExecutor
 from cascade.utils.JavaUtils import build_context, build_signature
 
 import os
@@ -10,14 +10,15 @@ import tiktoken
 import json
 
 class GPT4JavaCodeGenerator(Generator):
-    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, max_prompt_tokens=2000, freq_penalty=0.0, dummy=False):
+    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, max_prompt_tokens=2000, model="gpt-4", freq_penalty=0.0, dummy=False):
         super().__init__()
+        self.model = model
         self.max_prompt_tokens = max_prompt_tokens
-        self.prompt_executor = GPT4Executor(max_attempts=max_attempts, max_tokens=max_tokens, temperature=temperature,
+        self.prompt_executor = OpenAIChatCompletionExecutor(max_attempts=max_attempts, model=model, max_tokens=max_tokens, temperature=temperature,
                                             delay=delay, freq_penalty=freq_penalty, dummy=dummy)
 
     def build_prompt(self, context):
-        enc = tiktoken.encoding_for_model("gpt-4")
+        enc = tiktoken.encoding_for_model(self.model)
 
         system_prompt = f"Write the body of one Java function for {context['signature']['name']}. Respond only with the completion of the function body."
 
@@ -88,6 +89,11 @@ class GPT4JavaCodeGenerator(Generator):
 
         new_code = response["choices"][0]["message"]["content"]
 
+        new_code = self.extract_code(new_code, context)
+
+        return new_code , response
+
+    def extract_code(self, new_code, context):
         pattern = r"```java(.*?)```"
         code_blocks = re.findall(pattern, new_code, flags=re.DOTALL)
         if code_blocks == []:
@@ -101,9 +107,8 @@ class GPT4JavaCodeGenerator(Generator):
             else:
                 new_code = "".join(temp)
 
-        new_code = self.try_to_fix(new_code)
+        return self.try_to_fix(new_code)
 
-        return new_code , response
 
     def try_to_fix(self, new_code):
         fixed_code = ""
