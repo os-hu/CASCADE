@@ -41,7 +41,8 @@ class JavaExtraction(Extraction):
 
         my_path = os.path.dirname(__file__)
         subprocess.run(
-            ["java", "-Xmx12G", "-jar", os.path.join(my_path, "..", "..", "resources", "tools", "JavaExtractor.jar"),
+            ["java", "-Xmx12G", "-jar", os.path.join(my_path, "..", "resources", "tools", "JavaExtractor.jar"),
+             "ext",
              input_path,
              self.pattern,
              output_path]

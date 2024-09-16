@@ -31,7 +31,8 @@ class JavaExecutor(AnalysisExecutor):
                 json.dump(context, json_entry)
             my_path = os.path.dirname(__file__)
             p = subprocess.run(
-                ["java", "-jar", os.path.join(my_path, "..", "..", "..", "resources", "tools", "JavaModifier.jar"),
+                ["java", "-jar", os.path.join(my_path, "..", "..", "resources", "tools", "JavaExtractor.jar"),
+                 "mod",
                  temp_dir,
                  entry,
                  code,
