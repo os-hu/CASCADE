@@ -1,5 +1,4 @@
 import os.path
-from unittest.mock import open_spec
 
 import docker
 import tarfile
@@ -33,21 +32,34 @@ class DockerizedWrapper:
         self.debug=debug
         pass
 
-    def execute(self, context: dict, output_path: str) -> (succeeded, failed, errored):
+    def execute(self, context: dict, output_path: str):
         container = None
         try:
             container = self.setup(context)
             self.run(container, context, output_path)
-            succeeded, failed, errored = self.eval(container, context, output_path)
+            result = self.eval(container, context, output_path)
         finally:
             if container:
                 self.kill(container)
 
-        return succeeded, failed, errored
+        return result
+
+
+    def copy_path(self, context: dict, output_path: str):
+        container = None
+        try:
+            container = self.setup(context)
+            self.run(container, context, output_path)
+            self.copy(container, context, output_path)
+        finally:
+            if container:
+                self.kill(container)
+
+
 
     def setup_image(self, context: dict, output_path: str):
         container = None
-        client = docker.from_env()
+        client = docker.from_env(timeout=240)
         images = client.images.list(context["new_image"])
         exit_code = False
         try:
@@ -62,14 +74,14 @@ class DockerizedWrapper:
             return exit_code
 
     def remove_image(self, context: dict):
-        client = docker.from_env()
+        client = docker.from_env(timeout=240)
         try:
             client.images.remove(context["new_image"], force=True)
         except Exception as e:
             print(f"Could not remove image because of Exception: {e}")
 
     def setup(self, context: dict):
-        client = docker.from_env()
+        client = docker.from_env(timeout=240)
         container = client.containers.run(context["image"], "tail -f /dev/null", detach=True)
         buffer = io.BytesIO()
         with tarfile.open(mode="w", fileobj=buffer) as tar:
@@ -90,7 +102,7 @@ class DockerizedWrapper:
             print(str(res.output, "utf-8"))
         return res.exit_code == 0
 
-    def eval(self, container: Container, context: dict, path) -> (succeeded, failed, errored):
+    def eval(self, container: Container, context: dict, path):
         res = container.exec_run('bash -c - "cd ~; ' + context["eval_command"].replace('"', "\\\"") + '"')
         with open(os.path.join(path, "log.txt"), "a") as file:
             file.write("Eval Command: " + context["eval_command"] + "\n")
@@ -104,3 +116,28 @@ class DockerizedWrapper:
     def kill(self, container: Container):
         container.kill()
         container.remove()
+
+
+
+    def copy(self, container: Container, context: dict, path):
+        bits, stat = container.get_archive(context["path"])
+        tar_path = os.path.join(path, "temp_archive.tar")
+
+        try:
+            with open(tar_path, 'wb') as f:
+                for chunk in bits:
+                    f.write(chunk)
+
+            # Extract the tar file to the desired host path
+            with tarfile.open(tar_path) as tar:
+                tar.extractall(path=path)
+
+            os.remove(tar_path)
+
+        except Exception as e:
+            with open(os.path.join(path, "log.txt"), "a") as file:
+                file.write(f"Could not extract tar file because of Exception: {e}")
+
+        with open(os.path.join(path, "log.txt"), "a") as file:
+            file.write(f"copied file {context['path']} to {path}\n")
+            file.write(str(stat) + "\n")

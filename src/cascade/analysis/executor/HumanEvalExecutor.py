@@ -26,7 +26,7 @@ class HumanEvalExecutor(UnittestExecutor):
 
         return full_func
 
-    def execute(self, code: str, tests: str, context: dict, output_path) -> (succeeded, failed, errored):
+    def execute(self, code: str, tests: str, context: dict, input_path, output_path) -> (succeeded, failed, errored):
         result = ([], [], [])
 
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -39,7 +39,7 @@ class HumanEvalExecutor(UnittestExecutor):
             context["root_path"] = temp_dir
 
             try:
-                result = super().execute(code, tests, context, output_path)
+                result = super().execute(code, tests, context, input_path, output_path)
             except Exception as e:
                 if self.debug:
                     print("failed to execute:" , e)

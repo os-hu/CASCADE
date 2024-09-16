@@ -76,26 +76,26 @@ class test_Basic_Calc(unittest.TestCase):
 
     def test_exec_old_old(self):
         executor = UnittestExecutor()
-        res = executor.execute("code", "tests", self.context, output_path)
+        res = executor.execute("code", "tests", self.context, input_path, output_path)
         self.assertEqual((['test_sumgood', 'test_sumgood2'], ['test_sumbad'], ['test_sumerror']), res)
 
 
     def test_exec_old_new(self):
         #test for old code and new test
         executor = UnittestExecutor()
-        res = executor.execute("code", "new_tests", self.context, output_path)
+        res = executor.execute("code", "new_tests", self.context, input_path, output_path)
         self.assertEqual((['test_sumgood', 'test_sumgood2'], ['test_sumbad'], ['test_sumerror']), res)
 
     def test_exec_new_old(self):
         # test for new code and old test
         executor = UnittestExecutor()
-        res = executor.execute("new_code", "tests", self.context, output_path)
+        res = executor.execute("new_code", "tests", self.context, input_path, output_path)
         self.assertEqual((['test_sumgood', 'test_sumgood2'], ['test_sumbad'], ['test_sumerror']), res)
 
 
     def test_exec_new_new(self):
         # test for new code and new test
         executor = UnittestExecutor()
-        res = executor.execute("new_code", "new_tests", self.context, output_path)
+        res = executor.execute("new_code", "new_tests", self.context, input_path, output_path)
         self.assertEqual((['test_sumgood', 'test_sumgood2'], ['test_sumbad'], ['test_sumerror']), res)
 

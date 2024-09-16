@@ -19,9 +19,10 @@ class ReplayTreeAnalysis(Analysis):
         self.debug = debug
         self.visualizer.logger = "tqdm"
 
-    def analyse(self, data: list, output_path):
+    def analyse(self, data: list, input_path, output_path):
         """
         TODO
+        :param input_path:
         :param output_path:
         :param data:
         :return:

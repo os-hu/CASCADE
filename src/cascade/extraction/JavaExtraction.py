@@ -41,7 +41,8 @@ class JavaExtraction(Extraction):
 
         my_path = os.path.dirname(__file__)
         subprocess.run(
-            ["java", "-Xmx12G", "-jar", os.path.join(my_path, "..", "..", "resources", "tools", "JavaExtractor.jar"),
+            ["java", "-Xmx12G", "-jar", os.path.join(my_path, "..", "resources", "tools", "JavaExtractor.jar"),
+             "ext",
              input_path,
              self.pattern,
              output_path]
@@ -52,6 +53,10 @@ class JavaExtraction(Extraction):
         for e in extracted:
             e["id"] = count
             count += 1
+
+            # TODO remove this later when it is fixed in the jar
+            del e["root_path"]
+
 
         save_dicts_list_to_json(extracted, os.path.join(output_path, "extracted.json"))
 

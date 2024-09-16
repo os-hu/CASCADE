@@ -26,9 +26,10 @@ class TreeAnalysis(Analysis):
 
 
 
-    def analyse(self, data: list, output_path):
+    def analyse(self, data: list, input_path, output_path):
         """
         TODO
+        :param input_path:
         :param output_path:
         :param data:
         :return:
@@ -36,7 +37,7 @@ class TreeAnalysis(Analysis):
 
         # allows setting up requirements needed in every step of the execution (i.e. load docker images )
         print("Set up started")
-        if not self.executor.set_up(data, output_path) and self.die_if_setup_fails:
+        if not self.executor.set_up(data, input_path, output_path) and self.die_if_setup_fails:
             print("Set up failed")
             return
         print("Set up finished")
@@ -62,7 +63,7 @@ class TreeAnalysis(Analysis):
                 if self.debug >= 1:
                     log("        Executing code, tests", logger="tqdm")
 
-                res1 = self.executor.execute("code", "tests", d, output_path)
+                res1 = self.executor.execute("code", "tests", d, input_path, output_path)
 
                 if self.debug >= 1:
                     log("        Finished executing code, tests", logger="tqdm")
@@ -104,7 +105,7 @@ class TreeAnalysis(Analysis):
                 if self.debug >= 1:
                     log("        Executing code, new_tests", logger="tqdm")
 
-                res2 = self.executor.execute("code", "new_tests", d, output_path)
+                res2 = self.executor.execute("code", "new_tests", d, input_path, output_path)
 
                 if self.debug >= 1:
                     log("        Finished executing code, new_tests", logger="tqdm")
@@ -148,7 +149,7 @@ class TreeAnalysis(Analysis):
                 if self.debug >= 1:
                     log("        Executing new_code, new_tests", logger="tqdm")
 
-                res3 = self.executor.execute("new_code", "new_tests", d, output_path)
+                res3 = self.executor.execute("new_code", "new_tests", d, input_path, output_path)
 
                 if self.debug >= 1:
                     log("        Finished executing new_code, new_tests", logger="tqdm")
@@ -177,7 +178,7 @@ class TreeAnalysis(Analysis):
                 if self.debug >= 1:
                     log("        Executing new_code, tests", logger="tqdm")
 
-                res4 = self.executor.execute("new_code", "tests", d, output_path)
+                res4 = self.executor.execute("new_code", "tests", d, input_path, output_path)
 
                 if self.debug >= 1:
                     log("        Finished executing new_code, tests", logger="tqdm")

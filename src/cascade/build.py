@@ -47,7 +47,8 @@ def build_project(context, in_path, out_path, code, tests):
 
     my_path = os.path.dirname(__file__)
     p = subprocess.run(
-        ["java", "-jar", os.path.join(my_path, "..", "resources", "tools", "JavaModifier.jar"),
+        ["java", "-jar", os.path.join(my_path, "resources", "tools", "JavaExtractor.jar"),
+         "mod",
          out_path,
          entry,
          code,

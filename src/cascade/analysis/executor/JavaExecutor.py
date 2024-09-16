@@ -15,12 +15,12 @@ class JavaExecutor(AnalysisExecutor):
         self.debug = debug
         self.builder = builder
 
-    def execute(self, code: str, tests: str, context: dict, output_path) -> (succeeded, failed, errored):
+    def execute(self, code: str, tests: str, context: dict, input_path, output_path) -> (succeeded, failed, errored):
         result = ([], [], [])
 
         with tempfile.TemporaryDirectory() as temp_dir:
             try:
-                shutil.copytree(context["root_path"], temp_dir, dirs_exist_ok=True)
+                shutil.copytree(input_path, temp_dir, dirs_exist_ok=True)
 
             except Exception as e:
                 print("could not copy root path")
@@ -31,7 +31,8 @@ class JavaExecutor(AnalysisExecutor):
                 json.dump(context, json_entry)
             my_path = os.path.dirname(__file__)
             p = subprocess.run(
-                ["java", "-jar", os.path.join(my_path, "..", "..", "..", "resources", "tools", "JavaModifier.jar"),
+                ["java", "-jar", os.path.join(my_path, "..", "..", "resources", "tools", "JavaExtractor.jar"),
+                 "mod",
                  temp_dir,
                  entry,
                  code,
@@ -57,8 +58,8 @@ class JavaExecutor(AnalysisExecutor):
 
             dock_ex = DockerizedWrapper(debug=self.debug)
 
-            test_class_name = (self.builder.test_pattern
-                               .replace('%t', context['test_file_path'].split('/')[-1].split('.')[0]))
+            test_class_name = (self.builder.test_pattern.replace('%t', context['test_package'] + "."
+                                                                 + context['test_file_path'].split('/')[-1].split('.')[0]))
             dock_context = {
                 "image" : self.builder.image,
                 "directory" : temp_dir,
@@ -72,19 +73,19 @@ class JavaExecutor(AnalysisExecutor):
 
         return result
 
-    def set_up(self, data, output_path):
+    def set_up(self, data, input_path, output_path):
         context = data[0]
 
         with tempfile.TemporaryDirectory() as temp_dir:
             try:
-                shutil.copytree(context["root_path"], temp_dir, dirs_exist_ok=True)
+                shutil.copytree(input_path, temp_dir, dirs_exist_ok=True)
 
             except Exception as e:
                 print("could not copy root path")
                 print(e)
 
             if self.builder:
-                return self.builder.set_up(temp_dir, context, output_path)
+                return self.builder.set_up(temp_dir, input_path, input_path)
         return False
 
     def tear_down(self, data):

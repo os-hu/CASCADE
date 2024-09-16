@@ -6,9 +6,10 @@ from cascade.analysis.executor.builders.MavenBuilder import MavenBuilder
 class DatasetMavenJavaExecutor(MavenJavaExecutor):
     def __init__(self):
         super().__init__()
-        self.args = ["", "-Dskip.rat=true"]
+        # this can be changed to include more arguments that might be used for executing maven
+        self.args = ["-Dsurefire.failIfNoSpecifiedTests=false", "-Drat.skip=true -Dsurefire.failIfNoSpecifiedTests=false", "-DforkMode=never -Dsurefire.failIfNoSpecifiedTests=false"]
 
-    def execute(self, code: str, tests: str, context: dict, output_path) -> (succeeded, failed, errored):
+    def execute(self, code: str, tests: str, context: dict, input_path, output_path) -> (succeeded, failed, errored):
 
         # TODO? get mven to display all possbile paramters that migth be used here
 
@@ -16,14 +17,15 @@ class DatasetMavenJavaExecutor(MavenJavaExecutor):
             # try to run maven with the arg
             print("Trying arg: ", arg)
             self.builder = MavenBuilder(
-                new_image_name="maven_modified",
+                new_image_name="maven", # should be maven_modified but we dont do a setup here so this is a workaround
                 maven_args=arg,
                 set_up_maven_command="test",
                 set_up_maven_args=arg,
-                image="maven"
+                image="maven",
+                timeout=180
             )
 
-            result = super().execute(code, tests, context, output_path)
+            result = super().execute(code, tests, context, input_path, output_path)
 
             if not result == ([],[],[]):
                 # if it worked set args to the working arg

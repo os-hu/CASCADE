@@ -21,7 +21,6 @@ class Extraction(ABC):
 
         The expected output format for one function is
         {
-            "root_path" : str - # path to the root of the project that is to be extracted,
             "doc" : str  #
             "id" : str or int - # depending on the usecase
             "signature" : {
