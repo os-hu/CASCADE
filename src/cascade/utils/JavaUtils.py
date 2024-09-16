@@ -25,10 +25,6 @@ def build_signature(method_context, doc=False):
     doc_string = method_context["doc"] if doc else ""
     ctsig = method_context["signature"]
 
-    return doc_string + (" ".join(ctsig["modifier"]) + " " + (
-        '<' + ', '.join(ctsig["generics"]) + '>' if ctsig["generics"] else '') +
-                         ctsig["returns"] + " " + ctsig["name"] + "(" + ", ".join(ctsig["params"]) + ")")
-
-    # return doc_string + (" ".join(ctsig["modifier"]) + " " + ('<' + ', '.join(ctsig["generics"]) + '> ' if ctsig["generics"] else '') +
-    #              ctsig["returns"] + " " + ctsig["name"] + "(" + ", ".join(ctsig["params"]) + ")" +
-    #                      (" throws " + ", ".join(ctsig["exceptions"]) if ctsig["exceptions"] else ""))
+    return doc_string + (" ".join(ctsig["modifier"]) + " " + ('<' + ', '.join(ctsig["generics"]) + '> ' if ctsig["generics"] else '') +
+                 ctsig["returns"] + " " + ctsig["name"] + "(" + ", ".join(ctsig["params"]) + ")" +
+                         (" throws " + ", ".join(ctsig["exceptions"]) if ctsig["exceptions"] else ""))
