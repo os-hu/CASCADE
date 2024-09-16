@@ -1,55 +1,59 @@
+import copy
 import json
-
+import os
 import tiktoken
 
 from cascade.generation.Generator import Generator
-from cascade.generation.executor.GPT35CompletionExecutor import GPT35CompletionExecutor
+from cascade.generation.executor.GPT4Executor import GPT4Executor
 from cascade.utils.JavaUtils import build_context
 
-import copy
-import os
 
-
-class GPT35JavaTestGenerator(Generator):
-    def __init__(self, max_attempts=1, max_tokens=2048, temperature=0, delay=3, dummy=False, max_prompt_tokens=2000, debug=False, freq_penalty=0.0):
+class GPT4JavaTestGenerator(Generator):
+    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, max_prompt_tokens=2000, freq_penalty=0.0, dummy=False):
         super().__init__()
-        self.debug = debug
         self.max_prompt_tokens = max_prompt_tokens
-        self.prompt_executor = GPT35CompletionExecutor(max_attempts=max_attempts, max_tokens=max_tokens,
-                                                       temperature=temperature, delay=delay, dummy=dummy, freq_penalty=freq_penalty)
+        self.prompt_executor = GPT4Executor(max_attempts=max_attempts, max_tokens=max_tokens, temperature=temperature,
+                                            delay=delay, freq_penalty=freq_penalty, dummy=dummy)
 
     def build_prompt(self, context):
-        enc = tiktoken.encoding_for_model("gpt-3.5-turbo-instruct")
+        enc = tiktoken.encoding_for_model("gpt-4")
 
-        setup = f"// SETUP: Write Java JUnit tests for {context['signature']['name']}\n\n// CODE:\n\n"
+        system_prompt = f"Write Java JUnit tests for the function {context['signature']['name']}."
 
-        code = build_context(context, doc=True) + ";\n}\n\n// TEST:\n\n"
+        code = "// CODE:\n\n" + build_context(context, doc=True)
 
-        test_header = self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here\n")
+        test_header = ";\n}\n\n// TESTS:\n\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here\n")
 
-        prompt = setup + code + test_header
-
-
-        if len(enc.encode(prompt)) > self.max_prompt_tokens:
-            code = build_context(context, doc=True, no_fields=True)
-            prompt = setup + code + test_header
+        prompt = code + test_header
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
-            code = build_context(context, doc=True, no_fields=True, no_constructors=True)
-            prompt = setup + code + test_header
+            code = "// CODE:\n\n" + build_context(context, doc=True, no_fields=True)
+            prompt = code + test_header
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
-            code = build_context(context, doc=True, no_fields=True, no_constructors=True, no_other_method_docs=True)
-            prompt = setup + code + test_header
+            code = "// CODE:\n\n" + build_context(context, doc=True, no_fields=True, no_constructors=True)
+            prompt = code + test_header
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
-            code = build_context(context, doc=True, no_fields=True, no_constructors=True,  no_other_method_docs=True, no_other_methods=True)
-            prompt = setup + code + test_header
+            code = "// CODE:\n\n" + build_context(context, doc=True, no_fields=True, no_constructors=True, no_other_method_docs=True)
+            prompt = code + test_header
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
-            return ""
+            code = "// CODE:\n\n" + build_context(context, doc=True, no_fields=True, no_constructors=True, no_other_method_docs=True,
+                                 no_other_methods=True)
+            prompt = code + test_header
 
-        return prompt
+        if len(enc.encode(prompt)) > self.max_prompt_tokens:
+            return []
+
+
+        promptlist = []
+        promptlist.append({"role": "system", "content": system_prompt})
+        promptlist.append({"role": "user", "content": prompt})
+
+        return promptlist
+
+
 
     def build_tests(self, context, primer=""):
         packg_declaration = f"package {context['test_package']};\n\n"
@@ -59,9 +63,12 @@ class GPT35JavaTestGenerator(Generator):
         func_definition = "    @Test\n    public void test" + name[0].upper() + name[1:] + "1(){"
         return packg_declaration + imports + classdefinition + primer + func_definition
 
+
+
+
     def generate(self, context, output_path, safety_copy_prefix):
         prompt = self.build_prompt(context)
-
+        print(prompt)
         test_safety_copy_path = os.path.join(output_path, safety_copy_prefix + "test_generator_current.json")
 
         response = None
@@ -85,20 +92,14 @@ class GPT35JavaTestGenerator(Generator):
             with open(test_safety_copy_path , "w") as file:
                 json.dump(safety_copy, file)
 
-        if self.debug:
-            print(response)
-
-
-
-        new_test = response["choices"][0]["text"]
-
+        new_test = response["choices"][0]["message"]["content"]
         if response["choices"][0]["finish_reason"] == "length":
             new_test = self.try_to_fix(new_test)
 
-
-        new_test = self.build_tests(context) + new_test
+        new_test = self.build_tests(context) + "/n" + new_test
 
         return new_test , response
+
 
     def try_to_fix(self, new_test):
         last_test = 0

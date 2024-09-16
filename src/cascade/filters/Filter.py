@@ -11,7 +11,7 @@ class Filter:
         self.filter_functions.append(NoFilter())
 
     def filter_all(self, data: List[dict]) -> List[dict]:
-        filtered_data = list(filter(lambda x: all([f(copy.deepcopy(x)) for f in self.filter_functions]), data))
+        filtered_data = [x for x in data if all([f(copy.deepcopy(x)) for f in self.filter_functions])]
 
         return filtered_data
 
