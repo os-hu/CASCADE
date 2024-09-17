@@ -124,20 +124,18 @@ class GPT4JavaTestGenerator(Generator):
 
         new_tests = response["response"]["choices"][0]["message"]["content"]
 
-        self.extract_tests(new_tests, response)
-
-        new_tests = self.build_tests(context) + "\n" + new_tests
+        new_tests = self.extract_tests(new_tests, context, response)
 
         return new_tests , response
 
 
-    def extract_tests(self, new_tests, response):
+    def extract_tests(self, new_tests, context, response):
         code_blocks = re.findall(r"```java(.*?)\n```", new_tests, flags=re.DOTALL)
 
         if code_blocks == []:
             if response["response"]["choices"][0]["finish_reason"] == "length":
                 new_tests = self.try_to_fix(new_tests)
-
+            new_tests = self.build_tests(context) + "\n" + new_tests
         else:
             # TODO add more parsing?
             new_tests = code_blocks[0]
