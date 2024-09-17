@@ -94,8 +94,7 @@ class GPT4JavaCodeGenerator(Generator):
         return new_code , response
 
     def extract_code(self, new_code, context):
-        pattern = r"```java(.*?)```"
-        code_blocks = re.findall(pattern, new_code, flags=re.DOTALL)
+        code_blocks = re.findall(r"```java(.*?)\n```", new_code, flags=re.DOTALL)
         if code_blocks == []:
             print("No explicit code block found in response")
         else:
