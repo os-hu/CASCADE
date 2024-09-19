@@ -125,23 +125,23 @@ class GPT4JavaTestGenerator(Generator):
 
         new_tests = response["response"]["choices"][0]["message"]["content"]
 
-        new_tests = self.extract_tests(new_tests, context, response)
+        new_tests = self.extract_tests(new_tests, context, response, output_path)
 
         return new_tests , response
 
 
-    def extract_tests(self, new_tests, context, response):
+    def extract_tests(self, new_tests, context, response, output_path):
         code_blocks = re.findall(r"```java(.*?)\n```", new_tests, flags=re.DOTALL)
 
         if not code_blocks == []:
             new_tests = code_blocks[0]
 
-        new_tests = self.try_to_fix(new_tests, response, context)
+        new_tests = self.try_to_fix(new_tests, response, context, output_path)
 
         return new_tests
 
 
-    def try_to_fix(self, new_tests, response, context):
+    def try_to_fix(self, new_tests, response, context, output_path):
         # check if the class is complete
         chunk = ""
         braces = 2
@@ -164,7 +164,7 @@ class GPT4JavaTestGenerator(Generator):
             to_check = [chunk[:chunk.rfind("}")], self.build_tests(context) + chunk + "}"]
 
             for check in to_check:
-                if check_syntax(check, "class"):
+                if check_syntax(check, "class", output_path):
                     return check
 
         # the class is complete

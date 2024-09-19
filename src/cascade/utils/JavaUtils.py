@@ -33,7 +33,7 @@ def build_signature(method_context, doc=False):
                  ctsig["returns"] + " " + ctsig["name"] + "(" + ", ".join(ctsig["params"]) + ")" +
                          (" throws " + ", ".join(ctsig["exceptions"]) if ctsig["exceptions"] else ""))
 
-def check_syntax(code, type):
+def check_syntax(code, type, output_path):
     """
 
     :param code:
@@ -53,6 +53,10 @@ def check_syntax(code, type):
         capture_output=True,
         text=True
     )
+    with open(os.path.join(output_path, "log.txt"), "a") as file:
+        file.write("verify returned with:" + str(p.returncode))
+        file.write(p.stdout + "\n")
+        file.write(p.stderr + "\n")
     os.remove("temp.java")
 
     if p.returncode == 0:
