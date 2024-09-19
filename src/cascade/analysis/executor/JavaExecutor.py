@@ -63,7 +63,7 @@ class JavaExecutor(AnalysisExecutor):
             dock_context = {
                 "image" : self.builder.image,
                 "directory" : temp_dir,
-                "command" : f"ls;"
+                "command" : f"ls; cat -n {context['code_file_path']}; cat -n {context['test_file_path']};"
                             f"{test_class_name}",
                 "eval_command" : "cat out",
                 "eval_function" : self.builder.eval_function
@@ -72,6 +72,7 @@ class JavaExecutor(AnalysisExecutor):
             result = dock_ex.execute(dock_context, output_path)
 
         return result
+
 
     def set_up(self, data, input_path, output_path):
         context = data[0]
