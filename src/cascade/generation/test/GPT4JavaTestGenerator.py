@@ -161,15 +161,20 @@ class GPT4JavaTestGenerator(Generator):
         if braces == 1:
             # to possible cases  full class with a brace too much   or a completion with a brace to few
             #full class
-            to_check = [chunk[:chunk.rfind("}")], self.build_tests(context) + chunk + "}"]
-
+            to_check = [chunk[:chunk.rfind("}")], self.build_tests(context) + chunk + "}", self.build_tests(context) + chunk[chunk.find("{") + 1:]]
             for check in to_check:
                 if check_syntax(check, "class", output_path):
                     return check
 
         # the class is complete
         if braces == 2:
-            return chunk
+            check = chunk
+            if check_syntax(check, "class", output_path):
+                return check
+            check = self.build_tests(context) + chunk[chunk.find("{") + 1:] + "}"
+            if check_syntax(check, "class", output_path):
+                return check
+
 
         if braces > 2:
             if response['response']['choices'][0]["finish_reason"] == "length":
