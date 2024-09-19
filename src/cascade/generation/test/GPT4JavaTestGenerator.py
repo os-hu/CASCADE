@@ -2,12 +2,13 @@ import copy
 import json
 import os
 import re
+import subprocess
 
 import tiktoken
 
 from cascade.generation.Generator import Generator
 from cascade.generation.executor.OpenAIChatCompletionExecutor import OpenAIChatCompletionExecutor
-from cascade.utils.JavaUtils import build_context
+from cascade.utils.JavaUtils import build_context, check_syntax
 
 
 class GPT4JavaTestGenerator(Generator):
@@ -16,7 +17,7 @@ class GPT4JavaTestGenerator(Generator):
         self.model = model
         self.max_prompt_tokens = max_prompt_tokens
         self.prompt_executor = OpenAIChatCompletionExecutor(max_attempts=max_attempts, model=model, max_tokens=max_tokens, temperature=temperature,
-                                            delay=delay, freq_penalty=freq_penalty, dummy=dummy)
+                                                            delay=delay, freq_penalty=freq_penalty, dummy=dummy)
 
         self.is_three = False
 
@@ -46,7 +47,7 @@ class GPT4JavaTestGenerator(Generator):
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
             code = "// CODE:\n\n" + build_context(context, doc=True, no_fields=True, no_constructors=True, no_other_method_docs=True,
-                                 no_other_methods=True)
+                                                  no_other_methods=True)
             prompt = code + test_header
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
@@ -132,29 +133,57 @@ class GPT4JavaTestGenerator(Generator):
     def extract_tests(self, new_tests, context, response):
         code_blocks = re.findall(r"```java(.*?)\n```", new_tests, flags=re.DOTALL)
 
-        if code_blocks == []:
-            if response["response"]["choices"][0]["finish_reason"] == "length":
-                new_tests = self.try_to_fix(new_tests)
-            new_tests = self.build_tests(context) + "\n" + new_tests
-        else:
-            # TODO add more parsing?
+        if not code_blocks == []:
             new_tests = code_blocks[0]
+
+        new_tests = self.try_to_fix(new_tests, response, context)
 
         return new_tests
 
 
-    def try_to_fix(self, new_test):
-        last_test = 0
-        lines = new_test.splitlines()
+    def try_to_fix(self, new_tests, response, context):
+        # check if the class is complete
+        chunk = ""
+        braces = 2
+        for letter in new_tests:
+            chunk += letter
+            if letter == "{":
+                braces += 1
+            elif letter == "}":
+                braces -= 1
+            if braces == 0:
+                break
 
-        for num, line in enumerate(lines):
-            if not self.is_three:
-                if "@Test" in line:
-                    last_test = num
-            else:
-                if "public void test" in line:
-                    last_test = num
+        # we have to complete the class
+        if braces == 0:
+            return self.build_tests(context) + chunk
 
-        return "\n".join(lines[:last_test]) + "\n}"
+        if braces == 1:
+            # to possible cases  full class with a brace too much   or a completion with a brace to few
+            #full class
+            to_check = [chunk[:chunk.rfind("}")], self.build_tests(context) + chunk + "}"]
 
+            for check in to_check:
+                if check_syntax(check, "class"):
+                    return check
 
+        # the class is complete
+        if braces == 2:
+            return chunk
+
+        if braces > 2:
+            if response['response']['choices'][0]["finish_reason"] == "length":
+                last_test = 0
+                lines = new_tests.splitlines()
+
+                for num, line in enumerate(lines):
+                    if not self.is_three:
+                        if "@Test" in line:
+                            last_test = num
+                    else:
+                        if "public void test" in line:
+                            last_test = num
+
+                return "\n".join(lines[:last_test]) + "\n}"
+
+        return new_tests + "}"*(braces-2)

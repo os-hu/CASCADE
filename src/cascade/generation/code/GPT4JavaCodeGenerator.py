@@ -89,27 +89,26 @@ class GPT4JavaCodeGenerator(Generator):
 
         new_code = response["choices"][0]["message"]["content"]
 
-        new_code = self.extract_code(new_code, context)
+        new_code = self.extract_code(new_code, context, response)
 
         return new_code , response
 
-    def extract_code(self, new_code, context):
+    def extract_code(self, new_code, context, response):
         code_blocks = re.findall(r"```java(.*?)\n```", new_code, flags=re.DOTALL)
-        if code_blocks == []:
-            print("No explicit code block found in response")
-        else:
-            new_code = code_blocks[0].strip()
 
-            temp = new_code.split(build_signature(context , False) + "{")
-            if len(temp) > 1:
-                new_code = "".join(temp[1:])
-            else:
-                new_code = "".join(temp)
+        if code_blocks:
+            new_code = code_blocks[0]
 
-        return self.try_to_fix(new_code)
+        return self.try_to_fix(new_code, context, response)
 
 
-    def try_to_fix(self, new_code):
+
+
+    def try_to_fix(self, new_code, context, response):
+        temp = new_code.split(build_signature(context , False) + "{")
+        if len(temp) > 1:
+            new_code = "".join(temp[1:])
+
         fixed_code = ""
         # First brace is already there
         braces = 1
