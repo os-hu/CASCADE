@@ -55,6 +55,7 @@ def check_syntax(code, type, output_path):
     )
     with open(os.path.join(output_path, "log.txt"), "a") as file:
         file.write("verify returned with:" + str(p.returncode))
+        file.write(code + "\n")
         file.write(p.stdout + "\n")
         file.write(p.stderr + "\n")
     os.remove("temp.java")

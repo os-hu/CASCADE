@@ -104,7 +104,7 @@ class DatasetAnalysis(Analysis):
 
 
 
-        if "junit_version" not in d:    #remove this if later
+        if "junit_version" not in d:    #remove this if clause later
 
             print("extracting Junit version")
             junit_version, source_dir, test_source_dir = self.extract_junit_version( input_path, output_path )
