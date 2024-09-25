@@ -18,7 +18,7 @@ class GPT4oJavaTestGenerator(GPT4JavaTestGenerator):
     def build_prompt(self, context):
         enc = tiktoken.encoding_for_model(self.model)
 
-        system_prompt = f"Write Java JUnit tests for the function {context['signature']['name']}. Respond only with the completion of the tests."
+        system_prompt = f"Write Java tests for the function {context['signature']['name']}. Respond only with the completion of the tests."
 
 
 
