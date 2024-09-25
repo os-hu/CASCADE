@@ -12,8 +12,9 @@ from cascade.utils.JavaUtils import build_context, check_syntax
 
 
 class GPT4JavaTestGenerator(Generator):
-    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, max_prompt_tokens=2000, model="gpt-4", freq_penalty=0.0, dummy=False):
+    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, max_prompt_tokens=2000, model="gpt-4", freq_penalty=0.0, dummy=False, ask_for_imports=False):
         super().__init__()
+        self.ask_for_imports = ask_for_imports
         self.model = model
         self.max_prompt_tokens = max_prompt_tokens
         self.prompt_executor = OpenAIChatCompletionExecutor(max_attempts=max_attempts, model=model, max_tokens=max_tokens, temperature=temperature,
@@ -108,7 +109,8 @@ class GPT4JavaTestGenerator(Generator):
             safety_copy = copy.deepcopy(context)
 
             imports = dict()
-            if len(context["test_imports"]) == 1 and "*" in context["test_imports"][0]:
+
+            if self.ask_for_imports or (len(context["test_imports"]) == 1 and "*" in context["test_imports"][0]):
                 prompt.append({"role" : "assistant", "content" : response["choices"][0]["message"]["content"]})
                 prompt.append({"role" : "user", "content" : "What imports are necessary for this code?"})
                 imports = self.prompt_executor.execute(prompt).model_dump()
@@ -123,6 +125,7 @@ class GPT4JavaTestGenerator(Generator):
             with open(test_safety_copy_path , "w") as file:
                 json.dump(safety_copy, file)
 
+        # TODO WRONG RESPONSE
         new_tests = response["response"]["choices"][0]["message"]["content"]
 
         new_tests = self.extract_tests(new_tests, context, response, output_path)

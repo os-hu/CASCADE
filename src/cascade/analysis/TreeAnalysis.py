@@ -28,12 +28,15 @@ class TreeAnalysis(Analysis):
 
     def analyse(self, data: list, input_path, output_path):
         """
-        TODO
+        This
+
+        :param data:
         :param input_path:
         :param output_path:
-        :param data:
         :return:
         """
+
+
 
         # allows setting up requirements needed in every step of the execution (i.e. load docker images )
         print("Set up started")
