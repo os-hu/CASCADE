@@ -104,6 +104,7 @@ class DatasetAnalysis(Analysis):
 
 
 
+
         if "junit_version" not in d:    #remove this if clause later
 
             print("extracting Junit version")
