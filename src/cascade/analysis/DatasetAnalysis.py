@@ -106,7 +106,7 @@ class DatasetAnalysis(Analysis):
 
 
         if "junit_version" not in d:    #remove this if clause later
-
+            print(output_path)
             print("extracting Junit version")
             junit_version, source_dir, test_source_dir = self.extract_junit_version( input_path, output_path )
             print("Junit version: ", junit_version)
@@ -124,11 +124,13 @@ class DatasetAnalysis(Analysis):
             d["junit_version"] = junit_version #remove that later
             save_dicts_list_to_json([d], ana_path)
 
+
             return
 
         else:
             junit_version = d["junit_version"]
 
+        return
 
 
         # found in imports ?
