@@ -112,12 +112,12 @@ class GPT4JavaTestGenerator(Generator):
 
             if self.ask_for_imports or (len(context["test_imports"]) == 1 and "*" in context["test_imports"][0]):
                 prompt.append({"role" : "assistant", "content" : response["choices"][0]["message"]["content"]})
-                prompt.append({"role" : "user", "content" : "What imports are necessary for this code?"})
+                prompt.append({"role" : "user", "content" : f"Give me the necessary imports for this code, you don't need to import any of our classes!"})
                 imports = self.prompt_executor.execute(prompt).model_dump()
                 imports_message = imports["choices"][0]["message"]["content"]
                 for line in imports_message.splitlines():
                     if "import" in line and ";" in line:
-                        context["test_imports"].append(line)
+                        context["test_imports"].append(line + "\n")
                 context["test_imports"] = list(set(context["test_imports"]))
 
             response = {"response" : response, "imports" : imports}
