@@ -69,7 +69,7 @@ class DockerizedWrapper:
             exit_code = self.run(container, context, output_path)
             container.commit(context["new_image"])
         finally:
-            if not images and container:
+            if container:
                 self.kill(container)
             return exit_code
 
