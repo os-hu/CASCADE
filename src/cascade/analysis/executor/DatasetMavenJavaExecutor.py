@@ -16,7 +16,7 @@ class DatasetMavenJavaExecutor(MavenJavaExecutor):
             self.initialized = True
             docker_context = {
                 "image": "maven",
-                "new_image_name": "dataset",
+                "new_image": "dataset",
                 "command": ""
             }
             DockerizedWrapper().setup_image(docker_context,output_path)
