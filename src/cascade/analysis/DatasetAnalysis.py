@@ -130,8 +130,6 @@ class DatasetAnalysis(Analysis):
         else:
             junit_version = d["junit_version"]
 
-        return
-
 
         # found in imports ?
         junit_found = False
