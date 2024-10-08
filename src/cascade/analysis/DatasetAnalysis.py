@@ -159,13 +159,13 @@ class DatasetAnalysis(Analysis):
         if not "new_tests" in d:
             print("generate new tests")
             new_tests, response = self.generator.generate_tests(d, output_path)
-            new_tests = new_tests.replace(d["parent"]["name"], str("THIS_IS_A_UNIQUE_NAME_"))
+            new_tests = new_tests.replace(d["test_file_path"].split("/")[-1].split(".")[0], str("THIS_IS_A_UNIQUE_NAME_Test"))
             d["new_tests"] = new_tests
             d["new_tests_response"] = response
         else:
             print("new tests already generated")
 
-        d["test_file_path"] = d["test_file_path"].replace(d["parent"]["name"], str("THIS_IS_A_UNIQUE_NAME_"))
+        d["test_file_path"] = d["test_file_path"].replace(d["test_file_path"].split("/")[-1].split(".")[0], str("THIS_IS_A_UNIQUE_NAME_Test"))
 
         print("execute new tests")
 
