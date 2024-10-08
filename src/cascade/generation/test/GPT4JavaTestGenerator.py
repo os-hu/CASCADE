@@ -12,10 +12,11 @@ from cascade.utils.JavaUtils import build_context, check_syntax
 
 
 class GPT4JavaTestGenerator(Generator):
-    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, max_prompt_tokens=2000, model="gpt-4", freq_penalty=0.0, dummy=False, ask_for_imports=False):
+    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, max_prompt_tokens=2000, model="gpt-4", freq_penalty=0.0, dummy=False, ask_for_imports=False, import_prompt_finisher="Reply with the missing imports, leave out those you don't know the correct package of."):
         super().__init__()
         self.ask_for_imports = ask_for_imports
         self.model = model
+        self.import_prompt_finisher = import_prompt_finisher
         self.max_prompt_tokens = max_prompt_tokens
         self.prompt_executor = OpenAIChatCompletionExecutor(max_attempts=max_attempts, model=model, max_tokens=max_tokens, temperature=temperature,
                                                             delay=delay, freq_penalty=freq_penalty, dummy=dummy)
@@ -112,7 +113,7 @@ class GPT4JavaTestGenerator(Generator):
 
             if self.ask_for_imports or (len(context["test_imports"]) == 1 and "*" in context["test_imports"][0]):
                 prompt.append({"role" : "assistant", "content" : response["choices"][0]["message"]["content"]})
-                prompt.append({"role" : "user", "content" : f"Give me the necessary imports for this code, you don't need to import any of our classes!"})
+                prompt.append({"role" : "user", "content" : f"Give me the missing imports for this code to work. I am already importing:\n```java\n{"".join(context['test_imports'])}```\n\n for the Tests.\n The tested class imports:\n```java\n{"".join(context['imports'])}```\n\n{self.import_prompt_finisher}" })
                 imports = self.prompt_executor.execute(prompt).model_dump()
                 imports_message = imports["choices"][0]["message"]["content"]
                 for line in imports_message.splitlines():
