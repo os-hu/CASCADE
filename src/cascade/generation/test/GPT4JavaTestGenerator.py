@@ -113,7 +113,7 @@ class GPT4JavaTestGenerator(Generator):
 
             if self.ask_for_imports or (len(context["test_imports"]) == 1 and "*" in context["test_imports"][0]):
                 prompt.append({"role" : "assistant", "content" : response["choices"][0]["message"]["content"]})
-                prompt.append({"role" : "user", "content" : f"Give me the missing imports for this code to work. I am already importing:\n```java\n{"".join(context['test_imports'])}```\n\n for the Tests.\n The tested class imports:\n```java\n{"".join(context['imports'])}```\n\n{self.import_prompt_finisher}" })
+                prompt.append({"role" : "user", "content" : f"Give me the missing imports for this code to work. I am already importing:\n```java\n{''.join(context['test_imports'])}```\n\n for the Tests.\n The tested class imports:\n```java\n{''.join(context['parent']['imports'])}```\n\n{self.import_prompt_finisher}" })
                 imports = self.prompt_executor.execute(prompt).model_dump()
                 imports_message = imports["choices"][0]["message"]["content"]
                 for line in imports_message.splitlines():
