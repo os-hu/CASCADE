@@ -4,8 +4,8 @@ from cascade.analysis.executor.builders.MavenBuilder import MavenBuilder
 from cascade.utils.DockerizedWrapper import DockerizedWrapper
 
 class DatasetMavenJavaExecutor(MavenJavaExecutor):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self):
+        super().__init__()
         self.initialized = False
 
         # this can be changed to include more arguments that might be used for executing maven
