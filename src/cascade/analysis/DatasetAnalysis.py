@@ -153,7 +153,6 @@ class DatasetAnalysis(Analysis):
             else:
                 d["test_imports"] = ["import org.junit.jupiter.api.*;"]
 
-        d["test_file_path"] = d["test_file_path"].replace(d["parent"]["name"], str("THIS_IS_A_UNIQUE_NAME_"))
 
         print(f"Starting analysis of function: {d['signature']['name']}")
 
@@ -166,6 +165,7 @@ class DatasetAnalysis(Analysis):
         else:
             print("new tests already generated")
 
+        d["test_file_path"] = d["test_file_path"].replace(d["parent"]["name"], str("THIS_IS_A_UNIQUE_NAME_"))
 
         print("execute new tests")
 

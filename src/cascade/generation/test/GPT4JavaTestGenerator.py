@@ -74,7 +74,7 @@ class GPT4JavaTestGenerator(Generator):
                 break
 
         name = str(context["signature"]["name"])
-        class_name = context["parent"]["name"]
+        class_name = context["test_file_path"].split("/")[-1].split(".")[0]
         if self.is_three:
             classdefinition = "public class " + class_name + " extends TestCase {"
             test_suite_method = "\n    public static Test suite() {\n        return new TestSuite(" + class_name + ".class);\n    }\n"
