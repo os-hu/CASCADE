@@ -153,19 +153,18 @@ class DatasetAnalysis(Analysis):
             else:
                 d["test_imports"] = ["import org.junit.jupiter.api.*;"]
 
+        d["test_file_path"] = d["test_file_path"].replace(d["parent"]["name"], str("THIS_IS_A_UNIQUE_NAME_"))
 
         print(f"Starting analysis of function: {d['signature']['name']}")
 
         if not "new_tests" in d:
             print("generate new tests")
             new_tests, response = self.generator.generate_tests(d, output_path)
-
+            new_tests = new_tests.replace(d["parent"]["name"], str("THIS_IS_A_UNIQUE_NAME_"))
             d["new_tests"] = new_tests
             d["new_tests_response"] = response
         else:
             print("new tests already generated")
-
-
 
 
         print("execute new tests")
