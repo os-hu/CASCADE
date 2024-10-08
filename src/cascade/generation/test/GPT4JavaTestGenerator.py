@@ -121,7 +121,7 @@ class GPT4JavaTestGenerator(Generator):
                         context["test_imports"].append(line + "\n")
                 context["test_imports"] = list(set(context["test_imports"]))
 
-            response = {"response" : response, "imports" : imports}
+            response = {"prompt" : prompt, "response" : response, "imports" : imports}
             safety_copy["response"] = response
             with open(test_safety_copy_path , "w") as file:
                 json.dump(safety_copy, file)
