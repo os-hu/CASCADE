@@ -27,11 +27,11 @@ class GPT4JavaTestGenerator(Generator):
     def build_prompt(self, context):
         enc = tiktoken.encoding_for_model(self.model)
 
-        system_prompt = f"Write Java tests for the function {context['signature']['name']}."
+        system_prompt = f"Write Java tests for the function {context['signature']['name']}. Follow its documentation as closely as possible."
 
         code = "// CODE:\n\n" + build_context(context, doc=True)
 
-        test_header = ";\n}\n\n// TESTS:\n\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here\n")
+        test_header = ";\n}\n\n// TESTS:\n\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here. Take the Documentation as literal as possible.\n")
 
         prompt = code + test_header
 

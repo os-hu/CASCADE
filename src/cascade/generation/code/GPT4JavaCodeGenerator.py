@@ -20,7 +20,7 @@ class GPT4JavaCodeGenerator(Generator):
     def build_prompt(self, context):
         enc = tiktoken.encoding_for_model(self.model)
 
-        system_prompt = f"Write the body of one Java function for {context['signature']['name']}. Respond only with the completion of the function body."
+        system_prompt = f"Write the body of one Java function for {context['signature']['name']}. Follow its documentation as closely as possible. Respond only with the completion of the function body."
 
         packg_declaration = f"package {context['package']};\n\n"
 
@@ -28,7 +28,7 @@ class GPT4JavaCodeGenerator(Generator):
 
         code = build_context(context, doc=True)
 
-        primer =  "{\n// write only the function body here\n"
+        primer =  "{\n// write the function body here. Take the Documentation as literal as possible.\n"
 
         prompt = packg_declaration + imports + code + primer
 

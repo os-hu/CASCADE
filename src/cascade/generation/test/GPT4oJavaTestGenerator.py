@@ -11,20 +11,20 @@ from cascade.utils.JavaUtils import build_context
 from cascade.generation.test.GPT4JavaTestGenerator import GPT4JavaTestGenerator
 
 class GPT4oJavaTestGenerator(GPT4JavaTestGenerator):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, model="gpt-4o-mini-2024-07-18", **kwargs):
+        super().__init__(model=model, **kwargs)
 
 
     def build_prompt(self, context):
         enc = tiktoken.encoding_for_model(self.model)
 
-        system_prompt = f"Write Java tests for the function {context['signature']['name']}. Respond only with the completion of the tests."
+        system_prompt = f"Write Java tests for the function {context['signature']['name']}. Follow its documentation as closely as possible. Respond only with the completion of the tests."
 
 
 
         code = "// CODE:\n\n" + build_context(context, doc=True)
 
-        test_header = ";\n}\n\n// TESTS:\n\n" + self.build_tests(context, primer=f"\n    // start writing tests for {context['signature']['name']} here")
+        test_header = ";\n}\n\n// TESTS:\n\n" + self.build_tests(context, primer=f"\n    // start writing tests for {context['signature']['name']} here. Take the Documentation as literal as possible.\n")
 
         prompt = code + test_header
 
