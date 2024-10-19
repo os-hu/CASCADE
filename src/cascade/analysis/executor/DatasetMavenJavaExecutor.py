@@ -9,7 +9,7 @@ class DatasetMavenJavaExecutor(MavenJavaExecutor):
         self.initialized = False
 
         # this can be changed to include more arguments that might be used for executing maven
-        self.args = ["-Dsurefire.failIfNoSpecifiedTests=false", "-Drat.skip=true -Dsurefire.failIfNoSpecifiedTests=false", "-DforkMode=never -Dsurefire.failIfNoSpecifiedTests=false"]
+        self.args = ["-fae -Dsurefire.failIfNoSpecifiedTests=false", "-fae -Drat.skip=true -Dsurefire.failIfNoSpecifiedTests=false", "-fae -DforkMode=never -Dsurefire.failIfNoSpecifiedTests=false"]
 
     def execute(self, code: str, tests: str, context: dict, input_path, output_path) -> (succeeded, failed, errored):
         if not self.initialized:

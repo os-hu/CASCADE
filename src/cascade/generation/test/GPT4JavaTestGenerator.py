@@ -12,7 +12,7 @@ from cascade.utils.JavaUtils import build_context, check_syntax
 
 
 class GPT4JavaTestGenerator(Generator):
-    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, max_prompt_tokens=2000, model="gpt-4", freq_penalty=0.0, dummy=False, ask_for_imports=False, import_prompt_finisher="Reply with the missing imports, leave out those you don't know the correct package of."):
+    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, max_prompt_tokens=8000, model="gpt-4o-mini-2024-07-18", freq_penalty=0.0, dummy=False, ask_for_imports=False, import_prompt_finisher="Reply with the missing imports, leave out those you don't know the correct package of."):
         super().__init__()
         self.ask_for_imports = ask_for_imports
         self.model = model
@@ -27,34 +27,41 @@ class GPT4JavaTestGenerator(Generator):
     def build_prompt(self, context):
         enc = tiktoken.encoding_for_model(self.model)
 
-        system_prompt = f"Write Java tests for the function {context['signature']['name']}. Follow its documentation as closely as possible."
 
-        code = "// CODE:\n\n" + build_context(context, doc=True)
+        code = "// Here is the class containing the function:\n\n" + build_context(context, doc=True) + "// this is the function to be tested\n;\n}"
 
-        test_header = ";\n}\n\n// TESTS:\n\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here. Take the Documentation as literal as possible.\n")
+        #test_header = "\n\n// TESTS:\n\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here. Take the Documentation as literal as possible.\n")
+
+        test_header = f"\n\n// Now Please write tests for the function `{context['signature']['name']}` using the following test class skeleton. Use only the imports provided and do not add any new imports. You can assume that the testfile is in the same package as the code. Adhere to the documentation as close as possible when writing the tests."
+        test_header = test_header + "\n\n// TESTS:\n\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here.")
 
         prompt = code + test_header
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
-            code = "// CODE:\n\n" + build_context(context, doc=True, no_fields=True)
+            code = "// CODE:\n\n" + build_context(context, doc=True, no_fields=True) + ";\n}"
             prompt = code + test_header
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
-            code = "// CODE:\n\n" + build_context(context, doc=True, no_fields=True, no_constructors=True)
+            code = "// CODE:\n\n" + build_context(context, doc=True, no_fields=True, no_constructors=True) + ";\n}"
             prompt = code + test_header
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
-            code = "// CODE:\n\n" + build_context(context, doc=True, no_fields=True, no_constructors=True, no_other_method_docs=True)
+            code = "// CODE:\n\n" + build_context(context, doc=True, no_fields=True, no_constructors=True, no_other_method_docs=True) + ";\n}"
             prompt = code + test_header
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
             code = "// CODE:\n\n" + build_context(context, doc=True, no_fields=True, no_constructors=True, no_other_method_docs=True,
-                                                  no_other_methods=True)
+                                                  no_other_methods=True) + ";\n}"
             prompt = code + test_header
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
             return []
 
+
+        testframework = "3" if self.is_three else "5"
+
+        #system_prompt = f"Write Java tests for the function {context['signature']['name']}. Follow its documentation as closely as possible."
+        system_prompt = f"You are a Java developer assistant. Generate unit tests for the function `{context['signature']['name']}` in the provided class, using only its documentation. Use Junit{testframework}. Use only standard Java libraries and do not import any external or third-party packages. Ensure all code is compilable and follows best practices."
 
         promptlist = []
         promptlist.append({"role": "system", "content": system_prompt})
