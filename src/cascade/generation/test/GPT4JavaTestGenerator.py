@@ -27,14 +27,17 @@ class GPT4JavaTestGenerator(Generator):
     def build_prompt(self, context):
         enc = tiktoken.encoding_for_model(self.model)
 
-        c1 = "// Here is the class containing the function:\n\n"
-        c2 = "// this is the function to be tested\n;\n}"
+        testframework = "3" if self.is_three else "4"
+
+
+        c1 = "Here is the class containing the function:\n\n```java\n"
+        c2 = "// this is the function to be tested\n;\n}\n```\n"
         code = c1 + build_context(context, doc=True) + c2
 
         #test_header = "\n\n// TESTS:\n\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here. Take the Documentation as literal as possible.\n")
 
-        test_header = f"\n\n// Now Please write tests for the function `{context['signature']['name']}` using the following test class skeleton. Use only the imports provided and do not add any new imports. You can assume that the testfile is in the same package as the code. Adhere to the documentation as close as possible when writing the tests."
-        test_header = test_header + "\n\n// TESTS:\n\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here.")
+        test_header = f"\nNow Please write tests for the function `{context['signature']['name']}` using the following test class skeleton. Use only the imports provided and do not add any new imports. You can assume that the testfile is in the same package as the code. Adhere to the documentation as close as possible when writing the tests. As a reminder, the documentation for the function is:\n\n```java\n{context['doc']}\n```\n\n```java\n"
+        test_header = test_header + "\n```java\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here." + "\n```")
 
         prompt = code + test_header
 
@@ -59,10 +62,11 @@ class GPT4JavaTestGenerator(Generator):
             return []
 
 
-        testframework = "3" if self.is_three else "5"
+        par = context['signature']['params']
+        params = ", ".join(par) if len(par) > 1 else (par[0] if par else "")
 
         #system_prompt = f"Write Java tests for the function {context['signature']['name']}. Follow its documentation as closely as possible."
-        system_prompt = f"You are a Java developer assistant. Generate unit tests for the function `{context['signature']['name']}` in the provided class, using only its documentation. Use Junit{testframework}. Use only standard Java libraries and do not import any external or third-party packages. Ensure all code is compilable and follows best practices."
+        system_prompt = f"You are a Java developer assistant. Generate unit tests for the function `{context['signature']['name']}({params})` in the provided class, using only its documentation. Use JUnit {testframework}. Use only standard Java libraries and do not import any external or third-party packages. Ensure all code is compilable and follows best practices."
 
         promptlist = []
         promptlist.append({"role": "system", "content": system_prompt})
@@ -77,7 +81,7 @@ class GPT4JavaTestGenerator(Generator):
         imports = "".join(context["test_imports"]) + "\n"
 
         for import_ in context["test_imports"]:
-            if import_.startswith("import junit.framework"):
+            if ("junit.framework") in import_:
                 self.is_three = True
                 break
 
@@ -119,9 +123,10 @@ class GPT4JavaTestGenerator(Generator):
 
             imports = dict()
 
+
             if self.ask_for_imports or (len(context["test_imports"]) == 1 and "*" in context["test_imports"][0]):
                 prompt.append({"role" : "assistant", "content" : response["choices"][0]["message"]["content"]})
-                prompt.append({"role" : "user", "content" : f"Give me the missing imports for this code to work. I am already importing:\n```java\n{''.join(context['test_imports'])}```\n\n for the Tests.\n The tested class imports:\n```java\n{''.join(context['parent']['imports'])}```\n\n{self.import_prompt_finisher}" })
+                prompt.append({"role" : "user", "content" : f"Give me the missing imports for this code to work. For the tests, I am already importing:\n```java\n{''.join(context['test_imports'])}\n```\n\n The tested class imports:\n```java\n{''.join(context['parent']['imports'])}\n```\n\n{self.import_prompt_finisher}" })
                 imports = self.prompt_executor.execute(prompt).model_dump()
                 imports_message = imports["choices"][0]["message"]["content"]
                 for line in imports_message.splitlines():
@@ -173,7 +178,7 @@ class GPT4JavaTestGenerator(Generator):
             return self.build_tests(context) + chunk
 
         if braces == 1:
-            # to possible cases  full class with a brace too much   or a completion with a brace to few
+            # two possible cases  full class with a brace too much   or a completion with a brace to few
             #full class
             to_check = [chunk[:chunk.rfind("}")], self.build_tests(context) + chunk + "}", self.build_tests(context) + chunk[chunk.find("{") + 1:]]
             for check in to_check:
@@ -184,7 +189,7 @@ class GPT4JavaTestGenerator(Generator):
         if braces == 2:
             check = chunk
             if check_syntax(check, "class", output_path):
-                return check
+                return check   # TODO This seems to be the grand majority now.
             check = self.build_tests(context) + chunk[chunk.find("{") + 1:] + "}"
             if check_syntax(check, "class", output_path):
                 return check
