@@ -12,7 +12,7 @@ from cascade.utils.JavaUtils import build_context, check_syntax
 
 
 class GPT4JavaTestGenerator(Generator):
-    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, max_prompt_tokens=10000, model="gpt-4o-mini-2024-07-18", freq_penalty=0.0, dummy=False, ask_for_imports=False, import_prompt_finisher="Reply with the missing imports, leave out those you don't know the correct package of."):
+    def __init__(self, max_attempts=1, max_tokens=10000, temperature=0, delay=3, max_prompt_tokens=5000, model="gpt-4o-mini-2024-07-18", freq_penalty=0.0, dummy=False, ask_for_imports=False, import_prompt_finisher="Reply with the missing imports, leave out those you don't know the correct package of."):
         super().__init__()
         self.ask_for_imports = ask_for_imports
         self.model = model
@@ -27,8 +27,9 @@ class GPT4JavaTestGenerator(Generator):
     def build_prompt(self, context):
         enc = tiktoken.encoding_for_model(self.model)
 
-
-        code = "// Here is the class containing the function:\n\n" + build_context(context, doc=True) + "// this is the function to be tested\n;\n}"
+        c1 = "// Here is the class containing the function:\n\n"
+        c2 = "// this is the function to be tested\n;\n}"
+        code = c1 + build_context(context, doc=True) + c2
 
         #test_header = "\n\n// TESTS:\n\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here. Take the Documentation as literal as possible.\n")
 
@@ -38,20 +39,20 @@ class GPT4JavaTestGenerator(Generator):
         prompt = code + test_header
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
-            code = "// CODE:\n\n" + build_context(context, doc=True, no_fields=True) + ";\n}"
+            code = c1 + build_context(context, doc=True, no_fields=True) + c2
             prompt = code + test_header
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
-            code = "// CODE:\n\n" + build_context(context, doc=True, no_fields=True, no_constructors=True) + ";\n}"
+            code = c1 + build_context(context, doc=True, no_fields=True, no_constructors=True) + c2
             prompt = code + test_header
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
-            code = "// CODE:\n\n" + build_context(context, doc=True, no_fields=True, no_constructors=True, no_other_method_docs=True) + ";\n}"
+            code = c1 + build_context(context, doc=True, no_fields=True, no_constructors=True, no_other_method_docs=True) + c2
             prompt = code + test_header
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
-            code = "// CODE:\n\n" + build_context(context, doc=True, no_fields=True, no_constructors=True, no_other_method_docs=True,
-                                                  no_other_methods=True) + ";\n}"
+            code = c1 + build_context(context, doc=True, no_fields=True, no_constructors=True, no_other_method_docs=True,
+                                                  no_other_methods=True) + c2
             prompt = code + test_header
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
@@ -146,6 +147,8 @@ class GPT4JavaTestGenerator(Generator):
 
         if not code_blocks == []:
             new_tests = code_blocks[0]
+        else:
+            new_tests = new_tests.split("```java")[-1].strip()
 
         new_tests = self.try_to_fix(new_tests, response, context, output_path)
 
