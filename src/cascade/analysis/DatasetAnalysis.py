@@ -147,11 +147,11 @@ class DatasetAnalysis(Analysis):
 
         if not junit_found:
             if junit_version.startswith("3.8"):
-                d["test_imports"] = ["import junit.framework.*;"]
+                d["test_imports"] = ["import junit.framework.*;\n"]
             elif junit_version.startswith("4."):
-                d["test_imports"] = ["import org.junit.*;"]
+                d["test_imports"] = ["import org.junit.*;\n" , "import static org.junit.Assert.*;\n"]
             else:
-                d["test_imports"] = ["import org.junit.jupiter.api.*;"]
+                d["test_imports"] = ["import org.junit.jupiter.api.*;\n"]
 
 
         print(f"Starting analysis of function: {d['signature']['name']}")

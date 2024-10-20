@@ -30,14 +30,26 @@ class GPT4JavaTestGenerator(Generator):
         testframework = "3" if self.is_three else "4"
 
 
+        par = context['signature']['params']
+        params = ", ".join(par) if len(par) > 1 else (par[0] if par else "")
+
+        #system_prompt = f"Write Java tests for the function {context['signature']['name']}. Follow its documentation as closely as possible."
+        system_prompt = f"You are a Java developer assistant. Generate unit tests for the function `{context['signature']['name']}({params})` in the provided class, using only its documentation. Use JUnit {testframework}. Include necessary imports, handle exceptions properly, and ensure method signatures and calls are correct. The code should compile without errors." #Use only standard Java libraries and do not import any external or third-party packages. Ensure all code is compilable and follows best practices."
+
+
+
         c1 = "Here is the class containing the function:\n\n```java\n"
         c2 = "// this is the function to be tested\n;\n}\n```\n"
         code = c1 + build_context(context, doc=True) + c2
 
         #test_header = "\n\n// TESTS:\n\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here. Take the Documentation as literal as possible.\n")
 
-        test_header = f"\nNow Please write tests for the function `{context['signature']['name']}` using the following test class skeleton. Use only the imports provided and do not add any new imports. You can assume that the testfile is in the same package as the code. Adhere to the documentation as close as possible when writing the tests. As a reminder, the documentation for the function is:\n\n```java\n{context['doc']}\n```\n\n```java\n"
+        test_header = f"\nNow Please write tests for the function `{context['signature']['name']}({params})` using the following test class skeleton. Use only the imports provided and do not add any new imports. You can assume that the testfile is in the same package as the code. Properly handle any checked exceptions (use `try-catch` or `throws`). Match method signatures exactly when overriding or implementing methods. Adhere to the documentation as close as possible when writing the tests. As a reminder, the documentation for the function is:\n\n```java\n{context['doc']}\n```\n\n```java\n"
         test_header = test_header + "\n```java\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here." + "\n```")
+
+        if self.is_three:
+            test_header = test_header
+
 
         prompt = code + test_header
 
@@ -62,11 +74,6 @@ class GPT4JavaTestGenerator(Generator):
             return []
 
 
-        par = context['signature']['params']
-        params = ", ".join(par) if len(par) > 1 else (par[0] if par else "")
-
-        #system_prompt = f"Write Java tests for the function {context['signature']['name']}. Follow its documentation as closely as possible."
-        system_prompt = f"You are a Java developer assistant. Generate unit tests for the function `{context['signature']['name']}({params})` in the provided class, using only its documentation. Use JUnit {testframework}. Use only standard Java libraries and do not import any external or third-party packages. Ensure all code is compilable and follows best practices."
 
         promptlist = []
         promptlist.append({"role": "system", "content": system_prompt})
@@ -89,7 +96,8 @@ class GPT4JavaTestGenerator(Generator):
         class_name = context["test_file_path"].split("/")[-1].split(".")[0]
         if self.is_three:
             classdefinition = "public class " + class_name + " extends TestCase {"
-            test_suite_method = "\n    public static Test suite() {\n        return new TestSuite(" + class_name + ".class);\n    }\n"
+            #test_suite_method = "\n    public static Test suite() {\n        return new TestSuite(" + class_name + ".class);\n    }\n"
+            test_suite_method = "\n    public"  + class_name + "(String name) {\n        super(name);\n    }\n"
 
             classdefinition = classdefinition + test_suite_method
             func_definition = "\n    public void test" + name[0].upper() + name[1:] + "1(){"
