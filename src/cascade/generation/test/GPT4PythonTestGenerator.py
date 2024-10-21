@@ -30,7 +30,7 @@ class GPT4TestGenerator(Generator):
 
         return promptlist
 
-    def generate(self, context, output_path, safety_copy_prefix):
+    def generate(self, context, input_path, output_path, safety_copy_prefix):
         prompt = self.build_prompt(context)
         test_safety_copy_path = os.path.join(output_path, safety_copy_prefix + "test_generator_current.json")
 

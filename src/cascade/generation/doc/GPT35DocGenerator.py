@@ -20,7 +20,7 @@ class GPT35DocGenerator(Generator):
         return prompt
         return [{"role": "user", "content": prompt}]
 
-    def generate(self, context, output_path, safety_copy_prefix):
+    def generate(self, context, input_path, output_path, safety_copy_prefix):
         prompt = self.build_prompt(context)
         print(prompt)
         response = self.prompt_executor.execute(prompt).model_dump()

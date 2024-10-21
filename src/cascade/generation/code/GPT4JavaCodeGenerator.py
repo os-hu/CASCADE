@@ -59,7 +59,7 @@ class GPT4JavaCodeGenerator(Generator):
         return promptlist
 
 
-    def generate(self, context, output_path, safety_copy_prefix):
+    def generate(self, context, input_path, output_path, safety_copy_prefix):
         prompt = self.build_prompt(context)
         code_safety_copy_path = os.path.join(output_path, safety_copy_prefix + "code_generator_current.json")
 

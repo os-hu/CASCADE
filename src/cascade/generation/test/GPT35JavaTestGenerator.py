@@ -59,7 +59,7 @@ class GPT35JavaTestGenerator(Generator):
         func_definition = "    @Test\n    public void test" + name[0].upper() + name[1:] + "1(){"
         return packg_declaration + imports + classdefinition + primer + func_definition
 
-    def generate(self, context, output_path, safety_copy_prefix):
+    def generate(self, context, input_path, output_path, safety_copy_prefix):
         prompt = self.build_prompt(context)
 
         test_safety_copy_path = os.path.join(output_path, safety_copy_prefix + "test_generator_current.json")

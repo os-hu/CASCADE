@@ -29,26 +29,26 @@ class GPT4JavaTestGenerator(Generator):
 
         testframework = "3" if self.is_three else "4"
 
-
         par = context['signature']['params']
         params = ", ".join(par) if len(par) > 1 else (par[0] if par else "")
 
         #system_prompt = f"Write Java tests for the function {context['signature']['name']}. Follow its documentation as closely as possible."
-        system_prompt = f"You are a Java developer assistant. Generate unit tests for the function `{context['signature']['name']}({params})` in the provided class, using only its documentation. Use JUnit {testframework}. Include necessary imports, handle exceptions properly, and ensure method signatures and calls are correct. The code should compile without errors." #Use only standard Java libraries and do not import any external or third-party packages. Ensure all code is compilable and follows best practices."
+        system_prompt = f"You are a Java developer assistant. Generate unit tests for the function `{context['signature']['name']}({params})` in the provided class, using only its documentation. Use JUnit {testframework}. You can import anything from the project, but no third party libraries. Handle exceptions properly, and ensure method signatures and calls are correct. The code should compile without errors." #Use only standard Java libraries and do not import any external or third-party packages. Ensure all code is compilable and follows best practices."
 
 
 
         c1 = "Here is the class containing the function:\n\n```java\n"
-        c2 = "// this is the function to be tested\n;\n}\n```\n"
+        c2 = "{\n    // this is the function to be tested\n;\n}\n```\n"
         code = c1 + build_context(context, doc=True) + c2
 
         #test_header = "\n\n// TESTS:\n\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here. Take the Documentation as literal as possible.\n")
 
-        test_header = f"\nNow Please write tests for the function `{context['signature']['name']}({params})` using the following test class skeleton. Use only the imports provided and do not add any new imports. You can assume that the testfile is in the same package as the code. Properly handle any checked exceptions (use `try-catch` or `throws`). Match method signatures exactly when overriding or implementing methods. Adhere to the documentation as close as possible when writing the tests. As a reminder, the documentation for the function is:\n\n```java\n{context['doc']}\n```\n\n```java\n"
+        test_header = f"\nNow Please write tests for the function `{context['signature']['name']}({params})` using the following test class skeleton.  Everything that you use should be added to the imports in the skeleton. Properly handle any checked exceptions (use `try-catch` or `throws`), don't forget type parameters. Match method signatures exactly when overriding or implementing methods. Adhere to the documentation as close as possible when writing the tests. As a reminder, the documentation for the function is:\n\n```java\n{context['doc']}\n```\nand here is the test class\n"
         test_header = test_header + "\n```java\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here." + "\n```")
 
         if self.is_three:
             test_header = test_header
+            # add something like:    Include necessary constructors if extending a class that requires them.
 
 
         prompt = code + test_header
@@ -96,8 +96,7 @@ class GPT4JavaTestGenerator(Generator):
         class_name = context["test_file_path"].split("/")[-1].split(".")[0]
         if self.is_three:
             classdefinition = "public class " + class_name + " extends TestCase {"
-            #test_suite_method = "\n    public static Test suite() {\n        return new TestSuite(" + class_name + ".class);\n    }\n"
-            test_suite_method = "\n    public"  + class_name + "(String name) {\n        super(name);\n    }\n"
+            test_suite_method = "\n    public"  + class_name + "(String name) {\n        super(name);\n    }\n\n    public static Test suite() {\n        return new TestSuite(" + class_name + ".class);\n    }\n"
 
             classdefinition = classdefinition + test_suite_method
             func_definition = "\n    public void test" + name[0].upper() + name[1:] + "1(){"
@@ -109,7 +108,7 @@ class GPT4JavaTestGenerator(Generator):
 
 
 
-    def generate(self, context, output_path, safety_copy_prefix):
+    def generate(self, context, input_path, output_path, safety_copy_prefix):
         prompt = self.build_prompt(context)
         test_safety_copy_path = os.path.join(output_path, safety_copy_prefix + "test_generator_current.json")
 
@@ -131,24 +130,45 @@ class GPT4JavaTestGenerator(Generator):
 
             imports = dict()
 
+            text = response["choices"][0]["message"]["content"]
 
-            if self.ask_for_imports or (len(context["test_imports"]) == 1 and "*" in context["test_imports"][0]):
-                prompt.append({"role" : "assistant", "content" : response["choices"][0]["message"]["content"]})
-                prompt.append({"role" : "user", "content" : f"Give me the missing imports for this code to work. For the tests, I am already importing:\n```java\n{''.join(context['test_imports'])}\n```\n\n The tested class imports:\n```java\n{''.join(context['parent']['imports'])}\n```\n\n{self.import_prompt_finisher}" })
-                imports = self.prompt_executor.execute(prompt).model_dump()
-                imports_message = imports["choices"][0]["message"]["content"]
-                for line in imports_message.splitlines():
-                    if "import" in line and ";" in line:
-                        context["test_imports"].append(line + "\n")
-                context["test_imports"] = list(set(context["test_imports"]))
+            # extract all 'new' statements.
+            constructer_calls = re.findall(r"new (.*?)\(", text, flags=re.DOTALL)
 
-            response = {"prompt" : prompt, "response" : response, "imports" : imports}
+
+
+
+            calls = []
+            for call in constructer_calls:
+                calls.append(call.group(1))
+
+
+
+            tree = subprocess.check_output(["tree", "-P", "*.java", input_path]).decode("utf-8")
+
+            repair_question = f"{', '.join(calls)} are new, fix all missing imports using this directory structure:\n```\n{tree}\n```"
+
+            prompt.append({"role" : "user", "content" : repair_question})
+
+            repair = self.prompt_executor.execute(prompt).model_dump()
+
+            # if self.ask_for_imports or (len(context["test_imports"]) == 1 and "*" in context["test_imports"][0]):
+            #     prompt.append({"role" : "assistant", "content" : response["choices"][0]["message"]["content"]})
+            #     prompt.append({"role" : "user", "content" : f"Give me the missing imports for this code to work. For the tests, I am already importing:\n```java\n{''.join(context['test_imports'])}\n```\n\n The tested class imports:\n```java\n{''.join(context['parent']['imports'])}\n```\n\n{self.import_prompt_finisher}" })
+            #     imports = self.prompt_executor.execute(prompt).model_dump()
+            #     imports_message = imports["choices"][0]["message"]["content"]
+            #     for line in imports_message.splitlines():
+            #         if "import" in line and ";" in line:
+            #             context["test_imports"].append(line + "\n")
+            #     context["test_imports"] = list(set(context["test_imports"]))
+
+            response = {"prompt" : prompt, "response" : response, "repair" : repair ,  "imports" : imports}
             safety_copy["response"] = response
             with open(test_safety_copy_path , "w") as file:
                 json.dump(safety_copy, file)
 
         # TODO WRONG RESPONSE
-        new_tests = response["response"]["choices"][0]["message"]["content"]
+        new_tests = response["repair"]["choices"][0]["message"]["content"]
 
         new_tests = self.extract_tests(new_tests, context, response, output_path)
 

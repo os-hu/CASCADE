@@ -158,7 +158,7 @@ class DatasetAnalysis(Analysis):
 
         if not "new_tests" in d:
             print("generate new tests")
-            new_tests, response = self.generator.generate_tests(d, output_path)
+            new_tests, response = self.generator.generate_tests(d, input_path, output_path)
             new_tests = new_tests.replace(d["test_file_path"].split("/")[-1].split(".")[0], str("THIS_IS_A_UNIQUE_NAME_Test"))
             d["new_tests"] = new_tests
             d["new_tests_response"] = response
@@ -186,7 +186,7 @@ class DatasetAnalysis(Analysis):
 
         else:
             # generate new code
-            new_code, response = self.generator.generate_code(d, output_path)
+            new_code, response = self.generator.generate_code(d, input_path, output_path)
 
             d["new_code"] = new_code
             d["new_code_response"] = response

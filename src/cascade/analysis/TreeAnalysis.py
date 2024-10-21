@@ -98,7 +98,7 @@ class TreeAnalysis(Analysis):
                 if self.debug >= 1:
                     log("        Generating new tests", logger="tqdm")
                 try:
-                    new_tests, response = self.generator.generate_tests(d, output_path)
+                    new_tests, response = self.generator.generate_tests(d, input_path, output_path)
                 except:
                     d["new_tests"] = []
                     d["new_tests_response"] = []
@@ -151,7 +151,7 @@ class TreeAnalysis(Analysis):
                     log("        Generating new code", logger="tqdm")
 
                 try:
-                    new_code, response = self.generator.generate_code(d, output_path)
+                    new_code, response = self.generator.generate_code(d, input_path, output_path)
                 except:
                     d["new_code"] = []
                     d["new_code_response"] = []
