@@ -133,16 +133,7 @@ class GPT4JavaTestGenerator(Generator):
             text = response["choices"][0]["message"]["content"]
 
             # extract all 'new' statements.
-            constructer_calls = re.findall(r"new (.*?)\(", text, flags=re.DOTALL)
-
-
-
-
-            calls = []
-            for call in constructer_calls:
-                calls.append(call.group(1))
-
-
+            calls = re.findall(r"new (.*?)\(", text, flags=re.DOTALL)
 
             tree = subprocess.check_output(["tree", "-P", "*.java", input_path]).decode("utf-8")
 
