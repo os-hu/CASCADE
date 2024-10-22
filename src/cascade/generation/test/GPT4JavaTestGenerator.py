@@ -273,13 +273,10 @@ class GPT4JavaTestGenerator(Generator):
         promptlist.append({"role": "system", "content": system_prompt})
         promptlist.append({"role": "user", "content": prompt})
 
-        res = self.prompt_executor.execute(promptlist, tools=[])
+        res = self.prompt_executor.execute(promptlist, tools=tools).model_dump()
 
         if res["choices"][0]["finish_reason"] == "tool_calls":
             promptlist.append(res['choices'][0]['message'])
-
-
-            res = self.prompt_executor.execute(promptlist, tools=tools).model_dump()
 
             tool_calls = res["choices"][0]["message"]["tool_calls"]
 
