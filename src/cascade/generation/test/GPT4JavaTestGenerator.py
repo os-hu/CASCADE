@@ -27,7 +27,7 @@ class GPT4JavaTestGenerator(Generator):
     def build_prompt(self, context):
         enc = tiktoken.encoding_for_model(self.model)
 
-        testframework = "3" if self.is_three else "4"
+        testframework = "3" if self.is_three else "4" if "junit_version" in context and context["junit_version"].startswith("4") else "5"
 
         par = context['signature']['params']
         params = ", ".join(par) if len(par) > 1 else (par[0] if par else "")
@@ -178,6 +178,9 @@ class GPT4JavaTestGenerator(Generator):
 
         return new_tests
 
+
+    def repair(self, new_tests, context, input_path, errors):
+        pass
 
     def try_to_fix(self, new_tests, response, context, output_path):
         # check if the class is complete
