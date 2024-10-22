@@ -1,10 +1,12 @@
 import os
+import re
 import shutil
 import tempfile
 
 from cascade.analysis.Analysis import Analysis
 from cascade.analysis.executor.Execution import Execution
 from cascade.analysis.visualizer.Visualization import Visualization
+from cascade.extraction.JavaExtraction import JavaExtraction
 
 from cascade.generation.Generation import Generation
 from cascade.utils.Utils import load_json_from_path, log, save_dicts_list_to_json
@@ -102,8 +104,9 @@ class DatasetAnalysis(Analysis):
 
         d = data[0]
 
-
-
+        # extract functions
+        extractor = JavaExtraction()
+        extractor.extract(input_path, output_path)
 
         if "junit_version" not in d:    #remove this if clause later
             print(output_path)
@@ -172,17 +175,46 @@ class DatasetAnalysis(Analysis):
 
         res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
 
-
-
         d["results"] = {}
         d["results"]["(code, new_tests)"] = res2
 
         save_dicts_list_to_json([d], ana_path)
 
-
-
         # check if it passed failed or errored
         evaluated = self.evaluate(d["results"]["(code, new_tests)"])
+        if evaluated == 0:
+            with open( output_path + "/log.txt", "r") as f:
+                exec_output = f.read()
+            # If it errored we want to know the compilation error:
+
+            pattern = r"(\[ERROR\] COMPILATION ERROR :.*?\[INFO\] -------------------------------------------------------------)"
+
+            matches = re.findall(pattern, exec_output, re.DOTALL)
+
+            if not matches:
+                # No match (compilation error) found.
+                output = "Negative, error in layer 2: code, new_tests"
+
+            else:
+                # Get the last occurrence
+                comp_error = matches[-1].strip()
+                comp_error = comp_error.replace("THIS_IS_A_UNIQUE_NAME_Test", d["test_file_path"].split("/")[-1].split(".")[0])
+
+                new_tests , response = self.generator.repair_tests(d, input_path, output_path, comp_error)
+
+                new_tests = new_tests.replace(d["test_file_path"].split("/")[-1].split(".")[0], str("THIS_IS_A_UNIQUE_NAME_Test"))
+                d["new_tests"] = new_tests
+                d["new_tests_repair_response"] = response
+
+                print("execute repaired tests")
+                res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
+
+                d["results"]["(code, new_tests)"] = res2
+
+                save_dicts_list_to_json([d], ana_path)
+
+                evaluated = self.evaluate(d["results"]["(code, new_tests)"])
+
         if evaluated >= 0:
             output += "Negative"
             output += ", error in layer 2: code, new_tests" if evaluated == 0 else ", pass in layer 2: code, new_tests"
@@ -218,16 +250,16 @@ class DatasetAnalysis(Analysis):
     def evaluate(self, res):
         if res[0] == [] and res[1] == []:
             if self.debug >= 1:
-                log("        Error", logger="tqdm")
+                print("        Error")
             # error
             return 0
         elif res[1] == [] and res[2] == []:
             if self.debug >= 1:
-                log("        Passed", logger="tqdm")
+                print("        Passed")
             # if no errors or failures  then passed
             return 1
         else:
             if self.debug >= 1:
-                log("        Failed", logger="tqdm")
+                print("        Failed")
             # failed
             return -1

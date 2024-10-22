@@ -3,12 +3,13 @@ import json
 import os
 import re
 import subprocess
+from platform import system
 
 import tiktoken
 
 from cascade.generation.Generator import Generator
 from cascade.generation.executor.OpenAIChatCompletionExecutor import OpenAIChatCompletionExecutor
-from cascade.utils.JavaUtils import build_context, check_syntax
+from cascade.utils.JavaUtils import build_context, check_syntax, repair_helper_functions
 
 
 class GPT4JavaTestGenerator(Generator):
@@ -106,8 +107,6 @@ class GPT4JavaTestGenerator(Generator):
         return packg_declaration + imports + classdefinition + primer + func_definition
 
 
-
-
     def generate(self, context, input_path, output_path, safety_copy_prefix):
         prompt = self.build_prompt(context)
         test_safety_copy_path = os.path.join(output_path, safety_copy_prefix + "test_generator_current.json")
@@ -179,8 +178,6 @@ class GPT4JavaTestGenerator(Generator):
         return new_tests
 
 
-    def repair(self, new_tests, context, input_path, errors):
-        pass
 
     def try_to_fix(self, new_tests, response, context, output_path):
         # check if the class is complete
@@ -233,3 +230,78 @@ class GPT4JavaTestGenerator(Generator):
                 return "\n".join(lines[:last_test]) + "\n}"
 
         return new_tests + "}"*(braces-2)
+
+
+    def repair(self, context, input_path, output_path, errors, key):
+        def build_tool(name, description, parameters):
+            return {"type": "function",
+                    "function": {
+                        "name": name,
+                        "description": description,
+                        "strict": True,
+                        "parameters": {
+                            "type": "object",
+                            "required": [
+                                *map(lambda x: x[0], parameters)
+                            ],
+                            "properties": {
+                                **{x[0]: {"type": x[1], "description": x[2]} for x in parameters}
+                            },
+                            "additionalProperties": False
+                        }
+                    }}
+
+        t1 = build_tool("get_child_classes", "Gets all classes that implement or extend a given class.", [
+            ("class_name", "string", "The simple name of the class for which child classes are to be retrieved"),
+            ("abstract_included", "boolean", "Should abstract classes be included?")])
+        t2 = build_tool("get_class_methods", "Gets a list of all methods from a given class.", [
+            ("path_to_class", "string", "The relative path to the class"),
+            ("private_included", "boolean", "Should private methods be included?")])
+        t3 = build_tool("get_class_constructors", "Gets a list of constructors for a given class.", [
+            ("class_name", "string", "The simple name of the class for which child classes are to be retrieved")])
+
+        tools = [t1,t2,t3]
+
+        # TODO could be excluded into a tool call as well?
+        tree = subprocess.check_output(["tree", "-P", "*.java", input_path]).decode("utf-8")
+
+        system_prompt = "You are a Java developer assistant. Fix the following errors in the provided unit test class. Use tools to find out more about classes instead of making assumptions."
+
+        prompt = f"The following errors occurred during compilation.\n```\n{errors}\n```\n This is the project structure \n```\n{tree}\n```\n Please fix the errors in the following test class:\n```java\n{context[key]}\n```"
+
+        promptlist = []
+        promptlist.append({"role": "system", "content": system_prompt})
+        promptlist.append({"role": "user", "content": prompt})
+
+        res = self.prompt_executor.execute(promptlist, tools=[])
+
+        if res["choices"][0]["finish_reason"] == "tool_calls":
+            promptlist.append(res['choices'][0]['message'])
+
+
+            res = self.prompt_executor.execute(promptlist, tools=tools).model_dump()
+
+            tool_calls = res["choices"][0]["message"]["tool_calls"]
+
+            for tool_call in tool_calls:
+                func = tool_call["function"]["name"]
+                arguments = tool_call["function"]["arguments"]
+
+                results = {}
+                # make funciton call
+                results = repair_helper_functions(func, arguments, input_path, output_path)
+
+                promptlist.append({"role": "tool", "content": json.dumps(results), "tool_call_id": tool_call["id"]})
+
+            res = self.prompt_executor.execute(promptlist).model_dump()
+
+
+
+        repair_response = {"prompt": promptlist, "response": res}
+
+        new_tests = res["choices"][0]["message"]["content"]
+
+        new_tests = self.extract_tests(new_tests, context, res, output_path)
+
+        return new_tests, repair_response
+

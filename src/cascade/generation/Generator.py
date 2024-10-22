@@ -18,3 +18,6 @@ class Generator(ABC):
         :param input_path:
         """
         pass
+
+    def repair(self, context_, input_path, output_path, errors, key):
+        pass

@@ -45,3 +45,13 @@ class Generation:
         doc, response = self.doc_generator.generate(context_, input_path, output_path, safety_copy_prefix)
         del context_
         return doc, response
+
+    def repair_tests(self, context, input_path, output_path, errors, key):
+        """
+        TODO
+        :param input_path:
+        """
+        context_ = copy.deepcopy(context)
+        tests, response = self.test_generator.repair(context_, input_path, output_path, errors, key)
+        del context_
+        return tests, response

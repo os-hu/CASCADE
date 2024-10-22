@@ -1,4 +1,6 @@
 import os
+import json
+import ast
 import subprocess
 
 
@@ -64,4 +66,60 @@ def check_syntax(code, type, output_path):
         return True
     else:
         return False
+
+
+def repair_helper_functions(func, arguments, input_path, output_path):
+    arguments = json.loads(arguments)
+    functions = {"get_class_methods": get_class_methods, "get_class_constructors": get_class_constructors,
+                 "get_child_classes": get_child_classes}
+
+    try:
+        return functions[func](input_path, output_path, **arguments)
+    except:
+        return {}
+
+
+
+def get_class_methods(input_path, output_path, path_to_class, private_included):
+    with open(os.path.join( output_path ,"extracted.json"), "r") as f:
+        data = json.load(f)
+
+    returns = []
+
+    for d in data:
+        if d["code_file_path"] == path_to_class and (private_included or "private" not in d["signature"]["modifier"]):
+            returns.append(build_signature(d))
+
+    return { "methods" : list(returns)}
+
+
+def get_class_constructors(input_path, output_path, path_to_class):
+    with open(os.path.join( output_path ,"extracted.json"), "r") as f:
+        data = json.load(f)
+
+
+    returns = []
+
+    for d in data:
+        if d["code_file_path"] ==  path_to_class:
+            returns = d['parent']['constructors']
+            break
+
+    return { "constructors" : returns}
+
+
+def get_child_classes(input_path, output_path, class_name, abstract_included):
+    with open(os.path.join( output_path ,"extracted.json"), "r") as f:
+        data = json.load(f)
+
+    returns = set()
+
+    for d in data:
+        if abstract_included or ("interface" not in d["parent"]["kind"] and "abstract" not in d["parent"]["modifiers"]):
+            if class_name in d["parent"]["implements"] or class_name in d["parent"]["extends"]:
+                returns.add(d["code_file_path"])
+
+    return { "child_classes" : list(returns)}
+
+
 
