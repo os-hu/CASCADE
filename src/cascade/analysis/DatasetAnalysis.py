@@ -200,7 +200,7 @@ class DatasetAnalysis(Analysis):
                 comp_error = matches[-1].strip()
                 comp_error = comp_error.replace("THIS_IS_A_UNIQUE_NAME_Test", d["test_file_path"].split("/")[-1].split(".")[0])
 
-                new_tests , response = self.generator.repair_tests(d, input_path, output_path, comp_error)
+                new_tests , response = self.generator.repair_tests(d, input_path, output_path, comp_error, 'new_tests')
 
                 new_tests = new_tests.replace(d["test_file_path"].split("/")[-1].split(".")[0], str("THIS_IS_A_UNIQUE_NAME_Test"))
                 d["new_tests"] = new_tests
