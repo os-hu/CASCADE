@@ -133,6 +133,8 @@ class DatasetAnalysis(Analysis):
         else:
             junit_version = d["junit_version"]
 
+        test_class_real_name = d["test_file_path"].split("/")[-1].split(".")[0]
+        test_class_unique_name = "THIS_IS_A_UNIQUE_NAME_Test"
 
         # found in imports ?
         junit_found = False
@@ -157,19 +159,20 @@ class DatasetAnalysis(Analysis):
                 d["test_imports"] = ["import org.junit.jupiter.api.*;\n"]
 
 
-        print(f"Starting analysis of function: {d['signature']['name']}")
 
+        print(f"Starting analysis of function: {d['signature']['name']}")
+        print("    Level 1")
         if not "new_tests" in d:
             print("generate new tests")
             new_tests, response = self.generator.generate_tests(d, input_path, output_path)
-            new_tests = new_tests.replace(d["test_file_path"].split("/")[-1].split(".")[0], str("THIS_IS_A_UNIQUE_NAME_Test"))
+            new_tests = new_tests.replace(test_class_real_name, test_class_unique_name)
             d["new_tests"] = new_tests
             d["new_tests_response"] = response
 
         else:
             print("new tests already generated")
 
-        d["test_file_path"] = d["test_file_path"].replace(d["test_file_path"].split("/")[-1].split(".")[0], str("THIS_IS_A_UNIQUE_NAME_Test"))
+        d["test_file_path"] = d["test_file_path"].replace( test_class_real_name, test_class_unique_name )
 
         print("execute new tests")
 
@@ -193,16 +196,17 @@ class DatasetAnalysis(Analysis):
 
             if not matches:
                 # No match (compilation error) found.
-                output = "Negative, error in layer 2: code, new_tests"
+                output = "No compilation error"
 
             else:
                 # Get the last occurrence
                 comp_error = matches[-1].strip()
-                comp_error = comp_error.replace("THIS_IS_A_UNIQUE_NAME_Test", d["test_file_path"].split("/")[-1].split(".")[0])
+                comp_error = comp_error.replace( test_class_unique_name , test_class_real_name )
+                d["new_tests"] = d["new_tests"].replace( test_class_unique_name , test_class_real_name )
 
                 new_tests , response = self.generator.repair_tests(d, input_path, output_path, comp_error, 'new_tests')
 
-                new_tests = new_tests.replace(d["test_file_path"].split("/")[-1].split(".")[0], str("THIS_IS_A_UNIQUE_NAME_Test"))
+                new_tests = new_tests.replace( test_class_real_name, test_class_unique_name )
                 d["new_tests"] = new_tests
                 d["new_tests_repair_response"] = response
 
