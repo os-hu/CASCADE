@@ -190,7 +190,7 @@ class DatasetAnalysis(Analysis):
                 exec_output = f.read()
             # If it errored we want to know the compilation error:
 
-            pattern = r"(\[ERROR\] COMPILATION ERROR :.*?\[INFO\] -------------------------------------------------------------)"
+            pattern = r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -{61}\n(.*?)\[INFO\] -{61}'
 
             matches = re.findall(pattern, exec_output, re.DOTALL)
 

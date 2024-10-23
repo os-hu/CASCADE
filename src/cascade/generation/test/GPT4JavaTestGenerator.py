@@ -269,7 +269,7 @@ class GPT4JavaTestGenerator(Generator):
         # TODO could be excluded into a tool call as well?
         tree = subprocess.check_output(["tree", "-P", "*.java", input_path]).decode("utf-8")
 
-        system_prompt = "You are a Java developer assistant. Fix the following errors in the provided unit test class. Use tools to find out more about classes instead of making assumptions."
+        system_prompt = "You are a Java developer assistant. Fix compilation errors in the provided test class. Use tools to find out more about classes instead of making assumptions."
 
         prompt = f"The following errors occurred during compilation.\n```\n{errors}\n```\n This is the project structure \n```\n{tree}\n```\n Please fix the errors in the following test class:\n```java\n{context[key]}\n```"
 
@@ -289,7 +289,7 @@ class GPT4JavaTestGenerator(Generator):
                 arguments = tool_call["function"]["arguments"]
 
                 results = {}
-                # make funciton call
+                # make possible function calls
                 results = repair_helper_functions(func, arguments, input_path, output_path)
 
                 promptlist.append({"role": "tool", "content": json.dumps(results), "tool_call_id": tool_call["id"]})
