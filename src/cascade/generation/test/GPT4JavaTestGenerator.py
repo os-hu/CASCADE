@@ -140,7 +140,9 @@ class GPT4JavaTestGenerator(Generator):
 
             prompt.append({"role" : "user", "content" : repair_question})
 
-            repair = self.prompt_executor.execute(prompt).model_dump()
+            repair = self.prompt_executor.execute(prompt)
+
+            repair = repair.model_dump()
 
             # if self.ask_for_imports or (len(context["test_imports"]) == 1 and "*" in context["test_imports"][0]):
             #     prompt.append({"role" : "assistant", "content" : response["choices"][0]["message"]["content"]})
