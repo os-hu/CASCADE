@@ -196,7 +196,8 @@ class DatasetAnalysis(Analysis):
 
             if not matches:
                 # No match (compilation error) found.
-                output = "No compilation error"
+                with open( output_path + "/log.txt", "a") as f:
+                    f.write("No compilation error found\n")
 
             else:
                 # Get the last occurrence
@@ -220,7 +221,7 @@ class DatasetAnalysis(Analysis):
                 evaluated = self.evaluate(d["results"]["(code, new_tests)"])
 
         if evaluated >= 0:
-            output += "Negative"
+            output = "Negative"
             output += ", error in layer 2: code, new_tests" if evaluated == 0 else ", pass in layer 2: code, new_tests"
 
         else:
