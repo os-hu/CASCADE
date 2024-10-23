@@ -28,15 +28,17 @@ class GPT4JavaTestGenerator(Generator):
     def build_prompt(self, context):
         enc = tiktoken.encoding_for_model(self.model)
 
-        testframework = "3" if self.is_three else "4" if "junit_version" in context and context["junit_version"].startswith("4") else "5"
+        testframework = ""
+        if "junit_version" in context:
+            version = context["junit_version"]
+            testframework = "Use JUnit version " + (version if version[0].isdigit() else "5" )
+
 
         par = context['signature']['params']
         params = ", ".join(par) if len(par) > 1 else (par[0] if par else "")
 
         #system_prompt = f"Write Java tests for the function {context['signature']['name']}. Follow its documentation as closely as possible."
-        system_prompt = f"You are a Java developer assistant. Generate unit tests for the function `{context['signature']['name']}({params})` in the provided class, using only its documentation. Use JUnit {testframework}. You can import anything from the project, but no third party libraries. Handle exceptions properly, and ensure method signatures and calls are correct. The code should compile without errors." #Use only standard Java libraries and do not import any external or third-party packages. Ensure all code is compilable and follows best practices."
-
-
+        system_prompt = f"You are a Java developer assistant. Generate unit tests for the function `{context['signature']['name']}({params})` in the provided class, using only its documentation. {testframework}. You can import anything from the project, but no third party libraries. Handle exceptions properly, and ensure method signatures and calls are correct. The code should compile without errors." #Use only standard Java libraries and do not import any external or third-party packages. Ensure all code is compilable and follows best practices."
 
         c1 = "Here is the class containing the function:\n\n```java\n"
         c2 = "{\n    // this is the function to be tested\n;\n}\n```\n"
