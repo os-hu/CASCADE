@@ -76,7 +76,7 @@ class GPT4JavaCodeGenerator(Generator):
 
         new_code = response["response"]["choices"][0]["message"]["content"]
 
-        new_code = self.extract_code(new_code, context, response["response"])
+        new_code = self.extract_code(new_code, context, response["response"], output_path)
 
         return new_code , response
 
