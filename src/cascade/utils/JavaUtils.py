@@ -71,14 +71,20 @@ def check_syntax(code, type, output_path):
 def repair_helper_functions(func, arguments, input_path, output_path):
     arguments = json.loads(arguments)
     functions = {"get_class_methods": get_class_methods, "get_class_constructors": get_class_constructors,
-                 "get_child_classes": get_child_classes}
+                 "get_child_classes": get_child_classes, "get_file_content" : get_file_content}
 
     try:
         return functions[func](input_path, output_path, **arguments)
     except:
         return {}
 
-
+def get_file_content(input_path, output_path, path_to_file):
+    path = os.path.join( input_path, path_to_file)
+    if os.path.exists(path):
+        with open(path, "r") as f:
+            return {"content" : f.read()}
+    else:
+        return {"content" : "file does not exist"}
 
 def get_class_methods(input_path, output_path, path_to_class, private_included):
     with open(os.path.join( output_path ,"extracted.json"), "r") as f:

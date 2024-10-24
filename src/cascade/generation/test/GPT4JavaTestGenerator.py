@@ -126,25 +126,26 @@ class GPT4JavaTestGenerator(Generator):
 
         if not response:
             response = self.prompt_executor.execute(prompt).model_dump()
+            new_tests = self.extract_tests(response["choices"][0]["message"]["content"], context, response, output_path)
 
-            safety_copy = copy.deepcopy(context)
+            prompt.append({ "role" : "assistant", "content" : f"´´´java\n{new_tests}\n```"})
 
             imports = dict()
 
-            text = response["choices"][0]["message"]["content"]
-
             # extract all 'new' statements.
-            calls = re.findall(r"new (.*?)\(", text, flags=re.DOTALL)
+            calls = re.findall(r"new (.*?)\(", new_tests, flags=re.DOTALL)
 
             tree = subprocess.check_output(["tree", "-P", "*.java", input_path]).decode("utf-8")
 
-            repair_question = f"{', '.join(calls)} are new, fix all missing imports using this directory structure:\n```\n{tree}\n```"
+            repair_question = f"{', '.join(calls)} {'are' if len(calls) > 1 else 'is'} new, fix all missing imports using this directory structure:\n```\n{tree}\n```"
 
             prompt.append({"role" : "user", "content" : repair_question})
 
             repair = self.prompt_executor.execute(prompt)
 
             repair = repair.model_dump()
+
+            prompt.append(repair["choices"][0]["message"])
 
             # if self.ask_for_imports or (len(context["test_imports"]) == 1 and "*" in context["test_imports"][0]):
             #     prompt.append({"role" : "assistant", "content" : response["choices"][0]["message"]["content"]})
@@ -157,20 +158,16 @@ class GPT4JavaTestGenerator(Generator):
             #     context["test_imports"] = list(set(context["test_imports"]))
 
             response = {"prompt" : prompt, "response" : response, "repair" : repair ,  "imports" : imports}
-            safety_copy["response"] = response
-            with open(test_safety_copy_path , "w") as file:
-                json.dump(safety_copy, file)
 
-        # TODO WRONG RESPONSE
         new_tests = response["repair"]["choices"][0]["message"]["content"]
 
-        new_tests = self.extract_tests(new_tests, context, response, output_path)
+        new_tests = self.extract_tests(new_tests, context, response["repair"], output_path)
 
         return new_tests , response
 
 
     def extract_tests(self, new_tests, context, response, output_path):
-        code_blocks = re.findall(r"```java(.*?)\n```", new_tests, flags=re.DOTALL)
+        code_blocks = re.findall(r"```java(.*?)\n\s*```", new_tests, flags=re.DOTALL)
 
         if not code_blocks == []:
             new_tests = code_blocks[0]
@@ -219,7 +216,7 @@ class GPT4JavaTestGenerator(Generator):
 
 
         if braces > 2:
-            if response['response']['choices'][0]["finish_reason"] == "length":
+            if response['choices'][0]["finish_reason"] == "length":
                 last_test = 0
                 lines = new_tests.splitlines()
 
@@ -263,8 +260,11 @@ class GPT4JavaTestGenerator(Generator):
             ("private_included", "boolean", "Should private methods be included?")])
         t3 = build_tool("get_class_constructors", "Gets a list of constructors for a given class.", [
             ("class_name", "string", "The simple name of the class for which child classes are to be retrieved")])
+        t4 = build_tool("get_file_content", "Gets the content of a specific file.", [
+            ("path_to_file", "string", "The relative path to the file")])
 
-        tools = [t1,t2,t3]
+
+        tools = [t1,t2,t3, t4]
 
         # TODO could be excluded into a tool call as well?
         tree = subprocess.check_output(["tree", "-P", "*.java", input_path]).decode("utf-8")
@@ -288,9 +288,14 @@ class GPT4JavaTestGenerator(Generator):
                 func = tool_call["function"]["name"]
                 arguments = tool_call["function"]["arguments"]
 
-                results = {}
+                if func == "get_file_content" and arguments["path_to_file"] in [context["test_file_path"], context["code_file_path"]]:
+                    results = { "content" : "" , "error" : "path prohibited" }
+                    #if arguments["path_to_file"] == context["code_file_path"]:
+                    #    code_file = build_context(context, doc=True) + "; // this is the function to be tested\n}"
+
+                else:
                 # make possible function calls
-                results = repair_helper_functions(func, arguments, input_path, output_path)
+                    results = repair_helper_functions(func, arguments, input_path, output_path)
 
                 promptlist.append({"role": "tool", "content": json.dumps(results), "tool_call_id": tool_call["id"]})
 
