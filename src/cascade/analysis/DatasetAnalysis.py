@@ -190,9 +190,7 @@ class DatasetAnalysis(Analysis):
                 exec_output = f.read()
             # If it errored we want to know the compilation error:
 
-            pattern = r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -{61}\n(.*?)\[INFO\] -{61}'
-
-            matches = re.findall(pattern, exec_output, re.DOTALL)
+            matches = re.findall(r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -*\n(.*?)\[INFO\]', exec_output, re.DOTALL)
 
             if not matches:
                 # No match (compilation error) found.
@@ -220,6 +218,8 @@ class DatasetAnalysis(Analysis):
 
                 evaluated = self.evaluate(d["results"]["(code, new_tests)"])
 
+
+
         if evaluated >= 0:
             output = "Negative"
             output += ", error in layer 2: code, new_tests" if evaluated == 0 else ", pass in layer 2: code, new_tests"
@@ -231,21 +231,50 @@ class DatasetAnalysis(Analysis):
             d["new_code"] = new_code
             d["new_code_response"] = response
 
-            # execute new code
+            print("execute new code")
             res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
-
 
             d["results"]["(new_code, new_tests)"] = res3
             save_dicts_list_to_json([d], ana_path)
 
-            evaluated = self.evaluate(res3)
+            # check if it errored
+            evaluated = self.evaluate(d["results"]["(new_code, new_tests)"])
+            if evaluated == 0:
+                with open(output_path + "/log.txt", "r") as f:
+                    exec_output = f.read()
+                # If it errored we want to know the compilation error:
+
+                matches = re.findall(r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -*\n(.*?)\[INFO\]', exec_output,
+                                     re.DOTALL)
+
+                if not matches:
+                    # No match (compilation error) found.
+                    with open(output_path + "/log.txt", "a") as f:
+                        f.write("No compilation error found\n")
+
+                else:
+                    # Get the last occurrence
+                    comp_error = matches[-1].strip()
+
+                    new_code, response = self.generator.repair_code(d, input_path, output_path, comp_error, 'new_code')
+
+                    d["new_code"] = new_code
+                    d["new_code_repair_response"] = response
+
+                    print("execute repaired code")
+                    res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
+
+                    d["results"]["(new_code, new_tests)"] = res3
+                    save_dicts_list_to_json([d], ana_path)
+
+                    evaluated = self.evaluate(d["results"]["(new_code, new_tests)"])
+
             if evaluated <= 0:
                 output += "Negative"
                 output += ", error in layer 3: new_code, new_tests" if evaluated == 0 else ", fail in layer 3: new_code, new_tests"
 
             else:
                 output += "Positive"
-
 
         with open("result.txt", "w") as f:
             f.write(output)

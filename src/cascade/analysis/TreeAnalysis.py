@@ -24,8 +24,6 @@ class TreeAnalysis(Analysis):
         self.visualizer.logger = "tqdm"
 
 
-
-
     def analyse(self, data: list, input_path, output_path):
         """
         This
@@ -35,8 +33,6 @@ class TreeAnalysis(Analysis):
         :param output_path:
         :return:
         """
-
-
 
         # allows setting up requirements needed in every step of the execution (i.e. load docker images )
         print("Set up started")

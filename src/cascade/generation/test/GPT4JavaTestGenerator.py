@@ -13,7 +13,7 @@ from cascade.utils.JavaUtils import build_context, check_syntax, repair_helper_f
 
 
 class GPT4JavaTestGenerator(Generator):
-    def __init__(self, max_attempts=1, max_tokens=10000, temperature=0, delay=3, max_prompt_tokens=5000, model="gpt-4o-mini-2024-07-18", freq_penalty=0.0, dummy=False, ask_for_imports=False, import_prompt_finisher="Reply with the missing imports, leave out those you don't know the correct package of."):
+    def __init__(self, max_attempts=1, max_tokens=40000, temperature=0, delay=3, max_prompt_tokens=5000, model="gpt-4o-mini-2024-07-18", freq_penalty=0.0, dummy=False, ask_for_imports=False, import_prompt_finisher="Reply with the missing imports, leave out those you don't know the correct package of."):
         super().__init__()
         self.ask_for_imports = ask_for_imports
         self.model = model
@@ -41,7 +41,7 @@ class GPT4JavaTestGenerator(Generator):
         system_prompt = f"You are a Java developer assistant. Generate unit tests for the function `{context['signature']['name']}({params})` in the provided class, using only its documentation. {testframework}. You can import anything from the project, but no third party libraries. Handle exceptions properly, and ensure method signatures and calls are correct. The code should compile without errors." #Use only standard Java libraries and do not import any external or third-party packages. Ensure all code is compilable and follows best practices."
 
         c1 = "Here is the class containing the function:\n\n```java\n"
-        c2 = "{\n    // this is the function to be tested\n;\n}\n```\n"
+        c2 = "; // this is the function to be tested\n\n}\n```\n"
         code = c1 + build_context(context, doc=True) + c2
 
         #test_header = "\n\n// TESTS:\n\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here. Take the Documentation as literal as possible.\n")
@@ -111,53 +111,40 @@ class GPT4JavaTestGenerator(Generator):
 
     def generate(self, context, input_path, output_path, safety_copy_prefix):
         prompt = self.build_prompt(context)
-        test_safety_copy_path = os.path.join(output_path, safety_copy_prefix + "test_generator_current.json")
 
-        response = None
-        if os.path.exists(test_safety_copy_path):
-            with open(test_safety_copy_path, "r") as file:
-                context2 = json.load(file)
+        response = self.prompt_executor.execute(prompt).model_dump()
+        new_tests = self.extract_tests(response["choices"][0]["message"]["content"], context, response, output_path)
 
-            response = context2["response"]
-            del context2["response"]
+        prompt.append({ "role" : "assistant", "content" : f"´´´java\n{new_tests}\n```"})
 
-            if context != context2:
-                response = None
+        imports = dict()
 
-        if not response:
-            response = self.prompt_executor.execute(prompt).model_dump()
-            new_tests = self.extract_tests(response["choices"][0]["message"]["content"], context, response, output_path)
+        # extract all 'new' statements.
+        calls = re.findall(r"new (.*?)\(", new_tests, flags=re.DOTALL)
 
-            prompt.append({ "role" : "assistant", "content" : f"´´´java\n{new_tests}\n```"})
+        tree = subprocess.check_output(["tree", "-P", "*.java", input_path]).decode("utf-8")
 
-            imports = dict()
+        repair_question = f"{', '.join(calls)} {'are' if len(calls) > 1 else 'is'} new, fix all missing imports using this directory structure:\n```\n{tree}\n```"
 
-            # extract all 'new' statements.
-            calls = re.findall(r"new (.*?)\(", new_tests, flags=re.DOTALL)
+        prompt.append({"role" : "user", "content" : repair_question})
 
-            tree = subprocess.check_output(["tree", "-P", "*.java", input_path]).decode("utf-8")
+        repair = self.prompt_executor.execute(prompt)
 
-            repair_question = f"{', '.join(calls)} {'are' if len(calls) > 1 else 'is'} new, fix all missing imports using this directory structure:\n```\n{tree}\n```"
+        repair = repair.model_dump()
 
-            prompt.append({"role" : "user", "content" : repair_question})
+        prompt.append(repair["choices"][0]["message"])
 
-            repair = self.prompt_executor.execute(prompt)
+        # if self.ask_for_imports or (len(context["test_imports"]) == 1 and "*" in context["test_imports"][0]):
+        #     prompt.append({"role" : "assistant", "content" : response["choices"][0]["message"]["content"]})
+        #     prompt.append({"role" : "user", "content" : f"Give me the missing imports for this code to work. For the tests, I am already importing:\n```java\n{''.join(context['test_imports'])}\n```\n\n The tested class imports:\n```java\n{''.join(context['parent']['imports'])}\n```\n\n{self.import_prompt_finisher}" })
+        #     imports = self.prompt_executor.execute(prompt).model_dump()
+        #     imports_message = imports["choices"][0]["message"]["content"]
+        #     for line in imports_message.splitlines():
+        #         if "import" in line and ";" in line:
+        #             context["test_imports"].append(line + "\n")
+        #     context["test_imports"] = list(set(context["test_imports"]))
 
-            repair = repair.model_dump()
-
-            prompt.append(repair["choices"][0]["message"])
-
-            # if self.ask_for_imports or (len(context["test_imports"]) == 1 and "*" in context["test_imports"][0]):
-            #     prompt.append({"role" : "assistant", "content" : response["choices"][0]["message"]["content"]})
-            #     prompt.append({"role" : "user", "content" : f"Give me the missing imports for this code to work. For the tests, I am already importing:\n```java\n{''.join(context['test_imports'])}\n```\n\n The tested class imports:\n```java\n{''.join(context['parent']['imports'])}\n```\n\n{self.import_prompt_finisher}" })
-            #     imports = self.prompt_executor.execute(prompt).model_dump()
-            #     imports_message = imports["choices"][0]["message"]["content"]
-            #     for line in imports_message.splitlines():
-            #         if "import" in line and ";" in line:
-            #             context["test_imports"].append(line + "\n")
-            #     context["test_imports"] = list(set(context["test_imports"]))
-
-            response = {"prompt" : prompt, "response" : response, "repair" : repair ,  "imports" : imports}
+        response = {"prompt" : prompt, "response" : response, "repair" : repair ,  "imports" : imports}
 
         new_tests = response["repair"]["choices"][0]["message"]["content"]
 
@@ -169,7 +156,7 @@ class GPT4JavaTestGenerator(Generator):
     def extract_tests(self, new_tests, context, response, output_path):
         code_blocks = re.findall(r"```java(.*?)\n\s*```", new_tests, flags=re.DOTALL)
 
-        if not code_blocks == []:
+        if code_blocks:
             new_tests = code_blocks[0]
         else:
             new_tests = new_tests.split("```java")[-1].strip()

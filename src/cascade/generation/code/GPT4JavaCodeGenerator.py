@@ -10,7 +10,7 @@ import tiktoken
 import json
 
 class GPT4JavaCodeGenerator(Generator):
-    def __init__(self, max_attempts=1, max_tokens=1000, temperature=0, delay=3, max_prompt_tokens=2000, model="gpt-4", freq_penalty=0.0, dummy=False):
+    def __init__(self, max_attempts=1, max_tokens=10000, temperature=0, delay=3, max_prompt_tokens=5000, model="gpt-4o-mini-2024-07-18", freq_penalty=0.0, dummy=False):
         super().__init__()
         self.model = model
         self.max_prompt_tokens = max_prompt_tokens
@@ -20,7 +20,7 @@ class GPT4JavaCodeGenerator(Generator):
     def build_prompt(self, context):
         enc = tiktoken.encoding_for_model(self.model)
 
-        system_prompt = f"Write the body of one Java function for {context['signature']['name']}. Follow its documentation as closely as possible. Respond only with the completion of the function body."
+        system_prompt = f"Write the body of one Java function for {context['signature']['name']}. Follow its documentation as closely as possible. Respond only with the function"
 
         packg_declaration = f"package {context['package']};\n\n"
 
@@ -49,6 +49,10 @@ class GPT4JavaCodeGenerator(Generator):
             prompt = packg_declaration + imports + code + primer
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
+            code = build_context(context, doc=True, no_fields=True, no_constructors=True,  no_other_method_docs=True, no_other_methods=True)
+            prompt = code + primer
+
+        if len(enc.encode(prompt)) > self.max_prompt_tokens:
             return []
 
 
@@ -61,53 +65,39 @@ class GPT4JavaCodeGenerator(Generator):
 
     def generate(self, context, input_path, output_path, safety_copy_prefix):
         prompt = self.build_prompt(context)
-        code_safety_copy_path = os.path.join(output_path, safety_copy_prefix + "code_generator_current.json")
 
-
-        if prompt == "":
+        if not prompt:
             return "", None
 
-        response = None
-        if os.path.exists(code_safety_copy_path):
-            with open(code_safety_copy_path, "r") as file:
-                context2 = json.load(file)
+        response = self.prompt_executor.execute(prompt).model_dump()
 
-            response = context2["response"]
-            del context2["response"]
+        response = {"prompt": prompt, "response": response}
 
-            if context != context2:
-                response = None
+        new_code = response["response"]["choices"][0]["message"]["content"]
 
-        if not response:
-            response = self.prompt_executor.execute(prompt).model_dump()
-
-            safety_copy = copy.deepcopy(context)
-            safety_copy["response"] = response
-
-            with open(code_safety_copy_path, "w") as file:
-                json.dump(safety_copy, file)
-
-        new_code = response["choices"][0]["message"]["content"]
-
-        new_code = self.extract_code(new_code, context, response)
+        new_code = self.extract_code(new_code, context, response["response"])
 
         return new_code , response
+
+
 
     def extract_code(self, new_code, context, response):
         code_blocks = re.findall(r"```java(.*?)\n```", new_code, flags=re.DOTALL)
 
         if code_blocks:
             new_code = code_blocks[0]
+        else:
+            new_code = new_code.split("```java")[-1].strip()
 
         return self.try_to_fix(new_code, context, response)
 
 
-
-
     def try_to_fix(self, new_code, context, response):
-        temp = new_code.split(build_signature(context , False) + "{")
+        temp = new_code.split(build_signature(context , False))
         if len(temp) > 1:
             new_code = "".join(temp[1:])
+            new_code = new_code[new_code.find("{") + 1:]
+
 
         fixed_code = ""
         # First brace is already there
