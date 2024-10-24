@@ -1,5 +1,4 @@
 import re
-from inspect import signature
 
 from cascade.generation.Generator import Generator
 from cascade.generation.executor.OpenAIChatCompletionExecutor import OpenAIChatCompletionExecutor

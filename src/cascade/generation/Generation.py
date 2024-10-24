@@ -55,3 +55,13 @@ class Generation:
         tests, response = self.test_generator.repair(context_, input_path, output_path, errors, key)
         del context_
         return tests, response
+
+    def repair_code(self, context, input_path, output_path, errors, key):
+        """
+        TODO
+        :param input_path:
+        """
+        context_ = copy.deepcopy(context)
+        code, response = self.code_generator.repair(context_, input_path, output_path, errors, key)
+        del context_
+        return code, response
