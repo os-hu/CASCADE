@@ -266,22 +266,26 @@ class GPT4JavaTestGenerator(Generator):
 
         res = self.prompt_executor.execute(promptlist, tools=tools).model_dump()
 
-        if res["choices"][0]["finish_reason"] == "tool_calls":
-            promptlist.append(res['choices'][0]['message'])
+        for i in range(3):
+            if res["choices"][0]["finish_reason"] == "tool_calls":
+                promptlist.append(res['choices'][0]['message'])
 
-            tool_calls = res["choices"][0]["message"]["tool_calls"]
+                tool_calls = res["choices"][0]["message"]["tool_calls"]
 
-            for tool_call in tool_calls:
-                func = tool_call["function"]["name"]
-                arguments = tool_call["function"]["arguments"]
+                for tool_call in tool_calls:
+                    func = tool_call["function"]["name"]
+                    arguments = tool_call["function"]["arguments"]
 
-                results = repair_helper_functions(func, arguments, input_path, output_path, context)
+                    results = repair_helper_functions(func, arguments, input_path, output_path, context)
 
-                promptlist.append({"role": "tool", "content": json.dumps(results), "tool_call_id": tool_call["id"]})
+                    promptlist.append({"role": "tool", "content": json.dumps(results), "tool_call_id": tool_call["id"]})
 
+                res = self.prompt_executor.execute(promptlist, tools=tools).model_dump()
+            else:
+                break
+        else:  # this should only be reached if the for loop ended without a break   then we do a final model call without allowing asking for tools
             res = self.prompt_executor.execute(promptlist).model_dump()
-
-
+        promptlist.append(res['choices'][0]['message'])
 
         repair_response = {"prompt": promptlist, "response": res}
 

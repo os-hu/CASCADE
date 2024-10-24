@@ -151,7 +151,7 @@ class DatasetAnalysis(Analysis):
                     break
 
         if not junit_found:
-            if junit_version.startswith("3.8"):
+            if junit_version.startswith("3"):
                 d["test_imports"] = ["import junit.framework.*;\n"]
             elif junit_version.startswith("4."):
                 d["test_imports"] = ["import org.junit.*;\n" , "import static org.junit.Assert.*;\n"]
@@ -171,20 +171,28 @@ class DatasetAnalysis(Analysis):
 
         else:
             print("new tests already generated")
+        d["results"] = {}
+
+
+
 
         d["test_file_path"] = d["test_file_path"].replace( test_class_real_name, test_class_unique_name )
 
         print("execute new tests")
 
+
+
+
         res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
 
-        d["results"] = {}
         d["results"]["(code, new_tests)"] = res2
 
         save_dicts_list_to_json([d], ana_path)
 
         # check if it passed failed or errored
         evaluated = self.evaluate(d["results"]["(code, new_tests)"])
+
+
         if evaluated == 0:
             with open( output_path + "/log.txt", "r") as f:
                 exec_output = f.read()
@@ -244,8 +252,7 @@ class DatasetAnalysis(Analysis):
                     exec_output = f.read()
                 # If it errored we want to know the compilation error:
 
-                matches = re.findall(r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -*\n(.*?)\[INFO\]', exec_output,
-                                     re.DOTALL)
+                matches = re.findall(r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -*\n(.*?)\[INFO\]', exec_output, re.DOTALL)
 
                 if not matches:
                     # No match (compilation error) found.
