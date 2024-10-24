@@ -13,7 +13,7 @@ from cascade.utils.JavaUtils import build_context, check_syntax, repair_helper_f
 
 
 class GPT4JavaTestGenerator(Generator):
-    def __init__(self, max_attempts=1, max_tokens=40000, temperature=0, delay=3, max_prompt_tokens=5000, model="gpt-4o-mini-2024-07-18", freq_penalty=0.0, dummy=False, ask_for_imports=False, import_prompt_finisher="Reply with the missing imports, leave out those you don't know the correct package of."):
+    def __init__(self, max_attempts=1, max_tokens=16000, temperature=0, delay=3, max_prompt_tokens=5000, model="gpt-4o-mini-2024-07-18", freq_penalty=0.0, dummy=False, ask_for_imports=False, import_prompt_finisher="Reply with the missing imports, leave out those you don't know the correct package of."):
         super().__init__()
         self.ask_for_imports = ask_for_imports
         self.model = model
@@ -275,14 +275,7 @@ class GPT4JavaTestGenerator(Generator):
                 func = tool_call["function"]["name"]
                 arguments = tool_call["function"]["arguments"]
 
-                if func == "get_file_content" and arguments["path_to_file"] in [context["test_file_path"], context["code_file_path"]]:
-                    results = { "content" : "" , "error" : "path prohibited" }
-                    #if arguments["path_to_file"] == context["code_file_path"]:
-                    #    code_file = build_context(context, doc=True) + "; // this is the function to be tested\n}"
-
-                else:
-                # make possible function calls
-                    results = repair_helper_functions(func, arguments, input_path, output_path)
+                results = repair_helper_functions(func, arguments, input_path, output_path, context)
 
                 promptlist.append({"role": "tool", "content": json.dumps(results), "tool_call_id": tool_call["id"]})
 

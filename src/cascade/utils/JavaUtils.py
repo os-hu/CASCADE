@@ -68,25 +68,29 @@ def check_syntax(code, type, output_path):
         return False
 
 
-def repair_helper_functions(func, arguments, input_path, output_path):
+def repair_helper_functions(func, arguments, input_path, output_path, context):
     arguments = json.loads(arguments)
     functions = {"get_class_methods": get_class_methods, "get_class_constructors": get_class_constructors,
                  "get_child_classes": get_child_classes, "get_file_content" : get_file_content}
 
     try:
-        return functions[func](input_path, output_path, **arguments)
+        return functions[func](input_path, output_path, context, **arguments)
     except:
         return {}
 
-def get_file_content(input_path, output_path, path_to_file):
+def get_file_content(input_path, output_path, context, path_to_file):
+    if path_to_file in [context["test_file_path"], context["code_file_path"]]:
+        return  { "content" : "" , "error" : "path prohibited" }
+
     path = os.path.join( input_path, path_to_file)
     if os.path.exists(path):
         with open(path, "r") as f:
             return {"content" : f.read()}
     else:
-        return {"content" : "file does not exist"}
+        return {"content" : "", "error" : "file does not exist"}
 
-def get_class_methods(input_path, output_path, path_to_class, private_included):
+
+def get_class_methods(input_path, output_path, context, path_to_class, private_included):
     with open(os.path.join( output_path ,"extracted.json"), "r") as f:
         data = json.load(f)
 
@@ -99,7 +103,7 @@ def get_class_methods(input_path, output_path, path_to_class, private_included):
     return { "methods" : list(returns)}
 
 
-def get_class_constructors(input_path, output_path, path_to_class):
+def get_class_constructors(input_path, output_path, context, path_to_class):
     with open(os.path.join( output_path ,"extracted.json"), "r") as f:
         data = json.load(f)
 
@@ -114,7 +118,7 @@ def get_class_constructors(input_path, output_path, path_to_class):
     return { "constructors" : returns}
 
 
-def get_child_classes(input_path, output_path, class_name, abstract_included):
+def get_child_classes(input_path, output_path, context, class_name, abstract_included):
     with open(os.path.join( output_path ,"extracted.json"), "r") as f:
         data = json.load(f)
 

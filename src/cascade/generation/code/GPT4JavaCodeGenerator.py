@@ -1,8 +1,9 @@
 import re
+from inspect import signature
 
 from cascade.generation.Generator import Generator
 from cascade.generation.executor.OpenAIChatCompletionExecutor import OpenAIChatCompletionExecutor
-from cascade.utils.JavaUtils import build_context, build_signature
+from cascade.utils.JavaUtils import build_context, build_signature, repair_helper_functions
 
 import os
 import copy
@@ -10,7 +11,7 @@ import tiktoken
 import json
 
 class GPT4JavaCodeGenerator(Generator):
-    def __init__(self, max_attempts=1, max_tokens=10000, temperature=0, delay=3, max_prompt_tokens=5000, model="gpt-4o-mini-2024-07-18", freq_penalty=0.0, dummy=False):
+    def __init__(self, max_attempts=1, max_tokens=16000, temperature=0, delay=3, max_prompt_tokens=5000, model="gpt-4o-mini-2024-07-18", freq_penalty=0.0, dummy=False):
         super().__init__()
         self.model = model
         self.max_prompt_tokens = max_prompt_tokens
@@ -81,7 +82,7 @@ class GPT4JavaCodeGenerator(Generator):
 
 
 
-    def extract_code(self, new_code, context, response):
+    def extract_code(self, new_code, context, response, output_path):
         code_blocks = re.findall(r"```java(.*?)\n```", new_code, flags=re.DOTALL)
 
         if code_blocks:
@@ -114,6 +115,72 @@ class GPT4JavaCodeGenerator(Generator):
         return "{" + fixed_code + "}"
 
 
+    def repair(self, context, input_path, output_path, errors, key):
+        def build_tool(name, description, parameters):
+            return {"type": "function",
+                    "function": {
+                        "name": name,
+                        "description": description,
+                        "strict": True,
+                        "parameters": {
+                            "type": "object",
+                            "required": [
+                                *map(lambda x: x[0], parameters)
+                            ],
+                            "properties": {
+                                **{x[0]: {"type": x[1], "description": x[2]} for x in parameters}
+                            },
+                            "additionalProperties": False
+                        }
+                    }}
+
+        t1 = build_tool("get_child_classes", "Gets all classes that implement or extend a given class.", [
+            ("class_name", "string", "The simple name of the class for which child classes are to be retrieved"),
+            ("abstract_included", "boolean", "Should abstract classes be included?")])
+        t2 = build_tool("get_class_methods", "Gets a list of all methods from a given class.", [
+            ("path_to_class", "string", "The relative path to the class"),
+            ("private_included", "boolean", "Should private methods be included?")])
+        t3 = build_tool("get_class_constructors", "Gets a list of constructors for a given class.", [
+            ("class_name", "string", "The simple name of the class for which child classes are to be retrieved")])
+        t4 = build_tool("get_file_content", "Gets the content of a specific file.", [
+            ("path_to_file", "string", "The relative path to the file")])
+
+        tools = [t1,t2,t3, t4]
+
+        system_prompt = "You are a Java developer assistant. Fix compilation errors in the provided code. Use tools to find out more about classes instead of making assumptions."
+
+        prompt = f"The following errors occurred during compilation of class {context["parent"]["name"]}.\n```\n{errors}\n```\n Fix the errors in the following function:\n```java\n{build_signature(context, doc=True) + context[key]}\n```"
+
+        promptlist = []
+        promptlist.append({"role": "system", "content": system_prompt})
+        promptlist.append({"role": "user", "content": prompt})
+
+        res = self.prompt_executor.execute(promptlist, tools=tools).model_dump()
+
+        if res["choices"][0]["finish_reason"] == "tool_calls":
+            promptlist.append(res['choices'][0]['message'])
+
+            tool_calls = res["choices"][0]["message"]["tool_calls"]
+
+            for tool_call in tool_calls:
+                func = tool_call["function"]["name"]
+                arguments = tool_call["function"]["arguments"]
+
+                results = repair_helper_functions(func, arguments, input_path, output_path, context)
+
+                promptlist.append({"role": "tool", "content": json.dumps(results), "tool_call_id": tool_call["id"]})
+
+            res = self.prompt_executor.execute(promptlist).model_dump()
+
+
+
+        repair_response = {"prompt": promptlist, "response": res}
+
+        new_code = res["choices"][0]["message"]["content"]
+
+        new_code = self.extract_code(new_code, context, res, output_path)
+
+        return new_code, repair_response
 
 
 
