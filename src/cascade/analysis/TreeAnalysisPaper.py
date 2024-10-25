@@ -109,7 +109,7 @@ class TreeAnalysisPaper(Analysis):
 
                 try:
                     res2 = self.executor.execute("code", "new_tests", d, input_path, output_path)
-
+                    d["results"]["(code, new_tests)"] = list(res2)
                 except:
                     d["results"]["(code, new_tests)"] = [[], [], []]
                     continue
@@ -142,7 +142,7 @@ class TreeAnalysisPaper(Analysis):
                         print("execute repaired tests")
                         res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
 
-                        d["results"]["(code, new_tests)"] = res2
+                        d["results"]["(code, new_tests)"] = list(res2)
                         evaluated = self.evaluate(d["results"]["(code, new_tests)"])
 
                 if self.debug >= 1:
@@ -243,7 +243,7 @@ class TreeAnalysisPaper(Analysis):
                     print("execute repaired code")
                     res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
 
-                    d["results"]["(new_code, new_tests)"] = res3
+                    d["results"]["(new_code, new_tests)"] = list(res3)
 
                     evaluated = self.evaluate(d["results"]["(new_code, new_tests)"])
 
