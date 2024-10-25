@@ -68,10 +68,47 @@ def check_syntax(code, type, output_path):
         return False
 
 
+
+def get_repair_helper_functions():
+    def build_tool(name, description, parameters):
+        return {"type": "function",
+                "function": {
+                    "name": name,
+                    "description": description,
+                    "strict": True,
+                    "parameters": {
+                        "type": "object",
+                        "required": [
+                            *map(lambda x: x[0], parameters)
+                        ],
+                        "properties": {
+                            **{x[0]: {"type": x[1], "description": x[2]} for x in parameters}
+                        },
+                        "additionalProperties": False
+                    }
+                }}
+
+    t1 = build_tool("get_child_classes", "Gets all classes that implement or extend a given class.", [
+        ("class_name", "string", "The simple name of the class for which child classes are to be retrieved"),
+        ("abstract_included", "boolean", "Should abstract classes be included?")])
+    t2 = build_tool("get_class_methods", "Gets a list of all methods from a given class.", [
+        ("path_to_class", "string", "The relative path to the class"),
+        ("private_included", "boolean", "Should private methods be included?")])
+    t3 = build_tool("get_class_constructors", "Gets a list of constructors for a given class.", [
+        ("path_to_class", "string", "The relative path to the class")])
+    t4 = build_tool("get_file_content", "Gets the content of a specific file.", [
+        ("path_to_file", "string", "The relative path to the file")])
+    t5 = build_tool("get_class_fields", "Gets a list of fields of a given class.", [
+        ("path_to_class", "string", "The relative path to the class"),])
+
+    tools = [t1, t2, t3, t4, t5]
+
+
+
 def repair_helper_functions(func, arguments, input_path, output_path, context):
     arguments = json.loads(arguments)
     functions = {"get_class_methods": get_class_methods, "get_class_constructors": get_class_constructors,
-                 "get_child_classes": get_child_classes, "get_file_content" : get_file_content}
+                 "get_child_classes": get_child_classes, "get_file_content" : get_file_content, "get_class_fields" : get_class_fields}
 
     try:
         return functions[func](input_path, output_path, context, **arguments)
@@ -101,6 +138,21 @@ def get_class_methods(input_path, output_path, context, path_to_class, private_i
             returns.append(build_signature(d))
 
     return { "methods" : list(returns)}
+
+
+def get_class_fields(input_path, output_path, context, path_to_class, private_included):
+    with open(os.path.join( output_path ,"extracted.json"), "r") as f:
+        data = json.load(f)
+
+
+    returns = []
+
+    for d in data:
+        if d["code_file_path"] ==  path_to_class:
+            returns = d['parent']['variables']
+            break
+
+    return { "constructors" : returns}
 
 
 def get_class_constructors(input_path, output_path, context, path_to_class):

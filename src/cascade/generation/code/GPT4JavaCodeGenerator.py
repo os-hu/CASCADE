@@ -2,7 +2,7 @@ import re
 
 from cascade.generation.Generator import Generator
 from cascade.generation.executor.OpenAIChatCompletionExecutor import OpenAIChatCompletionExecutor
-from cascade.utils.JavaUtils import build_context, build_signature, repair_helper_functions
+from cascade.utils.JavaUtils import build_context, build_signature, repair_helper_functions, get_repair_helper_functions
 
 import os
 import copy
@@ -24,7 +24,6 @@ class GPT4JavaCodeGenerator(Generator):
         params = ", ".join(par) if len(par) > 1 else (par[0] if par else "")
 
         system_prompt = f"You are a Java developer assistant. You will be given a class and have to implement a specific method, following its documentation as closely as possible. Handle exceptions properly, and ensure all calls are correct. Do not use any new imports. The code should compile without errors. Respond only with the function."
-
 
         packg_and_imports = f"package {context['package']};\n\n" + "".join(context["parent"]["imports"]) + "\n"
 
@@ -109,38 +108,9 @@ class GPT4JavaCodeGenerator(Generator):
 
 
     def repair(self, context, input_path, output_path, errors, key):
-        def build_tool(name, description, parameters):
-            return {"type": "function",
-                    "function": {
-                        "name": name,
-                        "description": description,
-                        "strict": True,
-                        "parameters": {
-                            "type": "object",
-                            "required": [
-                                *map(lambda x: x[0], parameters)
-                            ],
-                            "properties": {
-                                **{x[0]: {"type": x[1], "description": x[2]} for x in parameters}
-                            },
-                            "additionalProperties": False
-                        }
-                    }}
+        tools = get_repair_helper_functions()
 
-        t1 = build_tool("get_child_classes", "Gets all classes that implement or extend a given class.", [
-            ("class_name", "string", "The simple name of the class for which child classes are to be retrieved"),
-            ("abstract_included", "boolean", "Should abstract classes be included?")])
-        t2 = build_tool("get_class_methods", "Gets a list of all methods from a given class.", [
-            ("path_to_class", "string", "The relative path to the class"),
-            ("private_included", "boolean", "Should private methods be included?")])
-        t3 = build_tool("get_class_constructors", "Gets a list of constructors for a given class.", [
-            ("class_name", "string", "The simple name of the class for which child classes are to be retrieved")])
-        t4 = build_tool("get_file_content", "Gets the content of a specific file.", [
-            ("path_to_file", "string", "The relative path to the file")])
-
-        tools = [t1,t2,t3, t4]
-
-        system_prompt = "You are a Java developer assistant. Fix compilation errors in the provided code. Use tools to find out more about classes instead of making assumptions."
+        system_prompt = "You are a Java developer assistant. Fix compilation errors in the provided code. Use tools to find out more about classes instead of making your own assumptions. You have to assume that all fields are initialized with null"
 
         prompt = f"The following errors occurred during compilation of class {context["parent"]["name"]}.\n```\n{errors}\n```\n Fix the errors in the following function:\n```java\n{build_signature(context, doc=True) + context[key]}\n```"
 
@@ -150,6 +120,7 @@ class GPT4JavaCodeGenerator(Generator):
 
         res = self.prompt_executor.execute(promptlist, tools=tools).model_dump()
 
+        steps = 3
         for i in range(3):
             if res["choices"][0]["finish_reason"] == "tool_calls":
                 promptlist.append(res['choices'][0]['message'])
@@ -164,11 +135,13 @@ class GPT4JavaCodeGenerator(Generator):
 
                     promptlist.append({"role": "tool", "content": json.dumps(results), "tool_call_id": tool_call["id"]})
 
-                res = self.prompt_executor.execute(promptlist, tools=tools).model_dump()
-            else:
-                break
-        else: # this should only be reached if the for loop ended without a break   then we do a final model call without allowing asking for tools
-            res = self.prompt_executor.execute(promptlist).model_dump()
+                if i < steps - 1:
+                    res = self.prompt_executor.execute(promptlist, tools=tools).model_dump()
+                else:
+                    res = self.prompt_executor.execute(promptlist).model_dump()
+
+
+
         promptlist.append(res['choices'][0]['message'])
 
         repair_response = {"prompt": promptlist, "response": res}

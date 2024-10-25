@@ -173,15 +173,9 @@ class DatasetAnalysis(Analysis):
             print("new tests already generated")
         d["results"] = {}
 
-
-
-
         d["test_file_path"] = d["test_file_path"].replace( test_class_real_name, test_class_unique_name )
 
         print("execute new tests")
-
-
-
 
         res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
 
@@ -191,7 +185,6 @@ class DatasetAnalysis(Analysis):
 
         # check if it passed failed or errored
         evaluated = self.evaluate(d["results"]["(code, new_tests)"])
-
 
         if evaluated == 0:
             with open( output_path + "/log.txt", "r") as f:
@@ -225,8 +218,6 @@ class DatasetAnalysis(Analysis):
                 save_dicts_list_to_json([d], ana_path)
 
                 evaluated = self.evaluate(d["results"]["(code, new_tests)"])
-
-
 
         if evaluated >= 0:
             output = "Negative"
