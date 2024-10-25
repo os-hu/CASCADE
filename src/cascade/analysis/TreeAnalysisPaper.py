@@ -11,7 +11,7 @@ from cascade.generation.Generation import Generation
 from cascade.utils.Utils import load_json_from_path, log, save_dicts_list_to_json
 
 
-class TreeAnalysis(Analysis):
+class TreeAnalysisPaper(Analysis):
     """
     TODO
     """
