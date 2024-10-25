@@ -20,41 +20,33 @@ class GPT4JavaCodeGenerator(Generator):
     def build_prompt(self, context):
         enc = tiktoken.encoding_for_model(self.model)
 
-        system_prompt = f"Write the body of one Java function for {context['signature']['name']}. Follow its documentation as closely as possible. Respond only with the function"
+        par = context['signature']['params']
+        params = ", ".join(par) if len(par) > 1 else (par[0] if par else "")
 
-        packg_declaration = f"package {context['package']};\n\n"
+        system_prompt = f"You are a Java developer assistant. You will be given a class and have to implement a specific method, following its documentation as closely as possible. Handle exceptions properly, and ensure all calls are correct. Do not use any new imports. The code should compile without errors. Respond only with the function."
 
-        imports = "".join(context["parent"]["imports"]) + "\n"
 
-        code = build_context(context, doc=True)
+        packg_and_imports = f"package {context['package']};\n\n" + "".join(context["parent"]["imports"]) + "\n"
 
-        primer =  "{\n// write the function body here. Take the Documentation as literal as possible.\n"
+        prompt_start = f"The method you need to implement is `{context['signature']['name']}({params})`\nAnd here is the class\n```java\n" + packg_and_imports
+        prompt_finisher =  " {\n    // write the function body here. Take the Documentation as literal as possible.\n    }\n}\n```\n Now respond with the implemented method."
 
-        prompt = packg_declaration + imports + code + primer
-
-        if len(enc.encode(prompt)) > self.max_prompt_tokens:
-            code = build_context(context, doc=True, no_fields=True)
-            prompt = packg_declaration + imports + code + primer
+        prompt = prompt_start +  build_context(context, doc=True)  + prompt_finisher
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
-            code = build_context(context, doc=True, no_fields=True, no_constructors=True)
-            prompt = packg_declaration + imports + code + primer
+            prompt = prompt_start + build_context(context, doc=True, no_fields=True) + prompt_finisher
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
-            code = build_context(context, doc=True, no_fields=True, no_constructors=True, no_other_method_docs=True)
-            prompt = packg_declaration + imports + code + primer
+            prompt = prompt_start + build_context(context, doc=True, no_fields=True, no_constructors=True) + prompt_finisher
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
-            code = build_context(context, doc=True, no_fields=True, no_constructors=True,  no_other_method_docs=True, no_other_methods=True)
-            prompt = packg_declaration + imports + code + primer
+            prompt = prompt_start + build_context(context, doc=True, no_fields=True, no_constructors=True, no_other_method_docs=True) + prompt_finisher
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
-            code = build_context(context, doc=True, no_fields=True, no_constructors=True,  no_other_method_docs=True, no_other_methods=True)
-            prompt = code + primer
+            prompt = prompt_start + build_context(context, doc=True, no_fields=True, no_constructors=True,  no_other_method_docs=True, no_other_methods=True) + prompt_finisher
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
             return []
-
 
         promptlist = []
         promptlist.append({"role": "system", "content": system_prompt})
@@ -93,7 +85,10 @@ class GPT4JavaCodeGenerator(Generator):
 
 
     def try_to_fix(self, new_code, context, response):
-        temp = new_code.split(build_signature(context , False))
+        sign = re.escape(re.sub(r'\s+', r' ', build_signature(context, False)))
+        # re.escape(re.sub(r'\s+', r'\\s+', build_signature(context, False)))
+        temp = re.split(sign, new_code)
+
         if len(temp) > 1:
             new_code = "".join(temp[1:])
             new_code = new_code[new_code.find("{") + 1:]
