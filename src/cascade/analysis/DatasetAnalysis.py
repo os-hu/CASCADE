@@ -165,7 +165,7 @@ class DatasetAnalysis(Analysis):
         if not "new_tests" in d:
             print("generate new tests")
             new_tests, response = self.generator.generate_tests(d, input_path, output_path)
-            new_tests = new_tests.replace(test_class_real_name, test_class_unique_name)
+
             d["new_tests"] = new_tests
             d["new_tests_response"] = response
 
@@ -173,11 +173,14 @@ class DatasetAnalysis(Analysis):
             print("new tests already generated")
         d["results"] = {}
 
-        d["test_file_path"] = d["test_file_path"].replace( test_class_real_name, test_class_unique_name )
 
         print("execute new tests")
-
+        d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
+        d["test_file_path"] = d["test_file_path"].replace( test_class_real_name, test_class_unique_name )
         res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
+        d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
+        d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name,  test_class_real_name)
+
 
         d["results"]["(code, new_tests)"] = res2
 
@@ -202,16 +205,19 @@ class DatasetAnalysis(Analysis):
                 # Get the last occurrence
                 comp_error = matches[-1].strip()
                 comp_error = comp_error.replace( test_class_unique_name , test_class_real_name )
-                d["new_tests"] = d["new_tests"].replace( test_class_unique_name , test_class_real_name )
 
                 new_tests , response = self.generator.repair_tests(d, input_path, output_path, comp_error, 'new_tests')
 
-                new_tests = new_tests.replace( test_class_real_name, test_class_unique_name )
                 d["new_tests"] = new_tests
                 d["new_tests_repair_response"] = response
 
                 print("execute repaired tests")
+
+                d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
+                d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
                 res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
+                d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
+                d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
 
                 d["results"]["(code, new_tests)"] = res2
 
@@ -224,7 +230,7 @@ class DatasetAnalysis(Analysis):
             output += ", error in layer 2: code, new_tests" if evaluated == 0 else ", pass in layer 2: code, new_tests"
 
         else:
-            # generate new code
+            # generate new code  -----------------------------------------------------------------------------------------------
             new_code, response = self.generator.generate_code(d, input_path, output_path)
 
             d["new_code"] = new_code

@@ -89,7 +89,7 @@ class GPT4JavaCodeGenerator(Generator):
 
         if len(temp) > 1:
             new_code = "".join(temp[1:])
-            new_code = new_code[new_code.find("{") + 1:]
+            #new_code = new_code[new_code.find("{") + 1:]
 
 
         fixed_code = ""

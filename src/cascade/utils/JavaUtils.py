@@ -96,7 +96,7 @@ def get_repair_helper_functions():
         ("private_included", "boolean", "Should private methods be included?")])
     t3 = build_tool("get_class_constructors", "Gets a list of constructors for a given class.", [
         ("path_to_class", "string", "The relative path to the class")])
-    t4 = build_tool("get_file_content", "Gets the content of a specific file.", [
+    t4 = build_tool("get_file_content", "Gets the entire content of a specific file.", [
         ("path_to_file", "string", "The relative path to the file")])
     t5 = build_tool("get_class_fields", "Gets a list of fields of a given class.", [
         ("path_to_class", "string", "The relative path to the class"),])

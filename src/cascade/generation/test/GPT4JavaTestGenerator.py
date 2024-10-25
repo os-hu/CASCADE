@@ -46,7 +46,7 @@ class GPT4JavaTestGenerator(Generator):
 
         #test_header = "\n\n// TESTS:\n\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here. Take the Documentation as literal as possible.\n")
 
-        test_header = f"\nNow Please write tests for the function `{context['signature']['name']}({params})` using the following test class skeleton.  Everything that you use should be added to the imports in the skeleton. Properly handle any checked exceptions (use `try-catch` or `throws`), don't forget type parameters. Match method signatures exactly when overriding or implementing methods. Adhere to the documentation as close as possible when writing the tests. As a reminder, the documentation for the function is:\n\n```java\n{context['doc']}\n```\nand here is the test class\n"
+        test_header = f"\nNow Please write several tests for the function `{context['signature']['name']}({params})` using the following test class skeleton.  Everything that you use should be added to the imports in the skeleton. Properly handle any checked exceptions (use `try-catch` or `throws`), don't forget type parameters. Match method signatures exactly when overriding or implementing methods. Adhere to the documentation as close as possible when writing the tests. As a reminder, the documentation for the function is:\n\n```java\n{context['doc']}\n```\n And here is the test class\n"
         test_header = test_header + "\n```java\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here." + "\n```")
 
         if self.is_three:
