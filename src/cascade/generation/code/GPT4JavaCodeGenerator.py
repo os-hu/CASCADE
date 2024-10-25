@@ -85,8 +85,7 @@ class GPT4JavaCodeGenerator(Generator):
 
 
     def try_to_fix(self, new_code, context, response):
-        sign = re.escape(re.sub(r'\s+', r' ', build_signature(context, False)))
-        # re.escape(re.sub(r'\s+', r'\\s+', build_signature(context, False)))
+        sign = re.escape(re.sub(r"(\W)", r" \1 ", build_signature(context, False) + " {")).replace(r"\ ", r'\s*')
         temp = re.split(sign, new_code)
 
         if len(temp) > 1:
