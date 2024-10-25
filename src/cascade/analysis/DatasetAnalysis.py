@@ -237,8 +237,14 @@ class DatasetAnalysis(Analysis):
             d["new_code_response"] = response
 
             print("execute new code")
-            res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
 
+            d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
+            d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
+            res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
+            d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
+            d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
+
+            
             d["results"]["(new_code, new_tests)"] = res3
             save_dicts_list_to_json([d], ana_path)
 
@@ -259,15 +265,23 @@ class DatasetAnalysis(Analysis):
                 else:
                     # Get the last occurrence
                     comp_error = matches[-1].strip()
-
+                    comp_error = comp_error.replace( test_class_unique_name , test_class_real_name )
+                    
                     new_code, response = self.generator.repair_code(d, input_path, output_path, comp_error, 'new_code')
 
                     d["new_code"] = new_code
                     d["new_code_repair_response"] = response
 
                     print("execute repaired code")
-                    res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
 
+                    d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
+                    d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
+                    res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
+                    d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
+                    d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
+
+
+                    
                     d["results"]["(new_code, new_tests)"] = res3
                     save_dicts_list_to_json([d], ana_path)
 
