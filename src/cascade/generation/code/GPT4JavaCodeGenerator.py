@@ -110,9 +110,9 @@ class GPT4JavaCodeGenerator(Generator):
     def repair(self, context, input_path, output_path, errors, key):
         tools = get_repair_helper_functions()
 
-        system_prompt = "You are a Java developer assistant. Fix compilation errors in the provided code. Use tools to find out more about classes instead of making your own assumptions. You have to assume that all fields are initialized with null"
+        system_prompt = "You are a Java developer assistant. Fix compilation errors in the provided code without changing its functionality. You can use tools to find out more about classes instead of making your own assumptions. You have to assume that all fields are initialized with null"
 
-        prompt = f"The following errors occurred during compilation of class {context["parent"]["name"]}.\n```\n{errors}\n```\n Fix the errors in the following function:\n```java\n{build_signature(context, doc=True) + context[key]}\n```"
+        prompt = f"The following errors occurred during compilation of class {context["parent"]["name"]}.\n```\n{errors}\n```\n Fix the errors in the following function while still following the documentation as close as possible:\n```java\n{build_signature(context, doc=True) + context[key]}\n```"
 
         promptlist = []
         promptlist.append({"role": "system", "content": system_prompt})

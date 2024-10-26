@@ -38,15 +38,15 @@ class GPT4JavaTestGenerator(Generator):
         params = ", ".join(par) if len(par) > 1 else (par[0] if par else "")
 
         #system_prompt = f"Write Java tests for the function {context['signature']['name']}. Follow its documentation as closely as possible."
-        system_prompt = f"You are a Java developer assistant. Generate unit tests for the function `{context['signature']['name']}({params})` in the provided class, using only its documentation. {testframework}. You can import anything from the project, but no third party libraries. Handle exceptions properly, and ensure method signatures and calls are correct. The code should compile without errors. Focus on creating tests that cover edge cases, boundary conditions, and all documented behaviors, including invalid inputs and exception handling." # Use only standard Java libraries and do not import any external or third-party packages. Ensure all code is compilable and follows best practices."
+        system_prompt = f"You are a Java developer assistant. You will generate unit tests for a specific method in a provided class. The method is not implemented yet so you will be using only its documentation as the ground truth of the expected behavior. {testframework}. You can import anything from the project, but no third party libraries. Handle exceptions properly, and ensure method signatures and calls are correct. The code should compile without errors. Focus on creating tests that cover edge cases, boundary conditions, and all documented behaviors, including thrown exceptions"
 
-        c1 = "Here is the class containing the function:\n\n```java\n"
+        c1 = f"The function under test is `{context['signature']['name']}({params})`\n\nThis is for test driven development so the tests should be designed to fail if the later implementation does not conform to the documentation. Here is the class containing the function:\n\n```java\n"
         c2 = "; // this is the function to be tested\n\n}\n```\n"
         code = c1 + build_context(context, doc=True) + c2
 
         #test_header = "\n\n// TESTS:\n\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here. Take the Documentation as literal as possible.\n")
 
-        test_header = f"\nNow Please write several tests for the function `{context['signature']['name']}({params})` using the following test class skeleton.  Everything that you use should be added to the imports in the skeleton. Properly handle any checked exceptions (use `try-catch` or `throws`), don't forget type parameters. Match method signatures exactly when overriding or implementing methods. Adhere to the documentation as close as possible when writing the tests and try to test everything that is mentioned including normal operation, edge cases, and error conditions. As a reminder, the documentation for the function is:\n\n```java\n{context['doc']}\n```\n And here is the test class\n"
+        test_header = f"\nNow Please write several tests for the function `{context['signature']['name']}({params})` using the following test class skeleton.  Everything that you use has to be added to the imports. Properly handle any checked exceptions (use `try-catch` or `throws`), don't forget type parameters. Match method signatures exactly when overriding or implementing methods. Adhere to the documentation as close as possible when writing the tests and try to test everything that is mentioned including normal operation, edge cases, and error conditions. As a reminder, the documentation for the function is:\n\n```java\n{context['doc']}\n```\n\n Test class:\n"
         test_header = test_header + "\n```java\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here." + "\n```")
 
         if self.is_three:
@@ -122,7 +122,7 @@ class GPT4JavaTestGenerator(Generator):
         # extract all 'new' statements.
         calls = re.findall(r"new (.*?)\(", new_tests, flags=re.DOTALL)
 
-        tree = subprocess.check_output(["tree", "-P", "*.java", input_path]).decode("utf-8")
+        tree = subprocess.check_output(["tree", "-P", "*.java", "--charset=ascii", input_path]).decode("utf-8")
 
         repair_question = f"{', '.join(calls)} {'are' if len(calls) > 1 else 'is'} new, fix all missing imports using this directory structure:\n```\n{tree}\n```"
 
@@ -224,11 +224,11 @@ class GPT4JavaTestGenerator(Generator):
         tools = get_repair_helper_functions()
 
         # TODO could be excluded into a tool call as well?
-        tree = subprocess.check_output(["tree", "-P", "*.java", input_path]).decode("utf-8")
+        tree = subprocess.check_output(["tree", "-P", "*.java", "--charset=ascii", input_path]).decode("utf-8")
 
         system_prompt = "You are a Java developer assistant. Fix compilation errors in the provided test class. Use tools to find out more about classes instead of making assumptions."
 
-        prompt = f"The following errors occurred during compilation.\n```\n{errors}\n```\n This is the project structure \n```\n{tree}\n```\n Please fix the errors in the following test class:\n```java\n{context[key]}\n```\n.The documentation for the function under test is:\n```java\n{context['doc']}\n``` Adhere to this documentation as close as possible. The Tests should cover normal operation, edge cases, and error conditions, as specified in the docstring."
+        prompt = f"The following errors occurred during compilation.\n```\n{errors}\n```\n This is the project structure \n```\n{tree}\n```\n Fix the errors in the following test class:\n```java\n{context[key]}\n```\n.The documentation for the function under test is:\n```java\n{context['doc']}\n``` Adhere to this documentation as close as possible. The Tests should cover edge cases, and error conditions exceptions, as specified in the docstring."
 
         promptlist = []
         promptlist.append({"role": "system", "content": system_prompt})
