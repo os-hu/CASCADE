@@ -16,8 +16,8 @@ class AnalysisExecutor(ABC):
     @abstractmethod
     def execute(self, code: str, tests: str, context: dict, input_path, output_path: str) -> (succeeded, failed, errored):
         """
-        This executes the provided tests against the code.
-        This should be done in some kind of sandbox as the passed code and tests can not be guaranteed to be safe
+        This executes the specified tests against the code.
+        This should be executed in some kind of sandbox as the passed code and tests can not be guaranteed to be safe.
 
         :param input_path: 
         :param output_path:

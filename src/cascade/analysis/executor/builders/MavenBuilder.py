@@ -5,15 +5,12 @@ from cascade.utils.DockerizedWrapper import DockerizedWrapper
 
 
 class MavenBuilder(Builder):
-    def __init__(self,
-                 new_image_name,
-                 maven_args,
-                 set_up_maven_command,
-                 set_up_maven_args,
-                 image, timeout=120
-                 ):
-        super().__init__(f"echo \"[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0\" > out; timeout {timeout} mvn test {maven_args} -Dtest=\"%t\" -DfailIfNoTests=false 2>&1 > output; cat output > out; cat output",
-                         self.eval_function, new_image_name)
+    def __init__(self, new_image_name, maven_args, set_up_maven_command, set_up_maven_args, image, timeout=120):
+        super().__init__(
+            test_pattern = f"echo \"[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0\" > out; timeout {timeout} mvn test {maven_args} -Dtest=\"%t\" -DfailIfNoTests=false 2>&1 > output; cat output > out; cat output",
+            eval_function = self.eval_function,
+            image = new_image_name
+        )
         self.old_image_name = image
         self.set_up_maven_args = set_up_maven_args
         self.set_up_maven_command = set_up_maven_command
@@ -21,7 +18,7 @@ class MavenBuilder(Builder):
 
     def eval_function(self, x):
         """
-        The function that has to be given to the builder to evaluate the output of the tests
+        The function that has to be given to a builder to evaluate the output of the tests.
         :param x: a string containing the output produced in the docker,
                     which should contain the output of the tests which are then parsed here.
         :return: result a tuple of three lists of strings,
@@ -50,6 +47,12 @@ class MavenBuilder(Builder):
         return result
 
     def set_up(self, temp_dir, _, output_path):
+        """
+        Sets up the environment for execution. Should be called once in the beginning of the Analysis
+        :param temp_dir:
+        :param output_path:
+        :return: The
+        """
         wrapper = DockerizedWrapper(debug=True)
         dock_context = {
             "image": self.old_image_name,

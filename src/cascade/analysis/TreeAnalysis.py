@@ -26,12 +26,14 @@ class TreeAnalysis(Analysis):
 
     def analyse(self, data: list, input_path, output_path):
         """
-        This
+        This is the basic tree analysis as described in the paper.
+        it contains of a loop going through the data array.
+        For each function:
+            first, the original tests are executed
 
-        :param data:
-        :param input_path:
-        :param output_path:
-        :return:
+        :param data: The data to be analyzed. shoudl be a python list of dictionaries each containing the entire context of one function to be analyzed.
+        :param input_path: The path to the root directory of the project under test.
+        :param output_path: the path to the output folder. This is where the results of the analysis as well as some intermediate files and logging data will be stored.
         """
 
         # allows setting up requirements needed in every step of the execution (i.e. load docker images )

@@ -15,13 +15,9 @@ from cascade.utils.DockerizedWrapper import DockerizedWrapper
 import xml.etree.ElementTree as ET
 
 class DatasetAnalysis(Analysis):
-    """
-    TODO
-    """
     def __init__(self, generator: Generation, executor: Execution, visualizer: Visualization, regenerate=False, reexecute=False, image="maven" , debug=0, step_size=1):
         super().__init__(generator, executor, visualizer)
         self.reexecute = reexecute or regenerate
-
         self.step_size = step_size
         self.regenerate = regenerate
         self.debug = debug
@@ -39,6 +35,7 @@ class DatasetAnalysis(Analysis):
 
             dock_ex = DockerizedWrapper(debug=0)
 
+            # get the effective pom file, which usually contains the used junit version
             dock_context = {
                 "image" : self.image,
                 "directory" : temp_dir,
@@ -46,7 +43,7 @@ class DatasetAnalysis(Analysis):
                 "path" : "/root/effective-pom.xml"
             }
 
-            dock_ex.copy_path(dock_context, output_path)
+            dock_ex.execute(dock_context, output_path, copy=True)
 
         try:
             tree = ET.parse(os.path.join(output_path, "effective-pom.xml"))
@@ -93,8 +90,12 @@ class DatasetAnalysis(Analysis):
         """
         this is the specific analysis for the dataset benchmark. it only executes level 2 and 3 of a normal tree analysis.
         it does not visualize anything. it does however safe the results in a file called result_CASCADE.txt
+
+        :param data:
         :param input_path:
+        :param output_path:
         """
+
         output = ""
 
         ana_path = os.path.join(output_path, "analyzed.json")
@@ -157,7 +158,6 @@ class DatasetAnalysis(Analysis):
                 d["test_imports"] = ["import org.junit.*;\n" , "import static org.junit.Assert.*;\n"]
             else:
                 d["test_imports"] = ["import org.junit.jupiter.api.*;\n"]
-
 
 
         print(f"Starting analysis of function: {d['signature']['name']}")

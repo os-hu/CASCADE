@@ -13,9 +13,24 @@ from cascade.utils.Utils import load_json_from_path, log, save_dicts_list_to_jso
 
 class TreeAnalysisPaper(Analysis):
     """
-    TODO
+    This is the basic tree analysis as described in the paper.
+
     """
+
+
     def __init__(self, generator: Generation, executor: Execution, visualizer: Visualization, regenerate=False, reexecute=False, debug=0, step_size=1, die_if_setup_fails=False):
+        """
+
+        :param generator:
+        :param executor:
+        :param visualizer:
+        :param regenerate:
+        :param reexecute:
+        :param debug:
+        :param step_size:
+        :param die_if_setup_fails:
+        """
+
         super().__init__(generator, executor, visualizer)
         self.die_if_setup_fails = die_if_setup_fails
         self.reexecute = reexecute or regenerate
