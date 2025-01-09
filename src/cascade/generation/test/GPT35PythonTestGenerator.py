@@ -24,7 +24,7 @@ class GPT35TestGenerator(Generator):
         return prompt
         #return [{"role": "user", "content": prompt}]
 
-    def generate(self, context, input_path, output_path, safety_copy_prefix):
+    def generate(self, context, input_path, output_path):
         prompt = self.build_prompt(context)
 
         response = self.prompt_executor.execute(prompt).model_dump()
@@ -34,7 +34,7 @@ class GPT35TestGenerator(Generator):
         savety_copy["response"] = response
         #save_dicts_list_to_json([savety_copy], os.path.join(output_path, "code_generator_current.json"))
 
-        with open(os.path.join(output_path, safety_copy_prefix + "test_generator_current.json") , "w") as file:
+        with open(os.path.join(output_path, "test_generator_current.json") , "w") as file:
             file.write(str(savety_copy))
 
         new_test = response["choices"][0]["text"]

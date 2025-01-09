@@ -51,7 +51,7 @@ class GPT35JavaCodeGenerator(Generator):
         return prompt
 
 
-    def generate(self, context, input_path, output_path, safety_copy_prefix):
+    def generate(self, context, input_path, output_path):
         prompt = self.build_prompt(context)
 
         if prompt == "":
@@ -62,7 +62,7 @@ class GPT35JavaCodeGenerator(Generator):
         savety_copy = copy.deepcopy(context)
         savety_copy["response"] = response
 
-        with open(os.path.join(output_path, safety_copy_prefix + "code_generator_current.json") , "w") as file:
+        with open(os.path.join(output_path, "code_generator_current.json") , "w") as file:
             file.write(str(savety_copy))
 
         new_code = response["choices"][0]["text"]

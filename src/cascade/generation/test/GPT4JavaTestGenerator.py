@@ -109,7 +109,7 @@ class GPT4JavaTestGenerator(Generator):
         return packg_declaration + imports + classdefinition + primer + func_definition
 
 
-    def generate(self, context, input_path, output_path, safety_copy_prefix):
+    def generate(self, context, input_path, output_path):
         prompt = self.build_prompt(context)
 
         response = self.prompt_executor.execute(prompt).model_dump()

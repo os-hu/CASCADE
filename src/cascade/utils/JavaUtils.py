@@ -33,7 +33,7 @@ def build_signature(method_context, doc=False):
 
     return doc_string + (" ".join(ctsig["modifier"]) + " " + ('<' + ', '.join(ctsig["generics"]) + '> ' if ctsig["generics"] else '') +
                  ctsig["returns"] + " " + ctsig["name"] + "(" + ", ".join(ctsig["params"]) + ")" +
-                         (" throws " + ", ".join(ctsig["exceptions"]) if ctsig["exceptions"] else ""))
+                         (" throws " + ", ".join(ctsig["exceptions"]) if ctsig.get("exceptions") else ""))
 
 def check_syntax(code, type, output_path):
     """

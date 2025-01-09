@@ -54,7 +54,7 @@ class GPT4JavaCodeGenerator(Generator):
         return promptlist
 
 
-    def generate(self, context, input_path, output_path, safety_copy_prefix):
+    def generate(self, context, input_path, output_path):
         prompt = self.build_prompt(context)
 
         if not prompt:

@@ -9,10 +9,10 @@ from cascade.utils.Utils import load_json_from_path
 class Pipeline():
     def __init__(self, extraction: Extraction, filter: Filter, analysis: Analysis, setup: dict):
         """
-         The main pipeline object. Calls "extract" and "analyse" in an appropriate manner.
-         is usually build through Pipeline_Factory
-         :param extraction: the specific instantiated Extraction object that is used for extraction
-         :param analysis: the specific instantiated analysis object
+        The main pipeline object. Calls "extract" and "analyse" in an appropriate manner.
+        is usually build through Pipeline_Factory
+        :param extraction: the specific instantiated Extraction object that is used for extraction
+        :param analysis: the specific instantiated analysis object
          :param setup: a dictionary that contains the names of the specific instances used
          for extraction, analysis and the objects inside of them,
         """

@@ -31,7 +31,7 @@ class TreeAnalysis(Analysis):
         For each function:
             first, the original tests are executed
 
-        :param data: The data to be analyzed. shoudl be a python list of dictionaries each containing the entire context of one function to be analyzed.
+        :param data: The data to be analyzed. Should be a python list of dictionaries each containing the entire context of one function to be analyzed.
         :param input_path: The path to the root directory of the project under test.
         :param output_path: the path to the output folder. This is where the results of the analysis as well as some intermediate files and logging data will be stored.
         """
@@ -50,7 +50,7 @@ class TreeAnalysis(Analysis):
             if self.debug >= 2:
                 self.visualizer.visualize(data, output_path)
 
-            # Phase 1  code + test: --------------------------------------
+            # Level 1  code + test: --------------------------------------
 
             if "id" in d and d["id"] != "":
                 log(d["id"], logger="tqdm")
