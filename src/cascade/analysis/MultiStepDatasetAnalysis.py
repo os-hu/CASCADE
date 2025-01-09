@@ -195,7 +195,9 @@ class MultiStepDatasetAnalysis(Analysis):
 
             evaluated = self.evaluate(res2)
 
+
             # this is the compilatio nerror loop.  turn back on if nedded by etiher making this a true or removingg the check.
+            # TODO still needs to be adjusted for new format
             compilerror = False
             if compilerror:
                 for i in range(2):
@@ -265,9 +267,7 @@ class MultiStepDatasetAnalysis(Analysis):
 
         else:
             # generate new code  -----------------------------------------------------------------------------------------------
-
-
-
+            d["results"]["(new_code, new_tests)"] = [[], [], []]
             new_code, response = self.generator.generate_code(d, input_path, output_path)
 
             d["new_code"] = new_code
@@ -275,54 +275,73 @@ class MultiStepDatasetAnalysis(Analysis):
 
             print("execute new code")
 
-            d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
-            d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
-            res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
-            d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
-            d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
+            for dt in d["new_tests"]:
+                if dt["new_tests"] is not None:
+                    print("testing property:", dt["property"])
 
-            
-            d["results"]["(new_code, new_tests)"] = res3
-            save_dicts_list_to_json([d], ana_path)
+                    dt["new_tests"] = dt["new_tests"].replace(test_class_real_name, test_class_unique_name)
+                    d["intermediate_tests"] = dt["new_tests"]
+                    d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
+                    res3 = list(self.executor.execute("new_code", "intermediate_tests", d, input_path, output_path))
+                    dt["new_tests"] = dt["new_tests"].replace(test_class_unique_name, test_class_real_name)
+                    d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
+
+                    evaluated = self.evaluate(res3)
+
+                    if evaluated == 0:
+                        output = "Test for property: " + dt["property"] + " errored and will be ignored"
+                        dt["new_tests"] = None  # delete test so that it is never executed again
+                        d["results"]["(new_code, new_tests)"][2].append(dt["property"])
+
+                    elif evaluated == 1:
+                        d["results"]["(new_code, new_tests)"][0].append(dt["property"])
+
+                    else:
+                        d["results"]["(new_code, new_tests)"][1].append(dt["property"])
+
+                    save_dicts_list_to_json([d], ana_path)
+
 
             # check if it errored
             evaluated = self.evaluate(d["results"]["(new_code, new_tests)"])
-            if evaluated == 0:
-                with open(output_path + "/log.txt", "r") as f:
-                    exec_output = f.read()
-                # If it errored we want to know the compilation error:
 
-                matches = re.findall(r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -*\n(.*?)\[INFO\]', exec_output, re.DOTALL)
+            # TODO still needs to be adjusted for new format
+            if compilerror:
+                if evaluated == 0:
+                    with open(output_path + "/log.txt", "r") as f:
+                        exec_output = f.read()
+                    # If it errored we want to know the compilation error:
 
-                if not matches:
-                    # No match (compilation error) found.
-                    with open(output_path + "/log.txt", "a") as f:
-                        f.write("No compilation error found\n")
+                    matches = re.findall(r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -*\n(.*?)\[INFO\]', exec_output, re.DOTALL)
 
-                else:
-                    # Get the last occurrence
-                    comp_error = matches[-1].strip()
-                    comp_error = comp_error.replace( test_class_unique_name , test_class_real_name )
-                    
-                    new_code, response = self.generator.repair_code(d, input_path, output_path, comp_error, 'new_code')
+                    if not matches:
+                        # No match (compilation error) found.
+                        with open(output_path + "/log.txt", "a") as f:
+                            f.write("No compilation error found\n")
 
-                    d["new_code"] = new_code
-                    d["new_code_repair_response"] = response
+                    else:
+                        # Get the last occurrence
+                        comp_error = matches[-1].strip()
+                        comp_error = comp_error.replace( test_class_unique_name , test_class_real_name )
 
-                    print("execute repaired code")
+                        new_code, response = self.generator.repair_code(d, input_path, output_path, comp_error, 'new_code')
 
-                    d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
-                    d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
-                    res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
-                    d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
-                    d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
+                        d["new_code"] = new_code
+                        d["new_code_repair_response"] = response
 
+                        print("execute repaired code")
 
-                    
-                    d["results"]["(new_code, new_tests)"] = res3
-                    save_dicts_list_to_json([d], ana_path)
+                        d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
+                        d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
+                        res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
+                        d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
+                        d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
 
-                    evaluated = self.evaluate(d["results"]["(new_code, new_tests)"])
+                        d["results"]["(new_code, new_tests)"] = res3
+                        save_dicts_list_to_json([d], ana_path)
+
+                        evaluated = self.evaluate(d["results"]["(new_code, new_tests)"])
+
 
             if evaluated <= 0:
                 output += "Negative"
