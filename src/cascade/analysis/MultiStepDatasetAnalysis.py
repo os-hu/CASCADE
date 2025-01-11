@@ -223,8 +223,10 @@ class MultiStepDatasetAnalysis(Analysis):
                 with open(output_path + "/errors.txt", "a") as f:
                     f.write(f"S1 Error in test: {test["property"]}\n")
                     f.write(f"S1 {str(res1)}")
-                    f.write(f"S1 {test["test_class"]}\n")
-                    f.write("--------------")
+                    f.write(f"{test["test_class"]}\n")
+                    f.write("------\nCompiler errors:\n")
+                    f.write(comp_errors)
+
                 test["phase1"] = "error"
                 d["results"]["(code, new_tests)"][2].append(test["property"])
 
@@ -240,6 +242,7 @@ class MultiStepDatasetAnalysis(Analysis):
 
 
             # check if overall tests passed or failed or errored
+        print("    evaluate overall results for function (s1):")
         evaluated = self.evaluate(d["results"]["(code, new_tests)"])
 
         if evaluated >= 0:
@@ -259,7 +262,7 @@ class MultiStepDatasetAnalysis(Analysis):
 
             print("    execute new code (with new tests)")
 
-            # TODO somehwoe check if this compiles... and is good etc.  the loop should be here
+            # TODO somehow check if this compiles... and is good etc.  the loop should be here
 
 
             for test in d["new_tests"]:
@@ -285,24 +288,30 @@ class MultiStepDatasetAnalysis(Analysis):
                         # loggin ----------
                         with open(output_path + "/errors.txt", "a") as f:
                             f.write(f"S2 Error in test: {test["property"]}\n")
-                            f.write(f"S2 {str(res2)}")
-                            f.write(f"S2 {test["test_class"]}\n")
+                            f.write(f"{str(res2)}")
+                            f.write(f"{test["test_class"]}\n")
+                            f.write("------\nCode:\n")
+                            f.write(d["new_code"])
+                            f.write("\n------\nCompiler errors:\n")
+                            f.write(comp_errors)
+
                             f.write("--------------")
                         test["phase2"] = "error"
-                        d["results"]["(code, new_tests)"][2].append(test["property"])
+                        d["results"]["(new_code, new_tests)"][2].append(test["property"])
 
                     elif evaluated == 1:
-                        d["results"]["(code, new_tests)"][0].append(test["property"])
+                        d["results"]["(new_code, new_tests)"][0].append(test["property"])
                         test["phase2"] = "pass"
 
                     else:
-                        d["results"]["(code, new_tests)"][1].append(test["property"])
+                        d["results"]["(new_code, new_tests)"][1].append(test["property"])
                         test["phase2"] = "fail"
 
                     save_dicts_list_to_json([d], ana_path)
 
 
             # check if it errored
+            print("    evaluate overall results for function (s2):")
             evaluated = self.evaluate(d["results"]["(new_code, new_tests)"])
 
             # TODO still needs to be adjusted for new format
@@ -348,7 +357,9 @@ class MultiStepDatasetAnalysis(Analysis):
             f.write(output)
             print("result:" , output)
 
+
         self.executor.tear_down(data)
+
 
 
     def evaluate(self, res):
