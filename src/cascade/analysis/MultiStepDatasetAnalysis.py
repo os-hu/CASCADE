@@ -104,9 +104,9 @@ class MultiStepDatasetAnalysis(Analysis):
 
         d = data[0]
 
-        # extract functions
-        extractor = JavaExtraction()
-        extractor.extract(input_path, output_path)
+        # extract functions   I DONT KNOW WHY THIS WAS HERE?
+        #extractor = JavaExtraction()
+        #extractor.extract(input_path, output_path)
 
         if "junit_version" not in d or "test_file_path" not in d:
             print(output_path)
@@ -190,7 +190,7 @@ class MultiStepDatasetAnalysis(Analysis):
 
             # this is the compilatio nerror loop.  turn back on if nedded by etiher making this a true or removingg the check.
             # TODO still needs to be adjusted for new format
-            compilerror = True
+            compilerror = False
             if compilerror:
                 for i in range(2):
                     # repair step

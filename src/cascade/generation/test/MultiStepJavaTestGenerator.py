@@ -115,8 +115,6 @@ class MultiStepJavaTestGenerator(GPT4JavaTestGenerator):
 
         answer_text = response_stage1_part2["choices"][0]["message"]["content"]
 
-
-        print(answer_text)
         json_blocks = re.findall(r"```json(.*?)\n\s*```", answer_text, flags=re.DOTALL)
 
         if json_blocks:
