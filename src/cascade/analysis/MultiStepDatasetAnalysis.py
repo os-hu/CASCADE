@@ -176,60 +176,47 @@ class MultiStepDatasetAnalysis(Analysis):
             print("        testing property:", test["property"])
 
             test["test_class"] = test["test_class"].replace(test_class_real_name, test_class_unique_name)
-            d["intermediate_tests"] = test["test_class"]
+            d["intermediate_test"] = test["test_class"]
             d["test_file_path"] = d["test_file_path"].replace( test_class_real_name, test_class_unique_name )
 
-            # TODO get compiler errors form this funciton directly !!!
-            res1 = list(self.executor.execute("code", "intermediate_tests", d, input_path, output_path))
+            res1, comp_errors = self.executor.execute("code", "intermediate_test", d, input_path, output_path)
+            res1 = list(res1)
 
             test["test_class"] = test["test_class"].replace(test_class_unique_name, test_class_real_name)
             d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name,  test_class_real_name)
-
+            if comp_errors:
+                comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
 
             evaluated = self.evaluate(res1)
 
-            # this is the compilatio nerror loop.  turn back on if nedded by etiher making this a true or removingg the check.
-            # TODO still needs to be adjusted for new format
-            compilerror = False
-            if compilerror:
+            # this is the compilation error loop.  turn back on if needed by either making this a true or removing the check.
+            repairloop_tests = True
+            if repairloop_tests:
                 for i in range(2):
                     # repair step
-                    if evaluated == 0:
-                        with open( output_path + "/log.txt", "r") as f:
-                            exec_output = f.read()
-                        # If it errored we want to know the compilation error:
+                    if evaluated == 0 and comp_errors:
+                        print("        Try to generate repaired tests")
+                        repaired_tests , _ = self.generator.repair_tests(d, input_path, output_path, comp_errors, 'intermediate_test')
 
-                        matches = re.findall(r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -*\n(.*?)\[INFO\]', exec_output, re.DOTALL)
+                        test["test_class"] = repaired_tests
 
-                        if not matches:
-                            # No match (compilation error) found.
-                            with open( output_path + "/log.txt", "a") as f:
-                                f.write("No compilation error found\n")
+                        print("        execute repaired tests")
 
-                        else:
-                            # Get the last occurrence
-                            comp_error = matches[-1].strip()
-                            comp_error = comp_error.replace( test_class_unique_name , test_class_real_name )
+                        test["test_class"] = test["test_class"].replace(test_class_real_name, test_class_unique_name)
+                        d["intermediate_test"] = test["test_class"]
+                        d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
 
-                            new_tests , response = self.generator.repair_tests(d, input_path, output_path, comp_error, 'new_tests')
+                        res1, comp_errors = self.executor.execute("code", "new_tests", d, input_path, output_path)
+                        res1 = list(res1)
 
-                            d["new_tests"] = new_tests
-                            d["new_tests_repair_response"] = response
+                        test["test_class"] = test["test_class"].replace(test_class_unique_name, test_class_real_name)
+                        d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
+                        if comp_errors:
+                            comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
 
-                            print("execute repaired tests")
+                        evaluated = self.evaluate(res1)
 
-                            d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
-                            d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
-                            res1 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
-                            d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
-                            d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
-
-                            d["results"]["(code, new_tests)"] = res1
-
-                            save_dicts_list_to_json([d], ana_path)
-
-                            evaluated = self.evaluate(d["results"]["(code, new_tests)"])
-
+                        save_dicts_list_to_json([d], ana_path)
 
             if evaluated == 0:
                 # loggin ----------
@@ -257,8 +244,8 @@ class MultiStepDatasetAnalysis(Analysis):
 
         if evaluated >= 0:
             output = "Negative"
-            output += ", error in step 1 (C, T') " if evaluated == 0 else ", pass  in step 1 (C, T') "
-            output += f"({len(d['results']['(code, new_tests)'][0])}, {len(d['results']['(code, new_tests)'][1])}, {len(d['results']['(code, new_tests)'][2])})"
+            output += ", error in step 1 (C +T') " if evaluated == 0 else ", pass  in step 1 (C +T') "
+            output += f"[{len(d['results']['(code, new_tests)'][0])},{len(d['results']['(code, new_tests)'][1])},{len(d['results']['(code, new_tests)'][2])}]"
 
 
         else:
@@ -270,20 +257,26 @@ class MultiStepDatasetAnalysis(Analysis):
             d["new_code"] = new_code
             d["new_code_response"] = response
 
-            print("    execute new code")
+            print("    execute new code (with new tests)")
+
+            # TODO somehwoe check if this compiles... and is good etc.  the loop should be here
+
 
             for test in d["new_tests"]:
                 if test["phase1"] == "fail":
                     print("        testing property:", test["property"])
 
                     test["test_class"] = test["test_class"].replace(test_class_real_name, test_class_unique_name)
-                    d["intermediate_tests"] = test["test_class"]
+                    d["intermediate_test"] = test["test_class"]
                     d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
 
-                    res2 = list(self.executor.execute("new_code", "intermediate_tests", d, input_path, output_path))
+                    res2, comp_errors = self.executor.execute("new_code", "intermediate_test", d, input_path, output_path)
+                    res2 = list(res2)
 
                     test["test_class"] = test["test_class"].replace(test_class_unique_name, test_class_real_name)
                     d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
+                    if comp_errors:
+                        comp_errors = comp_errors.replace( test_class_unique_name , test_class_real_name )
 
                     evaluated = self.evaluate(res2)
 
@@ -313,52 +306,43 @@ class MultiStepDatasetAnalysis(Analysis):
             evaluated = self.evaluate(d["results"]["(new_code, new_tests)"])
 
             # TODO still needs to be adjusted for new format
-            if compilerror:
-                if evaluated == 0:
-                    with open(output_path + "/log.txt", "r") as f:
-                        exec_output = f.read()
-                    # If it errored we want to know the compilation error:
+            repairloop_code = False
+            if repairloop_code:
+                for i in range(1):
+                    if evaluated == 0 and comp_errors:
 
-                    matches = re.findall(r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -*\n(.*?)\[INFO\]', exec_output, re.DOTALL)
-
-                    if not matches:
-                        # No match (compilation error) found.
-                        with open(output_path + "/log.txt", "a") as f:
-                            f.write("No compilation error found\n")
-
-                    else:
-                        # Get the last occurrence
-                        comp_error = matches[-1].strip()
-                        comp_error = comp_error.replace( test_class_unique_name , test_class_real_name )
-
-                        new_code, response = self.generator.repair_code(d, input_path, output_path, comp_error, 'new_code')
+                        new_code, response = self.generator.repair_code(d, input_path, output_path, comp_errors, 'new_code')
 
                         d["new_code"] = new_code
-                        d["new_code_repair_response"] = response
 
-                        print("execute repaired code")
+                        print("        execute repaired code")
 
-                        d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
+                        # TODO is the intermediate test realy the best option here? shoudl we change the acutall code or just the instance that is for this specific test???
+                        d["intermediate_test"] = d["intermediate_test"].replace(test_class_real_name, test_class_unique_name)
                         d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
-                        res2 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
-                        d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
+
+                        res2, comp_errors = self.executor.execute("new_code", "intermediate_test", d, input_path, output_path)
+                        res2 = list(res2)
+
+                        d["intermediate_test"] = d["intermediate_test"].replace(test_class_unique_name, test_class_real_name)
                         d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
+                        if comp_errors:
+                            comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
 
-                        d["results"]["(new_code, new_tests)"] = res2
+                        evaluated = self.evaluate(res1)
+
                         save_dicts_list_to_json([d], ana_path)
-
-                        evaluated = self.evaluate(d["results"]["(new_code, new_tests)"])
 
 
             if evaluated <= 0:
                 output += "Negative"
-                output += ", error in step 2 (C', T') " if evaluated == 0 else ", fail  in step 2 (C', T') "
+                output += ", error in step 2 (C'+T') " if evaluated == 0 else ", fail  in step 2 (C'+T') "
 
             else:
-                output += "Positive"
+                output += "Positive, pass  in step 2 (C'+T') "
 
-            output += f"({len(d['results']['(code, new_tests)'][0])}, {len(d['results']['(code, new_tests)'][1])}, {len(d['results']['(code, new_tests)'][2])})"
-            output += f" ({len(d['results']['(new_code, new_tests)'][0])}, {len(d['results']['(new_code, new_tests)'][1])}, {len(d['results']['(new_code, new_tests)'][2])})"
+            output += f"[{len(d['results']['(code, new_tests)'][0])}, {len(d['results']['(code, new_tests)'][1])}, {len(d['results']['(code, new_tests)'][2])}]"
+            output += f"\t[{len(d['results']['(new_code, new_tests)'][0])}, {len(d['results']['(new_code, new_tests)'][1])}, {len(d['results']['(new_code, new_tests)'][2])}]"
 
         with open("result.txt", "w") as f:
             f.write(output)
@@ -370,16 +354,16 @@ class MultiStepDatasetAnalysis(Analysis):
     def evaluate(self, res):
         if res[0] == [] and res[1] == []:
             if self.debug >= 1:
-                print("        Error")
+                print("            Error")
             # error
             return 0
         elif res[1] == [] and res[2] == []:
             if self.debug >= 1:
-                print("        Passed")
+                print("            Passed")
             # if no errors or failures  then passed
             return 1
         else:
             if self.debug >= 1:
-                print("        Failed")
+                print("            Failed")
             # failed
             return -1

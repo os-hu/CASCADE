@@ -4,6 +4,7 @@ import subprocess
 from cascade.analysis.executor.AnalysisExecutor import AnalysisExecutor, succeeded, failed, errored
 from cascade.utils.DockerizedWrapper import DockerizedWrapper
 
+import re
 import os
 import tempfile
 import shutil
@@ -47,6 +48,7 @@ class JavaExecutor(AnalysisExecutor):
                 file.write(str(context["id"]) + "\n")
                 file.write(p.stdout + "\n")
                 file.write(p.stderr + "\n")
+
             if p.stderr:
                 if self.debug:
                     print(p.stdout)
@@ -70,6 +72,7 @@ class JavaExecutor(AnalysisExecutor):
             }
 
             result = dock_ex.execute(dock_context, output_path)
+
 
         return result
 

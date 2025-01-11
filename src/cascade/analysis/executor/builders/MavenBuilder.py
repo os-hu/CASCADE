@@ -21,10 +21,12 @@ class MavenBuilder(Builder):
         The function that has to be given to a builder to evaluate the output of the tests.
         :param x: a string containing the output produced in the docker,
                     which should contain the output of the tests which are then parsed here.
-        :return: result a tuple of three lists of strings,
-            the first list contains the ids of the tests that passed,
-            the second list contains the ids of the tests that failed,
-            the third list contains the ids of the tests that errored
+        :return: result a 2-tuple of
+            first a three tuple of lists of strings,
+                the first list contains the ids of the tests that passed,
+                the second list contains the ids of the tests that failed,
+                the third list contains the ids of the tests that errored
+            second a string containing any compilation errors that happened during execution or 'None' if none happened
         """
         matches = re.search(r"Tests run: \d+, Failures: \d+, Errors: \d+, Skipped: \d+, Time", x)
         result = ([], [], [])
@@ -44,7 +46,16 @@ class MavenBuilder(Builder):
         for match in range(counter, total_tests):
             result[0].append(str(counter))
             counter += 1
-        return result
+
+        # catch all compilation errors
+        comp_matches = re.findall(r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -*\n(.*?)\[INFO\]', x, re.DOTALL)
+        if comp_matches:
+            comp_errors = comp_matches[-1].strip()
+        else:
+            comp_errors = None
+
+
+        return result, comp_errors
 
     def set_up(self, temp_dir, _, output_path):
         """
