@@ -88,17 +88,12 @@ class MultiStepDatasetAnalysis(Analysis):
 
     def analyse(self, data: list, input_path, output_path):
         """
-        this is the specific analysis for the dataset benchmark. it only executes level 2 and 3 of a normal tree analysis.
-        it does not visualize anything. it does however safe the results in a file called result_CASCADE.txt
+        THis is the new and improved analysis.  it does not use or require the original tests.
 
         :param data:
         :param input_path:
         :param output_path:
         """
-
-        #for interesting statisitcs:
-        amount_errored_testclasses = 0
-        amount_generated_testclasses = 0
 
         output = ""
 
@@ -113,26 +108,22 @@ class MultiStepDatasetAnalysis(Analysis):
         extractor = JavaExtraction()
         extractor.extract(input_path, output_path)
 
-        if "junit_version" not in d:    #remove this if clause later
+        if "junit_version" not in d or "test_file_path" not in d:
             print(output_path)
             print("extracting Junit version")
-            junit_version, source_dir, test_source_dir = self.extract_junit_version( input_path, output_path )
+            junit_version, source_dir, test_source_dir = self.extract_junit_version(input_path, output_path )
             print("Junit version: ", junit_version)
 
-            if not "test_file_path" in d:
-                if test_source_dir is not None and source_dir is not None:
-                    print(d["code_file_path"])
+            if test_source_dir is not None and source_dir is not None:
+                d["test_file_path"] = d["code_file_path"].replace(source_dir.replace("/root/" , ""), test_source_dir.replace("/root/" , ""))
+                d["test_file_path"] = d["test_file_path"].replace(".java", "Test.java")
+            else:
+                d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
 
-                    d["test_file_path"] = d["code_file_path"].replace(source_dir.replace("/root/" , ""), test_source_dir.replace("/root/" , ""))
-                    d["test_file_path"] = d["test_file_path"].replace(".java", "Test.java")
-                    print(d["test_file_path"])
-                else:
-                    d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
-
-            d["junit_version"] = junit_version #remove that later
+            d["junit_version"] = junit_version
             save_dicts_list_to_json([d], ana_path)
 
-
+            # basically a one step thing to run once over the dataset to provide all nesscary information. thats why we return here.
             return
 
         else:
@@ -145,9 +136,8 @@ class MultiStepDatasetAnalysis(Analysis):
         junit_found = False
 
         if not "test_package" in d:
-            print("no tests were extracted for this method")
+            print("no orignal tests were found for this method")
             d["test_package"] = d["package"]
-
 
         else:
             for imp in d["test_imports"]:
@@ -165,40 +155,42 @@ class MultiStepDatasetAnalysis(Analysis):
 
 
         print(f"Starting analysis of function: {d['signature']['name']}")
-        print("    Level 1")
+        print("  Step 1 - New Tests")
 
         if not "new_tests" in d:
-            print("generate new tests")
-            new_tests, response = self.generator.generate_tests(d, input_path, output_path)
+            new_tests, chat_history = self.generator.generate_tests(d, input_path, output_path)
 
             d["new_tests"] = new_tests
-            d["new_tests_response"] = response
+            d["new_tests_history"] = chat_history   #for debugging only
 
         else:
-            print("new tests already generated")
+            print("    new tests already generated")
 
-        print("execute new tests")
+        print("    execute new tests")
 
         d["results"] = {}
         d["results"]["(code, new_tests)"] = [[],[],[]]
 
-        for dt in d["new_tests"]:
-            print("testing property:", dt["property"])
+        # for every test in the new tests list
+        for test in d["new_tests"]:
+            print("        testing property:", test["property"])
 
-            dt["new_tests"] = dt["new_tests"].replace(test_class_real_name, test_class_unique_name)
-            d["intermediate_tests"] = dt["new_tests"]
+            test["test_class"] = test["test_class"].replace(test_class_real_name, test_class_unique_name)
+            d["intermediate_tests"] = test["test_class"]
             d["test_file_path"] = d["test_file_path"].replace( test_class_real_name, test_class_unique_name )
 
-            res2 = list(self.executor.execute("code", "intermediate_tests", d, input_path, output_path))
-            dt["new_tests"] = dt["new_tests"].replace(test_class_unique_name, test_class_real_name)
+            # TODO get compiler errors form this funciton directly !!!
+            res1 = list(self.executor.execute("code", "intermediate_tests", d, input_path, output_path))
+
+            test["test_class"] = test["test_class"].replace(test_class_unique_name, test_class_real_name)
             d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name,  test_class_real_name)
 
-            evaluated = self.evaluate(res2)
 
+            evaluated = self.evaluate(res1)
 
             # this is the compilatio nerror loop.  turn back on if nedded by etiher making this a true or removingg the check.
             # TODO still needs to be adjusted for new format
-            compilerror = False
+            compilerror = True
             if compilerror:
                 for i in range(2):
                     # repair step
@@ -228,34 +220,39 @@ class MultiStepDatasetAnalysis(Analysis):
 
                             d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
                             d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
-                            res2 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
+                            res1 = list(self.executor.execute("code", "new_tests", d, input_path, output_path))
                             d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
                             d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
 
-                            d["results"]["(code, new_tests)"] = res2
+                            d["results"]["(code, new_tests)"] = res1
 
                             save_dicts_list_to_json([d], ana_path)
 
                             evaluated = self.evaluate(d["results"]["(code, new_tests)"])
 
-            amount_generated_testclasses+=1
-
 
             if evaluated == 0:
-                output = "Test for property: " + dt["property"] + " errored and will be ignored"
-                dt["new_tests"] = None   #delete test so that it is never executed again
-                d["results"]["(code, new_tests)"][2].append(dt["property"])
-                amount_errored_testclasses += 1
-                print(f"errored classes so far: {amount_errored_testclasses} out of {amount_generated_testclasses} generated")
+                print("            error")
+                # loggin ----------
+                with open(output_path + "/errors.txt", "a") as f:
+                    f.write(f"S1 Error in test: {test["property"]}\n")
+                    f.write(f"S1 {str(res1)}")
+                    f.write(f"S1 {test["test_class"]}\n")
+                    f.write("--------------")
+                test["phase1"] = "error"
+                d["results"]["(code, new_tests)"][2].append(test["property"])
 
             elif evaluated == 1:
-                d["results"]["(code, new_tests)"][0].append(dt["property"])
+                print("            pass")
+                d["results"]["(code, new_tests)"][0].append(test["property"])
+                test["phase1"] = "pass"
 
             else:
-                d["results"]["(code, new_tests)"][1].append(dt["property"])
+                print("            fail")
+                d["results"]["(code, new_tests)"][1].append(test["property"])
+                test["phase1"] = "fail"
 
             save_dicts_list_to_json([d], ana_path)
-
 
 
             # check if overall tests passed or failed or errored
@@ -263,41 +260,57 @@ class MultiStepDatasetAnalysis(Analysis):
 
         if evaluated >= 0:
             output = "Negative"
-            output += ", error in layer 2: code, new_tests" if evaluated == 0 else ", pass in layer 2: code, new_tests"
+            output += ", error in step 1 (C, T') " if evaluated == 0 else ", pass  in step 1 (C, T') "
+            output += f"({len(d['results']['(code, new_tests)'][0])}, {len(d['results']['(code, new_tests)'][1])}, {len(d['results']['(code, new_tests)'][2])})"
+
 
         else:
             # generate new code  -----------------------------------------------------------------------------------------------
+            print("  Step 2 - New Code")
             d["results"]["(new_code, new_tests)"] = [[], [], []]
             new_code, response = self.generator.generate_code(d, input_path, output_path)
 
             d["new_code"] = new_code
             d["new_code_response"] = response
 
-            print("execute new code")
+            print("    execute new code")
 
-            for dt in d["new_tests"]:
-                if dt["new_tests"] is not None:
-                    print("testing property:", dt["property"])
+            for test in d["new_tests"]:
+                if test["phase1"] == "fail":
+                    print("        testing property:", test["property"])
 
-                    dt["new_tests"] = dt["new_tests"].replace(test_class_real_name, test_class_unique_name)
-                    d["intermediate_tests"] = dt["new_tests"]
+                    test["test_class"] = test["test_class"].replace(test_class_real_name, test_class_unique_name)
+                    d["intermediate_tests"] = test["test_class"]
                     d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
-                    res3 = list(self.executor.execute("new_code", "intermediate_tests", d, input_path, output_path))
-                    dt["new_tests"] = dt["new_tests"].replace(test_class_unique_name, test_class_real_name)
+
+                    res2 = list(self.executor.execute("new_code", "intermediate_tests", d, input_path, output_path))
+
+                    test["test_class"] = test["test_class"].replace(test_class_unique_name, test_class_real_name)
                     d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
 
-                    evaluated = self.evaluate(res3)
+                    evaluated = self.evaluate(res2)
+
 
                     if evaluated == 0:
-                        output = "Test for property: " + dt["property"] + " errored and will be ignored"
-                        dt["new_tests"] = None  # delete test so that it is never executed again
-                        d["results"]["(new_code, new_tests)"][2].append(dt["property"])
+                        print("            error")
+                        # loggin ----------
+                        with open(output_path + "/errors.txt", "a") as f:
+                            f.write(f"S2 Error in test: {test["property"]}\n")
+                            f.write(f"S2 {str(res2)}")
+                            f.write(f"S2 {test["test_class"]}\n")
+                            f.write("--------------")
+                        test["phase2"] = "error"
+                        d["results"]["(code, new_tests)"][2].append(test["property"])
 
                     elif evaluated == 1:
-                        d["results"]["(new_code, new_tests)"][0].append(dt["property"])
+                        print("            pass")
+                        d["results"]["(code, new_tests)"][0].append(test["property"])
+                        test["phase2"] = "pass"
 
                     else:
-                        d["results"]["(new_code, new_tests)"][1].append(dt["property"])
+                        print("            fail")
+                        d["results"]["(code, new_tests)"][1].append(test["property"])
+                        test["phase2"] = "fail"
 
                     save_dicts_list_to_json([d], ana_path)
 
@@ -333,11 +346,11 @@ class MultiStepDatasetAnalysis(Analysis):
 
                         d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
                         d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
-                        res3 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
+                        res2 = list(self.executor.execute("new_code", "new_tests", d, input_path, output_path))
                         d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
                         d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
 
-                        d["results"]["(new_code, new_tests)"] = res3
+                        d["results"]["(new_code, new_tests)"] = res2
                         save_dicts_list_to_json([d], ana_path)
 
                         evaluated = self.evaluate(d["results"]["(new_code, new_tests)"])
@@ -345,10 +358,13 @@ class MultiStepDatasetAnalysis(Analysis):
 
             if evaluated <= 0:
                 output += "Negative"
-                output += ", error in layer 3: new_code, new_tests" if evaluated == 0 else ", fail in layer 3: new_code, new_tests"
+                output += ", error in step 2 (C', T') " if evaluated == 0 else ", fail  in step 2 (C', T') "
 
             else:
                 output += "Positive"
+
+            output += f"({len(d['results']['(code, new_tests)'][0])}, {len(d['results']['(code, new_tests)'][1])}, {len(d['results']['(code, new_tests)'][2])})"
+            output += f" ({len(d['results']['(new_code, new_tests)'][0])}, {len(d['results']['(new_code, new_tests)'][1])}, {len(d['results']['(new_code, new_tests)'][2])})"
 
         with open("result.txt", "w") as f:
             f.write(output)

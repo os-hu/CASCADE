@@ -128,11 +128,9 @@ class GPT4JavaTestGenerator(Generator):
 
         prompt.append({"role" : "user", "content" : repair_question})
 
-        repair = self.prompt_executor.execute(prompt)
+        repair_response = self.prompt_executor.execute(prompt).model_dump()
 
-        repair = repair.model_dump()
-
-        prompt.append(repair["choices"][0]["message"])
+        prompt.append(repair_response["choices"][0]["message"])
 
         # if self.ask_for_imports or (len(context["test_imports"]) == 1 and "*" in context["test_imports"][0]):
         #     prompt.append({"role" : "assistant", "content" : response["choices"][0]["message"]["content"]})
@@ -144,13 +142,14 @@ class GPT4JavaTestGenerator(Generator):
         #             context["test_imports"].append(line + "\n")
         #     context["test_imports"] = list(set(context["test_imports"]))
 
-        response = {"prompt" : prompt, "response" : response, "repair" : repair ,  "imports" : imports}
+        # r
 
-        new_tests = response["repair"]["choices"][0]["message"]["content"]
+        new_tests = repair_response["choices"][0]["message"]["content"]
+        new_tests = self.extract_tests(new_tests, context, repair_response, output_path)
 
-        new_tests = self.extract_tests(new_tests, context, response["repair"], output_path)
+        response_for_logging = {"prompt": prompt, "response": response, "repair": repair_response, "imports": imports}
 
-        return new_tests , response
+        return new_tests , response_for_logging
 
 
     def extract_tests(self, new_tests, context, response, output_path):
