@@ -370,6 +370,8 @@ class MultiStepDatasetAnalysis(Analysis):
             f.write(output)
             print("result:" , output)
 
+        self.executor.tear_down(data)
+
 
     def evaluate(self, res):
         if res[0] == [] and res[1] == []:
