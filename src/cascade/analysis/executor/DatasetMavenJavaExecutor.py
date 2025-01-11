@@ -27,7 +27,7 @@ class DatasetMavenJavaExecutor(MavenJavaExecutor):
 
         for arg in self.args:
             # try to run maven with the arg
-            print("Trying arg: ", arg)
+            #print("Trying arg: ", arg)
             self.builder = MavenBuilder(
                 new_image_name="dataset-" + self.id,
                 maven_args=arg,
@@ -42,7 +42,7 @@ class DatasetMavenJavaExecutor(MavenJavaExecutor):
             if not result == ([],[],[]):
                 # if it worked set args to the working arg
                 self.args = [arg]
-                print("Working arg: ", arg)
+                #print("Working arg: ", arg)
                 return result
 
         return [],[],[]

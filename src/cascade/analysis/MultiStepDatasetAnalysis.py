@@ -136,7 +136,7 @@ class MultiStepDatasetAnalysis(Analysis):
         junit_found = False
 
         if not "test_package" in d:
-            print("no orignal tests were found for this method")
+            print("no original tests were found for this method")
             d["test_package"] = d["package"]
 
         else:
@@ -232,7 +232,6 @@ class MultiStepDatasetAnalysis(Analysis):
 
 
             if evaluated == 0:
-                print("            error")
                 # loggin ----------
                 with open(output_path + "/errors.txt", "a") as f:
                     f.write(f"S1 Error in test: {test["property"]}\n")
@@ -243,12 +242,10 @@ class MultiStepDatasetAnalysis(Analysis):
                 d["results"]["(code, new_tests)"][2].append(test["property"])
 
             elif evaluated == 1:
-                print("            pass")
                 d["results"]["(code, new_tests)"][0].append(test["property"])
                 test["phase1"] = "pass"
 
             else:
-                print("            fail")
                 d["results"]["(code, new_tests)"][1].append(test["property"])
                 test["phase1"] = "fail"
 
@@ -292,7 +289,6 @@ class MultiStepDatasetAnalysis(Analysis):
 
 
                     if evaluated == 0:
-                        print("            error")
                         # loggin ----------
                         with open(output_path + "/errors.txt", "a") as f:
                             f.write(f"S2 Error in test: {test["property"]}\n")
@@ -303,12 +299,10 @@ class MultiStepDatasetAnalysis(Analysis):
                         d["results"]["(code, new_tests)"][2].append(test["property"])
 
                     elif evaluated == 1:
-                        print("            pass")
                         d["results"]["(code, new_tests)"][0].append(test["property"])
                         test["phase2"] = "pass"
 
                     else:
-                        print("            fail")
                         d["results"]["(code, new_tests)"][1].append(test["property"])
                         test["phase2"] = "fail"
 

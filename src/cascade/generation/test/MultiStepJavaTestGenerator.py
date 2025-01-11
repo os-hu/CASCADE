@@ -88,7 +88,7 @@ class MultiStepJavaTestGenerator(GPT4JavaTestGenerator):
 
 
     def generate(self, context, input_path, output_path):
-        # first given the method documentation and signature, we want to extract possible testscases or properties.
+        # first given the method documentation and signature, we want to extract possible testcases or properties.
         print("generation Phase 1")
         chat_history = []
 
@@ -126,7 +126,7 @@ class MultiStepJavaTestGenerator(GPT4JavaTestGenerator):
             print("error extracting test list block")
             return # TODO some error handling
 
-        print(f"    Got {len(prop_list)} potential test properties: {prop_list}")
+        print(f"    Got {len(prop_list)} potential test properties: {[prop['property'] for prop in prop_list]}")
         print("generation Phase 2")
 
         final_response = []
