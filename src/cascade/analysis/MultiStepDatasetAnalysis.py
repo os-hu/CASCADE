@@ -242,7 +242,7 @@ class MultiStepDatasetAnalysis(Analysis):
 
 
             # check if overall tests passed or failed or errored
-        print("    evaluate overall results for function (s1):")
+        print("    evaluate overall results for function (s1):" , end="")
         evaluated = self.evaluate(d["results"]["(code, new_tests)"])
 
         if evaluated >= 0:
@@ -311,7 +311,7 @@ class MultiStepDatasetAnalysis(Analysis):
 
 
             # check if it errored
-            print("    evaluate overall results for function (s2):")
+            print("    evaluate overall results for function (s2):", end="")
             evaluated = self.evaluate(d["results"]["(new_code, new_tests)"])
 
             # TODO still needs to be adjusted for new format
