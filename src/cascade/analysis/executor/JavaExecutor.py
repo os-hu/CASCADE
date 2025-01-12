@@ -17,7 +17,7 @@ class JavaExecutor(AnalysisExecutor):
         self.builder = builder
 
     def execute(self, code: str, tests: str, context: dict, input_path, output_path) -> (succeeded, failed, errored):
-        result = ([], [], [])
+        result = ([], [], []), None
 
         with tempfile.TemporaryDirectory() as temp_dir:
             try:

@@ -29,9 +29,8 @@ class MavenBuilder(Builder):
             second a string containing any compilation errors that happened during execution or 'None' if none happened
         """
         matches = re.search(r"Tests run: \d+, Failures: \d+, Errors: \d+, Skipped: \d+, Time", x)
-        result = ([], [], [])
         if not matches:
-            return result
+            return ([], [], []), None
         matched_line = matches[0]
         matches = list(map(int, re.findall(r"\d+", matched_line)))
         total_tests = matches[0]
@@ -53,7 +52,6 @@ class MavenBuilder(Builder):
             comp_errors = comp_matches[-1].strip()
         else:
             comp_errors = None
-
 
         return result, comp_errors
 
