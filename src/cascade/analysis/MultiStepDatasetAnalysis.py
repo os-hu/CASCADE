@@ -222,10 +222,15 @@ class MultiStepDatasetAnalysis(Analysis):
                 # loggin ----------
                 with open(output_path + "/errors.txt", "a") as f:
                     f.write(f"S1 Error in test: {test["property"]}\n")
-                    f.write(f"S1 {str(res1)}")
+                    f.write(f"{str(res1)}")
                     f.write(f"{test["test_class"]}\n")
-                    f.write("------\nCompiler errors:\n")
-                    f.write(comp_errors)
+                    f.write("------\nCode:\n")
+                    f.write(d["code"])
+                    if comp_errors:
+                        f.write("\n------\nCompiler errors:\n")
+                        f.write(comp_errors)
+                    else:
+                        f.write("\n-------\nNo Compiler errors.  check log")
 
                 test["phase1"] = "error"
                 d["results"]["(code, new_tests)"][2].append(test["property"])
@@ -292,10 +297,12 @@ class MultiStepDatasetAnalysis(Analysis):
                             f.write(f"{test["test_class"]}\n")
                             f.write("------\nCode:\n")
                             f.write(d["new_code"])
-                            f.write("\n------\nCompiler errors:\n")
-                            f.write(comp_errors)
+                            if comp_errors:
+                                f.write("\n------\nCompiler errors:\n")
+                                f.write(comp_errors)
+                            else:
+                                f.write("\n-------\nNo Compiler errors.  check log")
 
-                            f.write("--------------")
                         test["phase2"] = "error"
                         d["results"]["(new_code, new_tests)"][2].append(test["property"])
 
@@ -350,8 +357,8 @@ class MultiStepDatasetAnalysis(Analysis):
             else:
                 output += "Positive, pass  in step 2 (C'+T') "
 
-            output += f"[{len(d['results']['(code, new_tests)'][0])}, {len(d['results']['(code, new_tests)'][1])}, {len(d['results']['(code, new_tests)'][2])}]"
-            output += f"\t[{len(d['results']['(new_code, new_tests)'][0])}, {len(d['results']['(new_code, new_tests)'][1])}, {len(d['results']['(new_code, new_tests)'][2])}]"
+            output += f"[{len(d['results']['(code, new_tests)'][0])},{len(d['results']['(code, new_tests)'][1])},{len(d['results']['(code, new_tests)'][2])}]"
+            output += f"[{len(d['results']['(new_code, new_tests)'][0])},{len(d['results']['(new_code, new_tests)'][1])},{len(d['results']['(new_code, new_tests)'][2])}]"
 
         with open("result.txt", "w") as f:
             f.write(output)

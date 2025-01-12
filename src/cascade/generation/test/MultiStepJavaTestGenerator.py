@@ -122,6 +122,15 @@ class MultiStepJavaTestGenerator(GPT4JavaTestGenerator):
                 prop_list = ast.literal_eval(json_blocks[0].strip())
             except Exception as e:
                 print("Failure: Could not parse json list because: ", e)
+
+                # TODO maybe ask llm again?  or some other ways of fixing bad json stuff
+
+                with open("results.txt", "w") as f:
+                    f.write("Negative, JSON error")
+                with open("errors.txt", "w") as f:
+                    f.write("not parsable json answer because: " + str(e))
+                    f.write(answer_text)
+                return [], []
         else:
             print("error extracting test list block")
             return # TODO some error handling
@@ -158,9 +167,10 @@ class MultiStepJavaTestGenerator(GPT4JavaTestGenerator):
 
                 new_test = self.extract_tests(repair_response["choices"][0]["message"]["content"], context, repair_response, output_path)
 
-            final_response.append({"property" : prop["property"], "chat_history" : chat_history} )
+            final_response.append({"property" : prop["property"]})
             final_new_tests.append({ "test_class" : new_test , "property" : prop["property"]})
 
         # remove the tested property entry from the context dict
         del context["tested_property"]
+        final_response.append({"chat_history" : chat_history})
         return final_new_tests, final_response

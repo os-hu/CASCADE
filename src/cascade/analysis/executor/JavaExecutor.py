@@ -53,7 +53,7 @@ class JavaExecutor(AnalysisExecutor):
                 if self.debug:
                     print(p.stdout)
                     print(p.stderr)
-                return [], [], []
+                return ([],[],[]), None
 
             if self.debug:
                 print(p.stdout)
