@@ -28,6 +28,7 @@ class MavenBuilder(Builder):
                 the third list contains the ids of the tests that errored
             second a string containing any compilation errors that happened during execution or 'None' if none happened
         """
+        result = [[],[],[]]
         matches = re.search(r"Tests run: \d+, Failures: \d+, Errors: \d+, Skipped: \d+, Time", x)
         if not matches:
             return ([], [], []), None
