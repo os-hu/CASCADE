@@ -186,8 +186,8 @@ class MultiStepDatasetAnalysis(Analysis):
             inter_res = self.executor.execute("code", "intermediate_test", d, input_path, output_path)
             print(str(inter_res))
             if len(inter_res) > 2:
-                    with open(output_path + "/errors.txt", "a") as f:
-                        f.write(f"FOUND The weird execution error: {str(inter_res)}")
+                with open(output_path + "/errors.txt", "a") as f:
+                    f.write(f"FOUND The weird execution error: {str(inter_res)}")
                 exit()
             res1 = list(inter_res[0])
             comp_errors = inter_res[1]
