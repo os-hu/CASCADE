@@ -42,6 +42,7 @@ class DatasetMavenJavaExecutor(MavenJavaExecutor):
             if not result[0] == ([],[],[]):
                 # if it worked set args to the working arg
                 self.args = [arg]
+                break
                 #print("Working arg: ", arg)
 
         return result
