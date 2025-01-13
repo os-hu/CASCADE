@@ -179,8 +179,18 @@ class MultiStepDatasetAnalysis(Analysis):
             d["intermediate_test"] = test["test_class"]
             d["test_file_path"] = d["test_file_path"].replace( test_class_real_name, test_class_unique_name )
 
-            res1, comp_errors = self.executor.execute("code", "intermediate_test", d, input_path, output_path)
-            res1 = list(res1)
+            # for debugging.  uncomment later:
+            #res1, comp_errors = self.executor.execute("code", "intermediate_test", d, input_path, output_path)
+            #res1 = list(res1)
+            # for debugging.  remove later:
+            inter_res = self.executor.execute("code", "intermediate_test", d, input_path, output_path)
+            print(str(inter_res))
+            if len(inter_res) > 2:
+                    with open(output_path + "/errors.txt", "a") as f:
+                        f.write(f"FOUND The weird execution error: {str(inter_res)}")
+                exit()
+            res1 = list(inter_res[0])
+            comp_errors = inter_res[1]
 
             test["test_class"] = test["test_class"].replace(test_class_unique_name, test_class_real_name)
             d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name,  test_class_real_name)
