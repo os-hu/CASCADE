@@ -53,9 +53,11 @@ class MavenBuilder(Builder):
         # debugging TODO  rmeove
         with open("/home/kiecketo/tmp/out.txt", "a") as f:
             f.write(f"-------------------\n")
+            f.write(x + "\n")
             f.write(str(comp_matches) + "\n")
             f.write(f"-----\n")
-            f.write(comp_matches[-1].strip() + "\n")
+            if comp_matches:
+                f.write(comp_matches[-1].strip() + "\n")
 
         if comp_matches:
             comp_errors = comp_matches[-1].strip()
