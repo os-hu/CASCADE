@@ -21,17 +21,17 @@ class MavenBuilder(Builder):
         The function that has to be given to a builder to evaluate the output of the tests.
         :param x: a string containing the output produced in the docker,
                     which should contain the output of the tests which are then parsed here.
-        :return: result a 2-tuple of
-            first a three tuple of lists of strings,
+        :return: result, a 2-tuple of
+            first a three-tuple of lists of strings,
                 the first list contains the ids of the tests that passed,
                 the second list contains the ids of the tests that failed,
                 the third list contains the ids of the tests that errored
-            second a string containing any compilation errors that happened during execution or 'None' if none happened
+            second a string containing any (compilation) errors that happened during execution or 'None' if none happened
         """
         result = [[],[],[]]
         matches = re.search(r"Tests run: \d+, Failures: \d+, Errors: \d+, Skipped: \d+, Time", x)
         if not matches:
-            return ([], [], []), None
+            return ([], [], []), "ERROR: test result pattern not found."
         matched_line = matches[0]
         matches = list(map(int, re.findall(r"\d+", matched_line)))
         total_tests = matches[0]
@@ -49,6 +49,14 @@ class MavenBuilder(Builder):
 
         # catch all compilation errors
         comp_matches = re.findall(r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -*\n(.*?)\[INFO\]', x, re.DOTALL)
+
+        # debugging TODO  rmeove
+        with open("~/tmp/out.txt", "a") as f:
+            f.write(f"-------------------\n")
+            f.write(str(comp_matches) + "\n")
+            f.write(f"-----\n")
+            f.write(comp_matches[-1].strip() + "\n")
+
         if comp_matches:
             comp_errors = comp_matches[-1].strip()
         else:

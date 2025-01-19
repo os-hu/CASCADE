@@ -179,15 +179,19 @@ class MultiStepDatasetAnalysis(Analysis):
             d["intermediate_test"] = test["test_class"]
             d["test_file_path"] = d["test_file_path"].replace( test_class_real_name, test_class_unique_name )
 
-            # for debugging.  uncomment later:
+            # for debugging.  TODO uncomment later:
             #res1, comp_errors = self.executor.execute("code", "intermediate_test", d, input_path, output_path)
             #res1 = list(res1)
             # for debugging.  remove later:
             inter_res = self.executor.execute("code", "intermediate_test", d, input_path, output_path)
+
+            with open(output_path + "/log.txt", "a") as f:
+                f.write(f"\nDEBUGTHIS result of first execute: {str(inter_res)}\n")  # debugging only  TODO remove this later
+
             print(str(inter_res))
             if len(inter_res) > 2:
                 with open(output_path + "/errors.txt", "a") as f:
-                    f.write(f"FOUND The weird execution error: {str(inter_res)}")
+                    f.write(f"FOUND The weird execution error: {str(inter_res)}")   # debugging only  TODO remove this later
                 exit()
             res1 = list(inter_res[0])
             comp_errors = inter_res[1]
@@ -219,6 +223,9 @@ class MultiStepDatasetAnalysis(Analysis):
                         res1, comp_errors = self.executor.execute("code", "new_tests", d, input_path, output_path)
                         res1 = list(res1)
 
+                        print("RES:" + str(res1))
+                        print("COMP ERRORS:" + str(comp_errors))
+
                         test["test_class"] = test["test_class"].replace(test_class_unique_name, test_class_real_name)
                         d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
                         if comp_errors:
@@ -240,7 +247,8 @@ class MultiStepDatasetAnalysis(Analysis):
                         f.write("\n------\nCompiler errors:\n")
                         f.write(comp_errors)
                     else:
-                        f.write("\n-------\nNo Compiler errors.  check log")
+                        f.write("\n-------\nNo Compiler errors.  check log\n")
+                    f.write("-----------------------\n")
 
                 test["phase1"] = "error"
                 d["results"]["(code, new_tests)"][2].append(test["property"])
@@ -260,11 +268,12 @@ class MultiStepDatasetAnalysis(Analysis):
         print("    evaluate overall results for function (s1):" , end="")
         evaluated = self.evaluate(d["results"]["(code, new_tests)"])
 
+        d["new_tests"]
         if evaluated >= 0:
             output = "Negative"
             output += ", error in step 1 (C +T') " if evaluated == 0 else ", pass  in step 1 (C +T') "
             output += f"[{len(d['results']['(code, new_tests)'][0])},{len(d['results']['(code, new_tests)'][1])},{len(d['results']['(code, new_tests)'][2])}]"
-
+            output += f"  junit: {junit_version}"
 
         else:
             # generate new code  -----------------------------------------------------------------------------------------------
@@ -281,7 +290,7 @@ class MultiStepDatasetAnalysis(Analysis):
 
 
             for test in d["new_tests"]:
-                if test["phase1"] == "fail":
+                if test["phase1"] == "fail" or test["phase1"] == "error":  # debatable if errors shoudl coutn here or not /:
                     print("        testing property:", test["property"])
 
                     test["test_class"] = test["test_class"].replace(test_class_real_name, test_class_unique_name)
@@ -290,6 +299,9 @@ class MultiStepDatasetAnalysis(Analysis):
 
                     res2, comp_errors = self.executor.execute("new_code", "intermediate_test", d, input_path, output_path)
                     res2 = list(res2)
+
+                    print("RES:" + str(res2))
+                    print("COMP ERRORS:" + str(comp_errors))
 
                     test["test_class"] = test["test_class"].replace(test_class_unique_name, test_class_real_name)
                     d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
@@ -311,7 +323,8 @@ class MultiStepDatasetAnalysis(Analysis):
                                 f.write("\n------\nCompiler errors:\n")
                                 f.write(comp_errors)
                             else:
-                                f.write("\n-------\nNo Compiler errors.  check log")
+                                f.write("\n-------\nNo Compiler errors.  check log\n")
+                            f.write("-----------------------\n")
 
                         test["phase2"] = "error"
                         d["results"]["(new_code, new_tests)"][2].append(test["property"])
@@ -338,9 +351,7 @@ class MultiStepDatasetAnalysis(Analysis):
                     if evaluated == 0 and comp_errors:
 
                         new_code, response = self.generator.repair_code(d, input_path, output_path, comp_errors, 'new_code')
-
                         d["new_code"] = new_code
-
                         print("        execute repaired code")
 
                         # TODO is the intermediate test realy the best option here? shoudl we change the acutall code or just the instance that is for this specific test???
@@ -369,6 +380,7 @@ class MultiStepDatasetAnalysis(Analysis):
 
             output += f"[{len(d['results']['(code, new_tests)'][0])},{len(d['results']['(code, new_tests)'][1])},{len(d['results']['(code, new_tests)'][2])}]"
             output += f"[{len(d['results']['(new_code, new_tests)'][0])},{len(d['results']['(new_code, new_tests)'][1])},{len(d['results']['(new_code, new_tests)'][2])}]"
+            output += f"  junit: {junit_version}"
 
         with open("result.txt", "w") as f:
             f.write(output)
@@ -381,17 +393,17 @@ class MultiStepDatasetAnalysis(Analysis):
 
     def evaluate(self, res):
         if res[0] == [] and res[1] == []:
-            if self.debug >= 1:
-                print("            Error")
+            print("            Error")
             # error
             return 0
         elif res[1] == [] and res[2] == []:
-            if self.debug >= 1:
-                print("            Passed")
+            print("            Passed")
             # if no errors or failures  then passed
             return 1
         else:
-            if self.debug >= 1:
-                print("            Failed")
+            print("            Failed")
             # failed
+
+            # if res[1] == []:
+            #     return -2   # this indicates the kind of fail that coudl not be fixed by a deeper level
             return -1

@@ -45,7 +45,7 @@ class MultiStepJavaTestGenerator(GPT4JavaTestGenerator):
         system_prompt = f"You are an expert Java developer. You will generate unit tests for a specific method in a provided class.{testframework} You can import anything from the project, but no third party libraries. Handle exceptions properly, and ensure method signatures and calls are correct. The code should compile without errors. The method is not implemented yet so you will be using only its documentation as the ground truth of the expected behavior."
 
         # This is for test driven development so the tests should be designed to fail if the later implementation does not exactly conform to the documentation.
-        c1 = f"The function under test is `{context['signature']['name']}({params})`\n\n Focus on testing: {context["tested_property"]["property"]}. Especially on the following Things: {'\n'.join(context["tested_property"]["tests"])}\nHere is the class containing the function:\n\n```java\n"
+        c1 = f"The function under test is `{context['signature']['name']}({params})`\n\n Only test: '{context["tested_property"]["property"]}', everything else will be tested later. Write tests for the following Things: {'\n'.join(context["tested_property"]["tests"])}\n" + "Here is the class containing the function:\n\n```java\n"
         c2 = "; // this is the function to be tested\n\n}\n```\n"
         code = c1 + build_context(context, doc=True) + c2
 
@@ -107,7 +107,7 @@ class MultiStepJavaTestGenerator(GPT4JavaTestGenerator):
         # next we aim to convert this list into a usable format and extract the to tested properties
 
 
-        prompt_stage1.append({"role": "user", "content": f"Now turn this into a JSON array. Where each entry has \"property\" (the tested property) and \"tests\" a list of up to 5 things that should be tested to verify the property" })
+        prompt_stage1.append({"role": "user", "content": f"Now turn this into a JSON array. Where each entry has \"property\" (the tested property) and \"tests\" a list of not more than 5 things that should be tested to verify the property" })
 
         chat_history.append(prompt_stage1)
         response_stage1_part2 = self.prompt_executor.execute(prompt_stage1).model_dump()

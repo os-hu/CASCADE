@@ -17,7 +17,8 @@ class JavaExecutor(AnalysisExecutor):
         self.builder = builder
 
     def execute(self, code: str, tests: str, context: dict, input_path, output_path) -> (succeeded, failed, errored):
-        result = ([], [], []), None
+        result = ([],[],[])
+        errors = None
 
         with tempfile.TemporaryDirectory() as temp_dir:
             try:
@@ -60,8 +61,10 @@ class JavaExecutor(AnalysisExecutor):
 
             dock_ex = DockerizedWrapper(debug=self.debug)
 
-            test_class_name = (self.builder.test_pattern.replace('%t', context['test_package'] + "."
-                                                                 + context['test_file_path'].split('/')[-1].split('.')[0]))
+            #test_class_name = (self.builder.test_pattern.replace('%t', context['test_package'] + "." + context['test_file_path'].split('/')[-1].split('.')[0]))
+            #debuggin verison TODO remove and uncommnet thing above
+            test_class_name = (self.builder.test_pattern.replace('%t', "THIS_IS_A_UNIQUE_NAME_Test"))
+
             dock_context = {
                 "image" : self.builder.image,
                 "directory" : temp_dir,
@@ -71,10 +74,9 @@ class JavaExecutor(AnalysisExecutor):
                 "eval_function" : self.builder.eval_function
             }
 
-            result = dock_ex.execute(dock_context, output_path)
+            result, errors = dock_ex.execute(dock_context, output_path)
 
-
-        return result
+        return result, errors
 
 
     def set_up(self, data, input_path, output_path):
