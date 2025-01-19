@@ -51,7 +51,7 @@ class MavenBuilder(Builder):
         comp_matches = re.findall(r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -*\n(.*?)\[INFO\]', x, re.DOTALL)
 
         # debugging TODO  rmeove
-        with open("~/tmp/out.txt", "a") as f:
+        with open("/home/kiecketo/tmp/out.txt", "a") as f:
             f.write(f"-------------------\n")
             f.write(str(comp_matches) + "\n")
             f.write(f"-----\n")
