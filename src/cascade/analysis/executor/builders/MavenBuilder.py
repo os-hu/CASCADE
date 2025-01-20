@@ -7,7 +7,9 @@ from cascade.utils.DockerizedWrapper import DockerizedWrapper
 class MavenBuilder(Builder):
     def __init__(self, new_image_name, maven_args, set_up_maven_command, set_up_maven_args, image, timeout=120):
         super().__init__(
-            test_pattern = f"echo \"[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0\" > out; timeout {timeout} mvn test {maven_args} -Dtest=\"%t\" -DfailIfNoTests=false 2>&1 > output; cat output > out; cat output",
+            test_pattern = f"echo \"[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0\" > out; timeout {timeout} mvn test {maven_args} -Dtest=\"%t\" -DfailIfNoTests=false > output 2>&1; cat output > out; cat output",
+            #test_pattern = f"echo \"[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0\" > out; timeout {timeout} mvn test {maven_args} -Dtest=\"%t\" -DfailIfNoTests=false 2>&1 > output; cat output > out; cat output",
+
             eval_function = self.eval_function,
             image = new_image_name
         )
