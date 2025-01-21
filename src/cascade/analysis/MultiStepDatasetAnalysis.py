@@ -171,6 +171,8 @@ class MultiStepDatasetAnalysis(Analysis):
         d["results"] = {}
         d["results"]["(code, new_tests)"] = [[],[],[]]
 
+        self.executor.set_up(data, input_path, output_path)
+
         # for every test in the new tests list
         for test in d["new_tests"]:
             print("        testing property:", test["property"])
@@ -251,14 +253,14 @@ class MultiStepDatasetAnalysis(Analysis):
                     f.write("-----------------------\n")
 
                 test["phase1"] = "error"
-                d["results"]["(code, new_tests)"][2].append(test["property"])
+                d["results"]["(code, new_tests)"][2].append({"property" : test["property"] , "results": res1})
 
             elif evaluated == 1:
-                d["results"]["(code, new_tests)"][0].append(test["property"])
+                d["results"]["(code, new_tests)"][0].append({"property" : test["property"] , "results": res1})
                 test["phase1"] = "pass"
 
             else:
-                d["results"]["(code, new_tests)"][1].append(test["property"])
+                d["results"]["(code, new_tests)"][1].append({"property" : test["property"] , "results": res1})
                 test["phase1"] = "fail"
 
             save_dicts_list_to_json([d], ana_path)
@@ -268,7 +270,6 @@ class MultiStepDatasetAnalysis(Analysis):
         print("    evaluate overall results for function (s1):" , end="")
         evaluated = self.evaluate(d["results"]["(code, new_tests)"])
 
-        d["new_tests"]
         if evaluated >= 0:
             output = "Negative"
             output += ", error in step 1 (C +T') " if evaluated == 0 else ", pass  in step 1 (C +T') "
@@ -290,7 +291,7 @@ class MultiStepDatasetAnalysis(Analysis):
 
 
             for test in d["new_tests"]:
-                if test["phase1"] == "fail" or test["phase1"] == "error":  # debatable if errors shoudl coutn here or not /:
+                if test["phase1"] == "fail" or test["phase1"] == "pass":  # debatable if errors shoudl coutn here or not /:
                     print("        testing property:", test["property"])
 
                     test["test_class"] = test["test_class"].replace(test_class_real_name, test_class_unique_name)
@@ -327,14 +328,14 @@ class MultiStepDatasetAnalysis(Analysis):
                             f.write("-----------------------\n")
 
                         test["phase2"] = "error"
-                        d["results"]["(new_code, new_tests)"][2].append(test["property"])
+                        d["results"]["(new_code, new_tests)"][2].append({"property" : test["property"] , "results": res2})
 
                     elif evaluated == 1:
-                        d["results"]["(new_code, new_tests)"][0].append(test["property"])
+                        d["results"]["(new_code, new_tests)"][0].append({"property" : test["property"] , "results": res2})
                         test["phase2"] = "pass"
 
                     else:
-                        d["results"]["(new_code, new_tests)"][1].append(test["property"])
+                        d["results"]["(new_code, new_tests)"][1].append({"property" : test["property"] , "results": res2})
                         test["phase2"] = "fail"
 
                     save_dicts_list_to_json([d], ana_path)
@@ -366,10 +367,9 @@ class MultiStepDatasetAnalysis(Analysis):
                         if comp_errors:
                             comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
 
-                        evaluated = self.evaluate(res1)
+                        evaluated = self.evaluate(res2)
 
                         save_dicts_list_to_json([d], ana_path)
-
 
             if evaluated <= 0:
                 output += "Negative"
@@ -386,9 +386,7 @@ class MultiStepDatasetAnalysis(Analysis):
             f.write(output)
             print("result:" , output)
 
-
         self.executor.tear_down(data)
-
 
 
     def evaluate(self, res):

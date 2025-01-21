@@ -63,13 +63,13 @@ class JavaExecutor(AnalysisExecutor):
 
             #test_class_name = (self.builder.test_pattern.replace('%t', context['test_package'] + "." + context['test_file_path'].split('/')[-1].split('.')[0]))
             #debuggin verison TODO remove and uncommnet thing above
-            test_class_name = (self.builder.test_pattern.replace('%t', "THIS_IS_A_UNIQUE_NAME_Test"))
+            test_command = (self.builder.test_pattern.replace('%t', "THIS_IS_A_UNIQUE_NAME_Test"))
 
             dock_context = {
                 "image" : self.builder.image,
                 "directory" : temp_dir,
                 "command" : f"ls; cat -n {context['code_file_path']}; cat -n {context['test_file_path']};"
-                            f"{test_class_name}",
+                            f"{test_command}",
                 "eval_command" : "cat out",
                 "eval_function" : self.builder.eval_function
             }
