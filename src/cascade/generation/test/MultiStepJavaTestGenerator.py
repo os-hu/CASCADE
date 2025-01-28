@@ -94,7 +94,7 @@ class MultiStepJavaTestGenerator(GPT4JavaTestGenerator):
 
         prompt_stage1 = [
         {"role": "system", "content": "You are an Expert Java Developer and Requirements Engineer. You will be given a method signature and its documentation. Your task is to extract testable properties from the documentation."},
-        {"role": "user", "content": f"Give me properties that should be tested for the method:\n ```java\n{build_signature(context, doc=True)}\n```\nMake sure the entire functionality exactly as described in the documentation is considered and covered with these tests."}
+        {"role": "user", "content": f"Give me properties that should be tested for this Java method:\n ```java\n{build_signature(context, doc=True)}\n```\nMake sure the entire functionality exactly as described in the documentation is considered and covered with these tests."}
         ]
 
         chat_history.append(prompt_stage1)
@@ -141,7 +141,7 @@ class MultiStepJavaTestGenerator(GPT4JavaTestGenerator):
         final_response = []
         final_new_tests = []
 
-        for prop in prop_list[0:3]:    # TODO make this more.  not just 0:3
+        for prop in prop_list[0:4]:    # TODO make this more.  not just 0:3
             # now generate a test class for each property
             context["tested_property"] = prop
 

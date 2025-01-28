@@ -88,7 +88,7 @@ class MultiStepDatasetAnalysis(Analysis):
 
     def analyse(self, data: list, input_path, output_path):
         """
-        THis is the new and improved analysis.  it does not use or require the original tests.
+        This is the new and improved analysis.  it does not use or require the original tests.
 
         :param data:
         :param input_path:
@@ -203,6 +203,8 @@ class MultiStepDatasetAnalysis(Analysis):
             if comp_errors:
                 comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
 
+
+
             evaluated = self.evaluate(res1)
 
             # this is the compilation error loop.  turn back on if needed by either making this a true or removing the check.
@@ -222,7 +224,7 @@ class MultiStepDatasetAnalysis(Analysis):
                         d["intermediate_test"] = test["test_class"]
                         d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
 
-                        res1, comp_errors = self.executor.execute("code", "new_tests", d, input_path, output_path)
+                        res1, comp_errors = self.executor.execute("code", "intermediate_test", d, input_path, output_path)
                         res1 = list(res1)
 
                         print("RES:" + str(res1))
@@ -268,15 +270,29 @@ class MultiStepDatasetAnalysis(Analysis):
 
             # check if overall tests passed or failed or errored
         print("    evaluate overall results for function (s1):" , end="")
-        evaluated = self.evaluate(d["results"]["(code, new_tests)"])
 
-        if evaluated >= 0:
-            output = "Negative"
-            output += ", error in step 1 (C +T') " if evaluated == 0 else ", pass  in step 1 (C +T') "
-            output += f"[{len(d['results']['(code, new_tests)'][0])},{len(d['results']['(code, new_tests)'][1])},{len(d['results']['(code, new_tests)'][2])}]"
+
+        go_to_step2 = True
+        lengths = [len(d["results"]["(code, new_tests)"][i]) for i in range(3)]
+
+        if lengths[0] > 0 and lengths[1] == 0:
+            # ALL passed (or errored)
+            go_to_step2 = False
+            output = f"Negative, pass  in step 1 (C +T') [{lengths[0]},{lengths[1]},{lengths[2]}]"
             output += f"  junit: {junit_version}"
 
+        elif lengths[1] > 0:
+            # some failed
+            go_to_step2 = True
+
         else:
+            go_to_step2 = False
+            output = f"Negative, error in step 1 (C +T') [{lengths[0]},{lengths[1]},{lengths[2]}]"
+            output += f"  junit: {junit_version}"
+
+
+
+        if go_to_step2:
             # generate new code  -----------------------------------------------------------------------------------------------
             print("  Step 2 - New Code")
             d["results"]["(new_code, new_tests)"] = [[], [], []]
@@ -291,7 +307,7 @@ class MultiStepDatasetAnalysis(Analysis):
 
 
             for test in d["new_tests"]:
-                if test["phase1"] == "fail" or test["phase1"] == "pass":  # debatable if errors shoudl coutn here or not /:
+                if test["phase1"] == "fail" or test["phase1"] == "pass":  # errors ignroed.  passes should still pass
                     print("        testing property:", test["property"])
 
                     test["test_class"] = test["test_class"].replace(test_class_real_name, test_class_unique_name)
@@ -327,8 +343,8 @@ class MultiStepDatasetAnalysis(Analysis):
                                 f.write("\n-------\nNo Compiler errors.  check log\n")
                             f.write("-----------------------\n")
 
-                        test["phase2"] = "error"
                         d["results"]["(new_code, new_tests)"][2].append({"property" : test["property"] , "results": res2})
+                        test["phase2"] = "error"
 
                     elif evaluated == 1:
                         d["results"]["(new_code, new_tests)"][0].append({"property" : test["property"] , "results": res2})
@@ -343,44 +359,49 @@ class MultiStepDatasetAnalysis(Analysis):
 
             # check if it errored
             print("    evaluate overall results for function (s2):", end="")
-            evaluated = self.evaluate(d["results"]["(new_code, new_tests)"])
+            evaluated_full = self.evaluate(d["results"]["(new_code, new_tests)"])
 
             # TODO still needs to be adjusted for new format
-            repairloop_code = False
-            if repairloop_code:
-                for i in range(1):
-                    if evaluated == 0 and comp_errors:
+            # repairloop_code = False
+            # if repairloop_code:
+            #     for i in range(1):
+            #         if evaluated == 0 and comp_errors:
+            #
+            #             new_code, response = self.generator.repair_code(d, input_path, output_path, comp_errors, 'new_code')
+            #             d["new_code"] = new_code
+            #             print("        execute repaired code")
+            #
+            #             # TODO is the intermediate test realy the best option here? shoudl we change the acutall code or just the instance that is for this specific test???
+            #             d["intermediate_test"] = d["intermediate_test"].replace(test_class_real_name, test_class_unique_name)
+            #             d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
+            #
+            #             res2, comp_errors = self.executor.execute("new_code", "intermediate_test", d, input_path, output_path)
+            #             res2 = list(res2)
+            #
+            #             d["intermediate_test"] = d["intermediate_test"].replace(test_class_unique_name, test_class_real_name)
+            #             d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
+            #             if comp_errors:
+            #                 comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
+            #
+            #             evaluated = self.evaluate(res2)
+            #
+            #             save_dicts_list_to_json([d], ana_path)
 
-                        new_code, response = self.generator.repair_code(d, input_path, output_path, comp_errors, 'new_code')
-                        d["new_code"] = new_code
-                        print("        execute repaired code")
+            lengths2 = [len(d["results"]["(new_code, new_tests)"][i]) for i in range(3)]
+            if lengths2[0] > 0 and lengths2[1] == 0:
+                # ALL passed (or errored)
+                output = f"Positive, pass  in step 2 (C'+T') [{lengths[0]},{lengths[1]},{lengths2[2]}][{lengths2[0]},{lengths2[1]},{lengths2[2]}]"
+                output += f"  junit: {junit_version}"
 
-                        # TODO is the intermediate test realy the best option here? shoudl we change the acutall code or just the instance that is for this specific test???
-                        d["intermediate_test"] = d["intermediate_test"].replace(test_class_real_name, test_class_unique_name)
-                        d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
-
-                        res2, comp_errors = self.executor.execute("new_code", "intermediate_test", d, input_path, output_path)
-                        res2 = list(res2)
-
-                        d["intermediate_test"] = d["intermediate_test"].replace(test_class_unique_name, test_class_real_name)
-                        d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
-                        if comp_errors:
-                            comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
-
-                        evaluated = self.evaluate(res2)
-
-                        save_dicts_list_to_json([d], ana_path)
-
-            if evaluated <= 0:
-                output += "Negative"
-                output += ", error in step 2 (C'+T') " if evaluated == 0 else ", fail  in step 2 (C'+T') "
+            elif lengths2[1] > 0:
+                # some failed
+                output = f"Negative, fail in step 2 (C'+T') [{lengths[0]},{lengths[1]},{lengths2[2]}][{lengths2[0]},{lengths2[1]},{lengths2[2]}]"
+                output += f"  junit: {junit_version}"
 
             else:
-                output += "Positive, pass  in step 2 (C'+T') "
+                output = f"Negative, error in step 2 (C'+T') [{lengths[0]},{lengths[1]},{lengths2[2]}][{lengths2[0]},{lengths2[1]},{lengths2[2]}]"
+                output += f"  junit: {junit_version}"
 
-            output += f"[{len(d['results']['(code, new_tests)'][0])},{len(d['results']['(code, new_tests)'][1])},{len(d['results']['(code, new_tests)'][2])}]"
-            output += f"[{len(d['results']['(new_code, new_tests)'][0])},{len(d['results']['(new_code, new_tests)'][1])},{len(d['results']['(new_code, new_tests)'][2])}]"
-            output += f"  junit: {junit_version}"
 
         with open("result.txt", "w") as f:
             f.write(output)
@@ -400,8 +421,4 @@ class MultiStepDatasetAnalysis(Analysis):
             return 1
         else:
             print("            Failed")
-            # failed
-
-            # if res[1] == []:
-            #     return -2   # this indicates the kind of fail that coudl not be fixed by a deeper level
             return -1

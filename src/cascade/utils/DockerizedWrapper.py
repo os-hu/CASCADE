@@ -118,7 +118,13 @@ class DockerizedWrapper:
     def remove_image(self, dock_context: dict):
         client = docker.from_env(timeout=240)
         try:
-            client.images.remove(dock_context["new_image"], force=True)
+            image_name = dock_context["new_image"]
+            containers = client.containers.list(all=True,
+                                                filters={"ancestor": image_name})  # Get all containers using the image
+            for container in containers:
+                container.remove(force=True)  # Remove the containers forcefully
+
+            client.images.remove(image_name, force=True)  # Now remove the image
         except Exception as e:
             print(f"Could not remove image because of Exception: {e}")
 

@@ -51,7 +51,7 @@ class MavenBuilder(Builder):
         # catch all compilation errors
         comp_matches = re.findall(r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -*\n(.*?)\[INFO\]', x, re.DOTALL)
 
-        # debugging TODO  rmeove
+        # debugging TODO remove
         with open("/home/kiecketo/tmp/out.txt", "a") as f:
             f.write(f"-------------------\n")
             f.write(x + "\n")
@@ -79,7 +79,7 @@ class MavenBuilder(Builder):
             "image": self.old_image_name,
             "new_image": self.image,
             "directory": temp_dir,
-            "command": f"mvn {self.set_up_maven_command} {self.set_up_maven_args}; RET=$?; rm -rf ../root/*; exit $RET;",
+            "command": f"timeout 120 mvn {self.set_up_maven_command} {self.set_up_maven_args}; RET=$?; rm -rf ../root/*; exit $RET;",
         }
         return wrapper.setup_image(dock_context, output_path)
 
