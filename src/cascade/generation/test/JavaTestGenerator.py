@@ -51,7 +51,7 @@ class JavaTestGenerator(GPT4JavaTestGenerator):
             f"The function under test is `{context['signature']['name']}({params})`\n\n everything else will be tested later. " 
             "Fill out the tests in the test class below. " 
             "This is for test driven development so the tests should be designed to fail if the later implementation does not exactly conform to the documentation.\n\n"
-            "Here is the entire class containing the function:\n\n```java\n"
+            "In case you need any of the other methods or fields of the class, here is the entire class containing the function under test:\n\n```java\n"
             )
         c2 = "; // this is the function to be tested\n\n}\n```\n"
         prompt_header = c1 + build_context(context, doc=True) + c2
@@ -118,8 +118,17 @@ class JavaTestGenerator(GPT4JavaTestGenerator):
         #print(response_stage1["choices"][0]["message"]["content"])
 
         # now we aim to convert this text into a usable format and extract the testable properties
-        json_listprompt = {"role": "user", "content": f"Now turn this into a JSON array of unit tests we should write for test driven development based on the documentation above. Where each entry has \"test_name\": referencing the specified behavior and \"test_description\": a detailed description for the developer of what this tests should do and which specific behavior from the documentation it tests."}
+        json_listprompt = {"role": "user", "content": f"Now turn this into a JSON array of unit tests we should write for test driven development based on the documentation above. Where each entry has \"test_name\": a name starting with 'test' referencing the specified behavior and \"test_description\": a detailed description for the developer of what this tests should do and which specific behavior from the documentation it tests. Include only those tests that follow directly from the documentation, not performance based ones."}
+
         #json_listprompt = {"role": "user", "content": f"Now turn this into a JSON array" }
+
+        # possible alterations   to later filter out unnessceary tests
+        # To ensure the correctness of the `uniqueIterable` method, we can derive several testable behavior specifications based on the provided documentation. Here are the key behaviors to test, structured in an "if this then that" format:
+        # classes:
+        #  - "directly from documentation"
+        #  - "weitere tests die ausserdem sinnvol sind"
+        #  - "performance and integration"
+        #  - "compile time tests (e.g. for return types)"
 
         prompt_step1.append(json_listprompt)
         response = self.prompt_executor.execute(prompt_step1).model_dump()

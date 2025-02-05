@@ -28,7 +28,7 @@ class GPT4JavaCodeGenerator(Generator):
         packg_and_imports = f"package {context['package']};\n\n" + "".join(context["parent"]["imports"]) + "\n"
 
         prompt_start = f"The method you need to implement is `{context['signature']['name']}({params})`\nHere is the class\n```java\n" + packg_and_imports
-        prompt_finisher =  " {\n    // write the function body here. Take the Documentation as literal as possible.\n    }\n}\n```\n Now respond with the implemented method."
+        prompt_finisher =  " {\n    // write the function body for this method. Take the Documentation as literal as possible.\n    }\n}\n```\nNow respond with the implemented method."
 
         prompt = prompt_start +  build_context(context, doc=True)  + prompt_finisher
 

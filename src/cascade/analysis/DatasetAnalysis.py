@@ -177,6 +177,8 @@ class DatasetAnalysis(Analysis):
         exec_results = self.executor.execute("code", "new_tests", d, input_path, output_path)
         res1 = list(exec_results [0])
         comp_errors = exec_results[1]
+        with open(output_path + "/log.txt", "a") as f:
+            f.write("COMP ERRORS:" + str(comp_errors) + "\n-------\n")
         d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
         d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
         if comp_errors:
@@ -187,6 +189,7 @@ class DatasetAnalysis(Analysis):
 
         # this is the compilation error loop.  turn back on if needed by either making this a true or removing the check.
         repairloop_tests = False
+        # TODO For now apperently the compiler errors do not come out to play....
         if repairloop_tests:
             for i in range(2):
                 # repair step
@@ -204,18 +207,19 @@ class DatasetAnalysis(Analysis):
                     res1, comp_errors = self.executor.execute("code", "intermediate_test", d, input_path, output_path)
                     res1 = list(res1)
 
-                    print("RES:" + str(res1))
-                    print("COMP ERRORS:" + str(comp_errors))
-
                     d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
                     d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
                     if comp_errors:
                         comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
 
                     evaluated = self.evaluate(res1)
-
                     save_dicts_list_to_json([d], ana_path)
 
+
+        amount_res = [len(r) for r in res1]
+        d["results"]["(code, new_tests)"] = amount_res
+
+        next_phase = False
         if evaluated == 0:
             # loggin ----------
             with open(output_path + "/errors.txt", "a") as f:
@@ -232,13 +236,72 @@ class DatasetAnalysis(Analysis):
                     f.write("\n-------\nNo Compiler errors.  check log\n")
                 f.write("-----------------------\n")
 
-            output = f"Negative, error in step 1 (C'+T')"
-
+            output = f"Negative, error in step 1 (C +T') {str(amount_res)}]"
+            print(output)
 
         elif evaluated == 1:
-            output = f"Negative, pass  in step 1 (C'+T'){res1}"
+            output = f"Negative, pass  in step 1 (C +T') {str(amount_res)}"
+            print(output)
+
         else:
-            output = f"Positive, fail  in step 1 (C'+T'){res1}"
+            next_phase = True
+
+        if next_phase:
+            # generate new code  -----------------------------------------------------------------------------------------------
+            print("  Step 2 - New Code")
+            d["results"]["(new_code, new_tests)"] = [[], [], []]
+            new_code, response = self.generator.generate_code(d, input_path, output_path)
+            #TODO overhaul code generation?
+            d["new_code"] = new_code
+            d["new_code_response"] = response
+            print("    execute new code (with new tests)")
+
+            d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
+            d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
+
+            res2, comp_errors = self.executor.execute("new_code", "new_tests", d, input_path, output_path)
+            res2 = list(res2)
+
+            d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
+            d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
+            if comp_errors:
+                comp_errors = comp_errors.replace( test_class_unique_name , test_class_real_name )
+
+            evaluated = self.evaluate(res2)
+
+            #TODO repair loop for code?
+            save_dicts_list_to_json([d], ana_path)
+
+        amount_res2 = [len(r) for r in res2]
+        d["results"]["(code, new_tests)"] = amount_res2
+
+        next_phase = False
+        if evaluated == 0:
+            # loggin ----------
+            with open(output_path + "/errors.txt", "a") as f:
+                f.write(f"S2 Error in code?")
+                f.write(f"{str(res1)}")
+                f.write("------\nTests:\n")
+                f.write(f"{d["new_tests"]}\n")
+                f.write("------\nCode:\n")
+                f.write(d["code"])
+                if comp_errors:
+                    f.write("\n------\nCompiler errors:\n")
+                    f.write(comp_errors)
+                else:
+                    f.write("\n-------\nNo Compiler errors.  check log\n")
+                f.write("-----------------------\n")
+
+            output = f"Negative, error in step 2 (C'+T') {str(amount_res)}{str(amount_res2)}]"
+            print(output)
+
+        elif evaluated == 1:
+            output = f"Positive, pass  in step 2 (C'+T') {str(amount_res)}{str(amount_res2)}"
+            print(output)
+
+        else:
+            output = f"Negative, fail in step 2 (C'+T') {str(amount_res)}{str(amount_res2)}"
+
 
         with open("result.txt", "w") as f:
             f.write(output)
@@ -247,35 +310,6 @@ class DatasetAnalysis(Analysis):
         self.executor.tear_down(data)
 
 
-
-
-#         output = f"Positive, pass  in step 2 (C'+T') [{lengths[0]},{lengths[1]},{lengths2[2]}][{lengths2[0]},{lengths2[1]},{lengths2[2]}]"
-#         output += f"  junit: {junit_version}"
-#
-#     elif lengths2[1] > 0:
-#     # some failed
-#     output = f"Negative, fail in step 2 (C'+T') [{lengths[0]},{lengths[1]},{lengths2[2]}][{lengths2[0]},{lengths2[1]},{lengths2[2]}]"
-#     output += f"  junit: {junit_version}"
-#
-# else:
-# output = f"Negative, error in step 2 (C'+T') [{lengths[0]},{lengths[1]},{lengths2[2]}][{lengths2[0]},{lengths2[1]},{lengths2[2]}]"
-# output += f"  junit: {junit_version}"
-#
-#
-#
-#         if go_to_step2:
-#             # generate new code  -----------------------------------------------------------------------------------------------
-#             print("  Step 2 - New Code")
-#             d["results"]["(new_code, new_tests)"] = [[], [], []]
-#             new_code, response = self.generator.generate_code(d, input_path, output_path)
-#
-#             d["new_code"] = new_code
-#             d["new_code_response"] = response
-#
-#             print("    execute new code (with new tests)")
-#
-#             # TODO somehow check if this compiles... and is good etc.  the loop should be here
-#
 #
 #             for test in d["new_tests"]:
 #                 if test["phase1"] == "fail" or test["phase1"] == "pass":  # errors ignroed.  passes should still pass
