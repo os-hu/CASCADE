@@ -272,36 +272,35 @@ class DatasetAnalysis(Analysis):
             #TODO repair loop for code?
             save_dicts_list_to_json([d], ana_path)
 
-        amount_res2 = [len(r) for r in res2]
-        d["results"]["(code, new_tests)"] = amount_res2
+            amount_res2 = [len(r) for r in res2]
+            d["results"]["(code, new_tests)"] = amount_res2
 
-        next_phase = False
-        if evaluated == 0:
-            # loggin ----------
-            with open(output_path + "/errors.txt", "a") as f:
-                f.write(f"S2 Error in code?")
-                f.write(f"{str(res1)}")
-                f.write("------\nTests:\n")
-                f.write(f"{d["new_tests"]}\n")
-                f.write("------\nCode:\n")
-                f.write(d["code"])
-                if comp_errors:
-                    f.write("\n------\nCompiler errors:\n")
-                    f.write(comp_errors)
-                else:
-                    f.write("\n-------\nNo Compiler errors.  check log\n")
-                f.write("-----------------------\n")
+            next_phase = False
+            if evaluated == 0:
+                # loggin ----------
+                with open(output_path + "/errors.txt", "a") as f:
+                    f.write(f"S2 Error in code?")
+                    f.write(f"{str(res1)}")
+                    f.write("------\nTests:\n")
+                    f.write(f"{d["new_tests"]}\n")
+                    f.write("------\nCode:\n")
+                    f.write(d["code"])
+                    if comp_errors:
+                        f.write("\n------\nCompiler errors:\n")
+                        f.write(comp_errors)
+                    else:
+                        f.write("\n-------\nNo Compiler errors.  check log\n")
+                    f.write("-----------------------\n")
 
-            output = f"Negative, error in step 2 (C'+T') {str(amount_res)}{str(amount_res2)}]"
-            print(output)
+                output = f"Negative, error in step 2 (C'+T') {str(amount_res)}{str(amount_res2)}]"
+                print(output)
 
-        elif evaluated == 1:
-            output = f"Positive, pass  in step 2 (C'+T') {str(amount_res)}{str(amount_res2)}"
-            print(output)
+            elif evaluated == 1:
+                output = f"Positive, pass  in step 2 (C'+T') {str(amount_res)}{str(amount_res2)}"
+                print(output)
 
-        else:
-            output = f"Negative, fail in step 2 (C'+T') {str(amount_res)}{str(amount_res2)}"
-
+            else:
+                output = f"Negative, fail in step 2 (C'+T') {str(amount_res)}{str(amount_res2)}"
 
         with open("result.txt", "w") as f:
             f.write(output)
