@@ -166,14 +166,9 @@ class JavaTestGenerator(GPT4JavaTestGenerator):
         prompt_step2 = self.build_prompt(context)
 
         chat_history.append(prompt_step2)
-        print("--------------------------------------\n" , prompt_step2)
         response = self.prompt_executor.execute(prompt_step2).model_dump()
 
-        print("-----------------\n", response["choices"][0]["message"]["content"])
         chat_history.append(response)
-
-        new_tests = self.extract_tests(response["choices"][0]["message"]["content"], context, response, output_path)
-        print(new_tests)
 
         prompt_step2.append(response["choices"][0]["message"])
         prompt_step2.append({"role": "user", "content": "Make sure that the imports contain everything for this to compile."})
@@ -185,7 +180,6 @@ class JavaTestGenerator(GPT4JavaTestGenerator):
             new_tests = self.extract_tests(response["choices"][0]["message"]["content"], context, response, output_path)
 
         chat_history.append(response2)
-        print("-----------------\n", new_tests)
 
         # prompt_step2.append({"role": "assistant", "content": f"```java\n{new_tests}\n```"})
         # calls = re.findall(r"new (.*?)\(", new_tests, flags=re.DOTALL)
@@ -200,7 +194,7 @@ class JavaTestGenerator(GPT4JavaTestGenerator):
         #
         #     new_tests = self.extract_tests(repair_response["choices"][0]["message"]["content"], context, repair_response, output_path)
 
-        print(check_syntax(new_tests, "class", output_path))
+        #print(check_syntax(new_tests, "class", output_path))
 
         return new_tests, chat_history
 

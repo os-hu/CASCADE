@@ -14,7 +14,7 @@ from cascade.utils.Utils import load_json_from_path, log, save_dicts_list_to_jso
 from cascade.utils.DockerizedWrapper import DockerizedWrapper
 import xml.etree.ElementTree as ET
 
-class MultiStepDatasetAnalysis(Analysis):
+class DatasetAnalysis(Analysis):
     def __init__(self, generator: Generation, executor: Execution, visualizer: Visualization, regenerate=False, reexecute=False, image="maven" , debug=0, step_size=1):
         super().__init__(generator, executor, visualizer)
         self.reexecute = reexecute or regenerate
