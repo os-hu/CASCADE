@@ -171,15 +171,13 @@ class DatasetAnalysis(Analysis):
         d["results"] = {}
         d["results"]["(code, new_tests)"] = [[],[],[]]
 
-        self.executor.set_up(data, input_path, output_path)
 
-
-        d["new_test"] = d["new_test"].replace(test_class_real_name, test_class_unique_name)
+        d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
         d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
         exec_results = self.executor.execute("code", "new_tests", d, input_path, output_path)
         res1 = list(exec_results [0])
         comp_errors = exec_results[1]
-        d["new_test"] = d["new_test"].replace(test_class_unique_name, test_class_real_name)
+        d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
         d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
         if comp_errors:
             comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
