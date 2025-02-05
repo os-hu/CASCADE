@@ -163,7 +163,6 @@ class MultiStepJavaTestGenerator(GPT4JavaTestGenerator):
         final_new_tests = []
 
         for prop in prop_list:
-            if
             # now generate a test class for each property
             context["tested_property"] = prop
 
