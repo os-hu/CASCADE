@@ -196,7 +196,7 @@ class DatasetAnalysis(Analysis):
                 if evaluated == 0 and comp_errors:
                     repair_tries += 1
                     print("        Try to generate repaired tests")
-                    repaired_tests , _ = self.generator.repair_tests(d, input_path, output_path, comp_errors, 'intermediate_test')
+                    repaired_tests , _ = self.generator.repair_tests(d, input_path, output_path, comp_errors, 'new_tests')
 
                     d["new_tests"] = repaired_tests
 
