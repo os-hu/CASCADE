@@ -205,7 +205,7 @@ class DatasetAnalysis(Analysis):
                     d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
                     d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
 
-                    res1, comp_errors = self.executor.execute("code", "intermediate_test", d, input_path, output_path)
+                    res1, comp_errors = self.executor.execute("code", "new_tests", d, input_path, output_path)
                     res1 = list(res1)
 
                     d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
