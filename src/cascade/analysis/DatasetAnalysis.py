@@ -188,12 +188,13 @@ class DatasetAnalysis(Analysis):
         evaluated = self.evaluate(res1)
 
         # this is the compilation error loop.  turn back on if needed by either making this a true or removing the check.
-        repairloop_tests = False
-        # TODO For now apperently the compiler errors do not come out to play....
+        repairloop_tests = True
+        repair_tries = 0
         if repairloop_tests:
             for i in range(2):
                 # repair step
                 if evaluated == 0 and comp_errors:
+                    repair_tries += 1
                     print("        Try to generate repaired tests")
                     repaired_tests , _ = self.generator.repair_tests(d, input_path, output_path, comp_errors, 'intermediate_test')
 
@@ -236,11 +237,11 @@ class DatasetAnalysis(Analysis):
                     f.write("\n-------\nNo Compiler errors.  check log\n")
                 f.write("-----------------------\n")
 
-            output = f"Negative, error in step 1 (C +T') {str(amount_res)}]"
+            output = f"Negative, error, step 1 (C +T'), {str(amount_res)}, "
             print(output)
 
         elif evaluated == 1:
-            output = f"Negative, pass  in step 1 (C +T') {str(amount_res)}"
+            output = f"Negative, pass, step 1 (C +T'), {str(amount_res)}, "
             print(output)
 
         else:
@@ -267,7 +268,7 @@ class DatasetAnalysis(Analysis):
             if comp_errors:
                 comp_errors = comp_errors.replace( test_class_unique_name , test_class_real_name )
 
-            evaluated = self.evaluate(res2)
+            evaluated2 = self.evaluate(res2)
 
             #TODO repair loop for code?
             save_dicts_list_to_json([d], ana_path)
@@ -276,7 +277,7 @@ class DatasetAnalysis(Analysis):
             d["results"]["(code, new_tests)"] = amount_res2
 
             next_phase = False
-            if evaluated == 0:
+            if evaluated2 == 0:
                 # loggin ----------
                 with open(output_path + "/errors.txt", "a") as f:
                     f.write(f"S2 Error in code?")
@@ -292,24 +293,24 @@ class DatasetAnalysis(Analysis):
                         f.write("\n-------\nNo Compiler errors.  check log\n")
                     f.write("-----------------------\n")
 
-                output = f"Negative, error in step 2 (C'+T') {str(amount_res)}{str(amount_res2)}]"
+                output = f"Negative, error, step 2 (C'+T'), {str(amount_res)}, {str(amount_res2)}]"
                 print(output)
 
-            elif evaluated == 1:
-                output = f"Positive, pass  in step 2 (C'+T') {str(amount_res)}{str(amount_res2)}"
+            elif evaluated2 == 1:
+                output = f"Positive, pass, step 2 (C'+T'), {str(amount_res)}, {str(amount_res2)}"
                 print(output)
 
             else:
-                output = f"Negative, fail in step 2 (C'+T') {str(amount_res)}{str(amount_res2)}"
+                output = f"Negative, fail, step 2 (C'+T'), {str(amount_res)}, {str(amount_res2)}"
 
         with open("result.txt", "w") as f:
+            output+= f", {str(True if "tests" in d else False)}, {repair_tries}"
             f.write(output)
             print("result:" , output)
 
         self.executor.tear_down(data)
 
 
-#
 #             for test in d["new_tests"]:
 #                 if test["phase1"] == "fail" or test["phase1"] == "pass":  # errors ignroed.  passes should still pass
 #                     print("        testing property:", test["property"])
@@ -410,7 +411,7 @@ class DatasetAnalysis(Analysis):
 
 
     def evaluate(self, res):
-        if res[0] == [] and res[1] == []:
+        if res[0] == [] and res[1] == [] and res[2] == []:
             print("            Error")
             # error
             return 0

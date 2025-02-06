@@ -30,9 +30,18 @@ class MavenBuilder(Builder):
             second a string containing any (compilation) errors that happened during execution or 'None' if none happened
         """
         result = [[],[],[]]
+
+        # catch all compilation errors
+        comp_matches = re.findall(r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -*\n(.*?)\[INFO\]', x, re.DOTALL)
+
+        if comp_matches:
+            comp_errors = comp_matches[-1].strip()
+        else:
+            comp_errors = None
+
         matches = re.search(r"Tests run: \d+, Failures: \d+, Errors: \d+, Skipped: \d+, Time", x)
         if not matches:
-            return ([], [], []), "ERROR: test result pattern not found."
+            return ([], [], []), comp_errors
         matched_line = matches[0]
         matches = list(map(int, re.findall(r"\d+", matched_line)))
         total_tests = matches[0]
@@ -48,22 +57,7 @@ class MavenBuilder(Builder):
             result[0].append(str(counter))
             counter += 1
 
-        # catch all compilation errors
-        comp_matches = re.findall(r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -*\n(.*?)\[INFO\]', x, re.DOTALL)
 
-        # debugging TODO remove
-        with open("/home/kiecketo/tmp/out.txt", "a") as f:
-            f.write(f"-------------------\n")
-            f.write(x + "\n")
-            f.write(str(comp_matches) + "\n")
-            f.write(f"-----\n")
-            if comp_matches:
-                f.write(comp_matches[-1].strip() + "\n")
-
-        if comp_matches:
-            comp_errors = comp_matches[-1].strip()
-        else:
-            comp_errors = None
 
         return result, comp_errors
 

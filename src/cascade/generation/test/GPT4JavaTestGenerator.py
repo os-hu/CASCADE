@@ -227,7 +227,7 @@ class GPT4JavaTestGenerator(Generator):
 
         system_prompt = "You are an expert Java developer. Fix compilation errors in the provided test class. Use tools to find out more about classes instead of making assumptions."
 
-        prompt = f"The following errors occurred during compilation.\n```\n{errors}\n```\n This is the project structure \n```\n{tree}\n```\n Fix the errors in the following test class:\n```java\n{context[key]}\n```\n.The documentation for the function under test is:\n```java\n{context['doc']}\n``` Adhere to this documentation as close as possible."
+        prompt = f"The following errors occurred during compilation.\n```\n{errors}\n```\n\nThis is the project structure:\n\n```\n{tree}\n```\n\nFix the errors in the following test class without altering the tests itself or adding new ones.:\n```java\n{context[key]}\n```\n\nThe documentation for the function under test is:\n```java\n{context['doc']}\n``` Adhere to this documentation as close as possible."
 
         promptlist = []
         promptlist.append({"role": "system", "content": system_prompt})
