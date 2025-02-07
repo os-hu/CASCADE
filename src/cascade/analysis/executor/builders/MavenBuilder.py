@@ -2,12 +2,12 @@ import re
 
 from cascade.analysis.executor.builders.Builder import Builder
 from cascade.utils.DockerizedWrapper import DockerizedWrapper
-
+import xml.etree.ElementTree as ET
 
 class MavenBuilder(Builder):
     def __init__(self, new_image_name, maven_args, set_up_maven_command, set_up_maven_args, image, timeout=120):
         super().__init__(
-            test_pattern = f"echo \"[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0\" > out; timeout {timeout} mvn test {maven_args} -Dtest=\"%t\" -DfailIfNoTests=false > output 2>&1; cat output > out; cat output",
+            test_pattern = f"echo \"[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0\" > out; timeout {timeout} mvn test {maven_args} -Dtest=\"%t\" -DfailIfNoTests=false -Dsurefire.reportsDirectory=target/surefire-reports > output 2>&1; cat output > out; cat target/surefire-reports/TEST-*.xml >> out; cat output",
 
             eval_function = self.eval_function,
             image = new_image_name
@@ -31,7 +31,7 @@ class MavenBuilder(Builder):
         """
         result = [[],[],[]]
 
-        # catch all compilation errors
+        # First Catch Compilation Errors
         comp_matches = re.findall(r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -*\n(.*?)\[INFO\]', x, re.DOTALL)
 
         if comp_matches:
@@ -39,25 +39,48 @@ class MavenBuilder(Builder):
         else:
             comp_errors = None
 
-        matches = re.search(r"Tests run: \d+, Failures: \d+, Errors: \d+, Skipped: \d+, Time", x)
-        if not matches:
+        test_overview_matches = re.search(r"Tests run: \d+, Failures: \d+, Errors: \d+, Skipped: \d+, Time", x)
+        if not test_overview_matches:
             return ([], [], []), comp_errors
-        matched_line = matches[0]
-        matches = list(map(int, re.findall(r"\d+", matched_line)))
-        total_tests = matches[0]
-        counter = 0
-        for match in range(matches[1]):
-            result[1].append(str(counter))
-            counter += 1
-        for match in range(matches[2]):
-            # there is a fourth option namely skipped tests  matches[3]  which we ignore
-            result[2].append(str(counter))
-            counter += 1
-        for match in range(counter, total_tests):
-            result[0].append(str(counter))
-            counter += 1
+        matched_line = test_overview_matches[0]
 
 
+        run_fail_err_skip = list(map(int, re.findall(r"\d+", matched_line)))
+        total_tests = run_fail_err_skip[0]
+
+        xml_blocks = re.findall(r'(<\?xml.*?</testsuite>)', x, re.DOTALL)
+        print(xml_blocks)
+
+        # results = {}
+        # for block in xml_blocks:
+        #     try:
+        #         root = ET.fromstring(block)
+        #     except ET.ParseError as e:
+        #         continue
+        #     # Get the test class name (usually in the 'name' attribute)
+        #     test_class = root.attrib.get('name', 'unknown')
+        #     # Get counts for failures and errors (if they are present)
+        #     failures = int(root.attrib.get('failures', '0'))
+        #     errors = int(root.attrib.get('errors', '0'))
+        #     # Determine the status: passed if both failures and errors are zero.
+        #     if failures > 0 or errors > 0:
+        #         results[test_class] = 'failed'
+        #     else:
+        #         results[test_class] = 'passed'
+
+
+        # counter = 0
+        # for match in range(matches[1]):
+        #     result[1].append(str(counter))
+        #     counter += 1
+        # for match in range(matches[2]):
+        #     # there is a fourth option namely skipped tests  matches[3]  which we ignore
+        #     result[2].append(str(counter))
+        #     counter += 1
+        # for match in range(counter, total_tests):
+        #     result[0].append(str(counter))
+        #     counter += 1
+        exit()
 
         return result, comp_errors
 

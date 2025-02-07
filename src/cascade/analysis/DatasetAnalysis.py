@@ -295,7 +295,7 @@ class DatasetAnalysis(Analysis):
                         f.write("\n-------\nNo Compiler errors.  check log\n")
                     f.write("-----------------------\n")
 
-                output = f"Negative; error; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}]"
+                output = f"Negative; error; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
                 print(output)
 
             elif evaluated2 == 1:
