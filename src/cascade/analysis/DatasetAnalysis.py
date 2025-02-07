@@ -324,9 +324,10 @@ class DatasetAnalysis(Analysis):
             d["metric"] = metric
 
         save_dicts_list_to_json([d], ana_path)
+        metric_lengths = ", ".join(f"{k}: {len(v)}" for k, v in metric.items())
 
         with open("result.txt", "w") as f:
-            output+= f"; {str("og tests exist" if "tests" in d else " no og tests")}; {repair_tries}; {metric}"
+            output+= f"; {str("og tests exist" if "tests" in d else " no og tests")}; {repair_tries}; ({metric_lengths})"
             f.write(output)
             print("result:" , output)
 

@@ -49,7 +49,6 @@ class MavenBuilder(Builder):
         total_tests = run_fail_err_skip[0]
 
         xml_blocks = re.findall(r'(<\?xml.*?</testsuite>)', x, re.DOTALL)
-        print(xml_blocks)
 
         try:
             root = ET.fromstring(xml_blocks[-1])
