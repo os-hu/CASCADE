@@ -198,6 +198,8 @@ class DatasetAnalysis(Analysis):
                     print("        Try to generate repaired tests")
                     repaired_tests , _ = self.generator.repair_tests(d, input_path, output_path, comp_errors, 'new_tests')
 
+                    old_tests_key = "test_pre_repairstep_" + str(i+1)
+                    d[old_tests_key] = d["new_tests"]
                     d["new_tests"] = repaired_tests
 
                     print("        execute repaired tests")
@@ -237,11 +239,11 @@ class DatasetAnalysis(Analysis):
                     f.write("\n-------\nNo Compiler errors.  check log\n")
                 f.write("-----------------------\n")
 
-            output = f"Negative, error, step 1 (C +T'), {str(amount_res)}, "
+            output = f"Negative; error; step 1 (C +T'); {str(amount_res)}; "
             print(output)
 
         elif evaluated == 1:
-            output = f"Negative, pass, step 1 (C +T'), {str(amount_res)}, "
+            output = f"Negative; pass; step 1 (C +T'); {str(amount_res)}; "
             print(output)
 
         else:
@@ -293,18 +295,18 @@ class DatasetAnalysis(Analysis):
                         f.write("\n-------\nNo Compiler errors.  check log\n")
                     f.write("-----------------------\n")
 
-                output = f"Negative, error, step 2 (C'+T'), {str(amount_res)}, {str(amount_res2)}]"
+                output = f"Negative; error; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}]"
                 print(output)
 
             elif evaluated2 == 1:
-                output = f"Positive, pass, step 2 (C'+T'), {str(amount_res)}, {str(amount_res2)}"
+                output = f"Positive; pass; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
                 print(output)
 
             else:
-                output = f"Negative, fail, step 2 (C'+T'), {str(amount_res)}, {str(amount_res2)}"
+                output = f"Negative; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
 
         with open("result.txt", "w") as f:
-            output+= f", {str(True if "tests" in d else False)}, {repair_tries}"
+            output+= f"; {str(True if "tests" in d else False)}; {repair_tries}"
             f.write(output)
             print("result:" , output)
 

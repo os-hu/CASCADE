@@ -59,11 +59,11 @@ class JavaTestGenerator(GPT4JavaTestGenerator):
         # test_header = "\n\n// TESTS:\n\n" + self.build_tests(context, primer=f"\n    // write tests for {context['signature']['name']} here. Take the Documentation as literal as possible.\n")
 
         test_header = (
-            f"\nNow write unit tests for the function `{context['signature']['name']}({params})` using the test class skeleton below. "
-            "Everything that you use has to be added to the imports. Every object you use has to be properly instantiated. "
-            "Handle any checked exceptions (use try-catch or throws), do not forget type parameters. Match method signatures exactly when overriding or implementing methods. "
+            f"\nNow write unit tests for the following function using the test class skeleton below.\nFunction:\n```Java{build_signature(context, doc=True)}```\n"
+            "import all necessary classes from the project. Every object you use has to be properly instantiated. "
+            "Handle any checked exceptions using try-catch or throws, do not forget type parameters. Match method signatures exactly when overriding or implementing methods. "
             f"Adhere to the documentation as close as possible when writing the tests and only fill the tests that are already given.\n"
-            f"As a reminder, the documentation for the function is:\n\n```java\n{context['doc']}\n```\n\nTest class:\n"
+            f"\nTest class:"
             )
         # TODO mark additional test somehow, instead of saying 'only write'?
 
