@@ -51,36 +51,27 @@ class MavenBuilder(Builder):
         xml_blocks = re.findall(r'(<\?xml.*?</testsuite>)', x, re.DOTALL)
         print(xml_blocks)
 
-        # results = {}
-        # for block in xml_blocks:
-        #     try:
-        #         root = ET.fromstring(block)
-        #     except ET.ParseError as e:
-        #         continue
-        #     # Get the test class name (usually in the 'name' attribute)
-        #     test_class = root.attrib.get('name', 'unknown')
-        #     # Get counts for failures and errors (if they are present)
-        #     failures = int(root.attrib.get('failures', '0'))
-        #     errors = int(root.attrib.get('errors', '0'))
-        #     # Determine the status: passed if both failures and errors are zero.
-        #     if failures > 0 or errors > 0:
-        #         results[test_class] = 'failed'
-        #     else:
-        #         results[test_class] = 'passed'
+        try:
+            root = ET.fromstring(xml_blocks[-1])
+        except ET.ParseError as e:
+            print("Error parsing XML:", e)
 
+        passed = []
+        failed = []
+        errored = []
 
-        # counter = 0
-        # for match in range(matches[1]):
-        #     result[1].append(str(counter))
-        #     counter += 1
-        # for match in range(matches[2]):
-        #     # there is a fourth option namely skipped tests  matches[3]  which we ignore
-        #     result[2].append(str(counter))
-        #     counter += 1
-        # for match in range(counter, total_tests):
-        #     result[0].append(str(counter))
-        #     counter += 1
-        exit()
+        # Loop over each <testcase> element.
+        for testcase in root.findall('testcase'):
+            test_name = testcase.attrib.get('name')
+            # If a <failure> or <error> tag exists as a child, mark accordingly.
+            if testcase.find('failure') is not None:
+                failed.append(test_name)
+            elif testcase.find('error') is not None:
+                errored.append(test_name)
+            else:
+                passed.append(test_name)
+
+        result = [passed, failed, errored]
 
         return result, comp_errors
 

@@ -220,7 +220,7 @@ class DatasetAnalysis(Analysis):
 
 
         amount_res = [len(r) for r in res1]
-        d["results"]["(code, new_tests)"] = amount_res
+        d["results"]["(code, new_tests)"] = res1
 
         next_phase = False
         if evaluated == 0:
@@ -239,11 +239,11 @@ class DatasetAnalysis(Analysis):
                     f.write("\n-------\nNo Compiler errors.  check log\n")
                 f.write("-----------------------\n")
 
-            output = f"Negative; error; step 1 (C +T'); {str(amount_res)}; "
+            output = f"Negative; error; step 1 (C +T'); {str(amount_res)}; ; ;"
             print(output)
 
         elif evaluated == 1:
-            output = f"Negative; pass; step 1 (C +T'); {str(amount_res)}; "
+            output = f"Negative; pass; step 1 (C +T'); {str(amount_res)}; ; ;"
             print(output)
 
         else:
@@ -276,7 +276,7 @@ class DatasetAnalysis(Analysis):
             save_dicts_list_to_json([d], ana_path)
 
             amount_res2 = [len(r) for r in res2]
-            d["results"]["(code, new_tests)"] = amount_res2
+            d["results"]["(new_code, new_tests)"] = res2
 
             next_phase = False
             if evaluated2 == 0:
@@ -305,8 +305,28 @@ class DatasetAnalysis(Analysis):
             else:
                 output = f"Negative; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
 
+            # calculate the new improved cool metrix for chekcign out if somethign is a positive or not.
+            r1 = [d["results"]["(code, new_tests)"][0], d["results"]["(code, new_tests)"][1] + d["results"]["(code, new_tests)"][2]]
+            r2 = [d["results"]["(new_code, new_tests)"], d["results"]["(new_code, new_tests)"][1] + d["results"]["(new_code, new_tests)"][2]]
+
+            metric = {"vv": [], "vx": [], "xx": [], "xv": []}
+
+            for i in r1[0]:
+                if i in r2[0]:
+                    metric["vv"].append(i)
+                elif i in r2[1]:
+                    metric["vx"].append(i)
+            for i in r1[1]:
+                if i in r2[0]:
+                    metric["xv"].append(i)
+                elif i in r2[1]:
+                    metric["xx"].append(i)
+            d["metric"] = metric
+
+        save_dicts_list_to_json([d], ana_path)
+
         with open("result.txt", "w") as f:
-            output+= f"; {str(True if "tests" in d else False)}; {repair_tries}"
+            output+= f"; {str("og tests exist" if "tests" in d else " no og tests")}; {repair_tries}; {metric}"
             f.write(output)
             print("result:" , output)
 
