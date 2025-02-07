@@ -307,7 +307,7 @@ class DatasetAnalysis(Analysis):
 
             # calculate the new improved cool metrix for chekcign out if somethign is a positive or not.
             r1 = [d["results"]["(code, new_tests)"][0], d["results"]["(code, new_tests)"][1] + d["results"]["(code, new_tests)"][2]]
-            r2 = [d["results"]["(new_code, new_tests)"], d["results"]["(new_code, new_tests)"][1] + d["results"]["(new_code, new_tests)"][2]]
+            r2 = [d["results"]["(new_code, new_tests)"][0], d["results"]["(new_code, new_tests)"][1] + d["results"]["(new_code, new_tests)"][2]]
 
             metric = {"vv": [], "vx": [], "xx": [], "xv": []}
 
@@ -323,11 +323,13 @@ class DatasetAnalysis(Analysis):
                     metric["xx"].append(i)
             d["metric"] = metric
 
-        save_dicts_list_to_json([d], ana_path)
-        metric_lengths = ", ".join(f"{k}: {len(v)}" for k, v in metric.items())
+            save_dicts_list_to_json([d], ana_path)
+            metric_lengths = ", ".join(f"{k}: {len(v)}" for k, v in metric.items())
+            output += f"; {metric_lengths}"
 
+        save_dicts_list_to_json([d], ana_path)
         with open("result.txt", "w") as f:
-            output+= f"; {str("og tests exist" if "tests" in d else " no og tests")}; {repair_tries}; ({metric_lengths})"
+            output+= f"; {str("og tests exist" if "tests" in d else " no og tests")}; {repair_tries})"
             f.write(output)
             print("result:" , output)
 
