@@ -18,9 +18,7 @@ class JavaExtraction(Extraction):
         super().__init__()
         self.pattern = pattern
 
-    """
-    The Java extraction class, this class supports extracting from source folders.
-    """
+
     def extract(self, input_path, output_path) -> List[Dict[str, any]]:
         """
         Extracts a java class hierarchy from the source folder that the input path points to.

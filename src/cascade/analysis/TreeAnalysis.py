@@ -4,7 +4,6 @@ from tqdm import tqdm
 
 from cascade.analysis.Analysis import Analysis
 from cascade.analysis.executor.Execution import Execution
-from cascade.analysis.visualizer.Visualization import Visualization
 
 from cascade.generation.Generation import Generation
 from cascade.utils.Utils import load_json_from_path, log, save_dicts_list_to_json
@@ -12,16 +11,15 @@ from cascade.utils.Utils import load_json_from_path, log, save_dicts_list_to_jso
 
 class TreeAnalysis(Analysis):
     """
-    TODO
+    Deprecated analysis class. This class is not used anymore and is only kept for references.
     """
-    def __init__(self, generator: Generation, executor: Execution, visualizer: Visualization, regenerate=False, reexecute=False, debug=0, step_size=1, die_if_setup_fails=False):
-        super().__init__(generator, executor, visualizer)
+    def __init__(self, generator: Generation, executor: Execution, regenerate=False, reexecute=False, debug=0, step_size=1, die_if_setup_fails=False):
+        super().__init__(generator, executor)
         self.die_if_setup_fails = die_if_setup_fails
         self.reexecute = reexecute or regenerate
         self.step_size = step_size
         self.regenerate = regenerate
         self.debug = debug
-        self.visualizer.logger = "tqdm"
 
 
     def analyse(self, data: list, input_path, output_path):
@@ -46,9 +44,6 @@ class TreeAnalysis(Analysis):
         #  loop through data
         for d in tqdm(data[::self.step_size]):
             dirty = False
-
-            if self.debug >= 2:
-                self.visualizer.visualize(data, output_path)
 
             # Level 1  code + test: --------------------------------------
 
@@ -223,8 +218,6 @@ class TreeAnalysis(Analysis):
             del res4
 
         self.executor.tear_down(data)
-
-        self.visualizer.visualize(data, output_path, full=True)
 
     def should_skip(self, res, skip_on_passed):
         if res[0] == [] and res[1] == []:

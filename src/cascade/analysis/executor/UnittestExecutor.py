@@ -8,13 +8,16 @@ import shutil
 
 
 class UnittestExecutor(AnalysisExecutor):
+    """
+    This class is used to execute Python unittest tests in a docker container
+    """
     def __init__(self, debug=False):
         super().__init__()
         self.debug = debug
 
     class ReplaceFunctionBody(ast.NodeTransformer):
         """
-        This is used to replace the Body of a fucntion in a file parsed to an AST
+        This is used to replace the Body of a function in a file parsed to an AST
         """
         def __init__(self, function_name, new_body):
             self.function_name = function_name

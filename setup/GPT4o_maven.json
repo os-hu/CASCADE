@@ -4,8 +4,6 @@
    "TestGenerator": { "name": "GPT4JavaTestGenerator", "kwargs" : {"model": "gpt-4o-mini-2024-07-18"}},
    "Analysis"      : { "name": "TreeAnalysis",  "kwargs" : {}},
    "Executor"      : { "name": "MavenJavaExecutor",   "kwargs" : {}},
-   "Visualizer"    : { "name": "TreeVisualizer",  "kwargs" : {}},
-
    "FilterFunctions"  : [
       { "name": "NoTestsFilterFunction", "kwargs" : {}},
       { "name": "ContainsFilterFunction", "kwargs" : {"key":"doc", "content":"@inheritDoc" , "invert":true}},

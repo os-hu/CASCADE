@@ -7,7 +7,7 @@ from cascade.generation.executor.PromptExecutor import PromptExecutor
 
 
 class OpenAIChatCompletionExecutor(PromptExecutor):
-    def __init__(self, max_attempts=1, max_tokens=1200, temperature=0, delay=3, dummy=False, model="gpt-4o-mini", freq_penalty=0.0):
+    def __init__(self, max_attempts=1, max_tokens=1200, temperature=0, delay=5, dummy=False, model="gpt-4o-mini", freq_penalty=0.0):
         self.max_attempts = max_attempts
         self.max_tokens = max_tokens
         self.temperature = temperature
@@ -19,9 +19,7 @@ class OpenAIChatCompletionExecutor(PromptExecutor):
             if "OPENAI_API_KEY" in os.environ:
                 api_key = os.environ["OPENAI_API_KEY"]
             else:
-                # TODO
                 raise Exception("No api key in environment")
-
             self.client = OpenAI(api_key=api_key)
 
 
@@ -37,7 +35,6 @@ class OpenAIChatCompletionExecutor(PromptExecutor):
                     frequency_penalty=self.freq_penalty,
                     **kwargs
                 )
-
                 return response
 
             except Exception as e:

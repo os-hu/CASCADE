@@ -21,15 +21,15 @@ class Extraction(ABC):
 
         The expected output format for one function is
         {
-            "doc" : str  #
-            "id" : str or int - # depending on the usecase
+            "doc" : str  - the docstring of the function,
+            "id" : str or int - depending on the use case a unique id to later identify the function,
             "signature" : {
-                "name" : str - the simple name of the function
+                "name" : str - the simple name of the function,
                 "returns" : str - return type of the function,
-                "params" : list of str    -  parameters, including types -- if existent -- each as a string ,
-                "modifier" : list of str  - ,
-                "annotations": list of str ,
-                "generics" list of str :
+                "params" : list of str - parameters, including types (if existent) ach as a string,
+                "modifier" : list of str,
+                "annotations": list of str,
+                "generics" list of str
                 }
             "language" : str   - #e.g. python or java
             "parent" : {
@@ -40,18 +40,17 @@ class Extraction(ABC):
                 "variables" : list of str   - global variables of the class that could be used by the function under test,
                 "generics" : list of str
                 }
-            "code" : str    -the body of the function
-            "code_file_path" : str   -  relative to root
-            "called_functions" : list of str   full function call of the functions that are called insdie of origianl 'code'
-            "tests" :  str    complete content of a test_ file
-            "test_imports" : list of str
-            "test_file_path" : str   -  relative to root
-            "testrunner": str  e.g. unnittest, junit,
+            "code" : str - the body of the function
+            "code_file_path" : str - path to the file where the code resides in (relative to root),
+            "called_functions" : list of str - full function call of the functions that are called inside of the original 'code',
+            "tests" :  str - The complete content of a test file,
+            "test_imports" : list of str - imports of the test file,
+            "test_file_path" : str - path to the test file (relative to root),
+            "testrunner": str - e.g. unnittest, junit3,
         }
         TODO add other missing ones.  for java we have extends
 
-
-        Note that depending on the Analysis and generate implementations not all of these fields need to be filled.
+        Note that depending on the 'Analysis' and 'Generate' implementations not all of these fields need to be filled.
 
         You can use the implementation 'json_Extraction' and its extract() method to check whether
         the file already exists in the output path and just load this one instead.

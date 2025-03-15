@@ -23,13 +23,11 @@ class Pipeline():
 
     def execute(self, input_path, output_path) -> None:
         """
-       This executes the entire pipline. First extract() from the extraction object is called.
-       The output of that is passed to the analysis object. and analyse is executed.
+        This executes the entire pipline. First extract() from the extraction object is called.
+        he output of that is passed to the analysis object. and analyse is executed.
 
-       These specific objects handle what the specific operations do and any things like temporary or
-       intermediate saving, which type of analyses should be done and the generator that the analysis uses.
-        The visualizer of the analysis object handles whether any output/results are printed
-        or just saved to the output_path.
+        These specific objects handle what the specific operations do and any things like temporary or
+        intermediate saving, which type of analyses should be done and the generator that the analysis uses.
         """
         if not os.path.exists(os.path.join(output_path, "analyzed.json")):
             print("Extraction started")
@@ -46,7 +44,6 @@ class Pipeline():
             can_work &= self.analysis.generator.code_generator.extraction_requirements.verify(filtered_data)
             can_work &= self.analysis.generator.doc_generator.extraction_requirements.verify(filtered_data)
             can_work &= self.analysis.executor.executor.extraction_requirements.verify(filtered_data)
-            can_work &= self.analysis.visualizer.visualizer.extraction_requirements.verify(filtered_data)
         else:
             print("Found analyzed results, will skip extraction and filtering")
             # generated artifacts for the same dataset can be saved to avoid repeated generation of code and tests.

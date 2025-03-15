@@ -19,18 +19,16 @@ class MavenBuilder(Builder):
 
     def eval_function(self, x):
         """
-        The function that has to be given to a builder to evaluate the output of the tests.
+        An implementation of the function that has to be given to a builder to evaluate the output of the tests.
         :param x: a string containing the output produced in the docker,
                     which should contain the output of the tests which are then parsed here.
         :return: result, a 2-tuple of
             first a three-tuple of lists of strings,
-                the first list contains the ids of the tests that passed,
-                the second list contains the ids of the tests that failed,
-                the third list contains the ids of the tests that errored
-            second a string containing any (compilation) errors that happened during execution or 'None' if none happened
+                the first list contains the names of the tests that passed,
+                the second list contains the names of the tests that failed,
+                the third list contains the names of the tests that errored
+            second a string containing any (compilation) errors that happened during execution or 'None' if none occured
         """
-        result = [[],[],[]]
-
         # First Catch Compilation Errors
         comp_matches = re.findall(r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -*\n(.*?)\[INFO\]', x, re.DOTALL)
 
@@ -39,6 +37,7 @@ class MavenBuilder(Builder):
         else:
             comp_errors = None
 
+        # get general test results
         test_overview_matches = re.search(r"Tests run: \d+, Failures: \d+, Errors: \d+, Skipped: \d+, Time", x)
         if not test_overview_matches:
             return ([], [], []), comp_errors

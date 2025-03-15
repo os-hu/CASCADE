@@ -4,7 +4,6 @@ from tqdm import tqdm
 
 from cascade.analysis.Analysis import Analysis
 from cascade.analysis.executor.Execution import Execution
-from cascade.analysis.visualizer.Visualization import Visualization
 
 from cascade.generation.Generation import Generation
 from cascade.utils.Utils import load_json_from_path, save_dicts_list_to_json
@@ -14,14 +13,13 @@ class BaselineAnalysis(Analysis):
     """
     TODO
     """
-    def __init__(self, generator: Generation, executor: Execution, visualizer: Visualization, regenerate=False, reexecute=False, debug=0, step_size=1, die_if_setup_fails=False):
-        super().__init__(generator, executor, visualizer)
+    def __init__(self, generator: Generation, executor: Execution, regenerate=False, reexecute=False, debug=0, step_size=1, die_if_setup_fails=False):
+        super().__init__(generator, executor)
         self.die_if_setup_fails = die_if_setup_fails
         self.reexecute = reexecute or regenerate
         self.step_size = step_size
         self.regenerate = regenerate
         self.debug = debug
-        self.visualizer.logger = "tqdm"
 
 
     def analyse(self, data: list, input_path, output_path):
@@ -43,17 +41,12 @@ class BaselineAnalysis(Analysis):
             )
 
             answer = str(response.choices[0].message.content)
-
             return answer
-
-
 
         #  loop through data
         for d in tqdm(data):
             code = d["code"]
             doc = d["doc"]
-
-            self.visualizer.visualize(data, output_path)
 
             results = [None, None, None, None]
             answers = {}
@@ -169,8 +162,4 @@ class BaselineAnalysis(Analysis):
             d["results"] = results
             d["answers"] = answers
 
-            self.visualizer.visualize(data, output_path)
-
             save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
-
-        self.visualizer.visualize(data, output_path, full=True)

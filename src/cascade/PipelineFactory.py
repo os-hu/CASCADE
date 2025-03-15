@@ -1,6 +1,5 @@
 from cascade.analysis.executor.Execution import Execution
-from cascade.analysis.visualizer.Visualization import Visualization
-from cascade.generation.NoGenerator import NoGenerator
+from cascade.generation.EmptyGenerator import EmptyGenerator
 from cascade.Pipeline import Pipeline
 from cascade.generation.Generation import Generation
 from cascade.filters.Filter import Filter
@@ -60,13 +59,13 @@ class PipelineFactory:
         """
         Builds a pipeline from a setup file and optional keyword arguments.
         The setup file is a JSON file containing the specific modules that should be used for each pipeline component.
-        It should include Extraction, any of (CodeGenerator, TestGenerator, DocGenerator), Analysis, Executor and Visualizer
+        It should include Extraction, any of (CodeGenerator, TestGenerator, DocGenerator), Analysis and its Executor
 
         :param pipeline_path: The path to the setup file.
         """
         if not kwargs:
             kwargs = {"module_path": None, "Extraction": {}, "CodeGenerator": {}, "TestGenerator": {},
-                      "DocGenerator": {}, "Analysis": {}, "Executor": {}, "Visualizer": {}, "FilterFunctions": []}
+                      "DocGenerator": {}, "Analysis": {}, "Executor": {}, "FilterFunctions": []}
 
         setup = Utils.load_json_from_path(pipeline_path)
         if not setup:
@@ -99,7 +98,7 @@ class PipelineFactory:
                              ("TestGenerator", "test"),
                              ("DocGenerator", "doc")]
 
-        generators = {gen[1]: NoGenerator() for gen in generator_strings}
+        generators = {gen[1]: EmptyGenerator() for gen in generator_strings}
         for gen in generator_strings:
             if gen[0] in setup and "name" in setup[gen[0]]:
                 current = setup[gen[0]]
@@ -117,18 +116,11 @@ class PipelineFactory:
         kwargs_.update(kwargs["Executor"])
         analysis_executor = self.load_class(name, path, [], kwargs_)
 
-        name = setup["Visualizer"]["name"]
-        path = "cascade.analysis.visualizer." + name
-        kwargs_ = setup["Visualizer"]["kwargs"]
-        kwargs_.update(kwargs["Visualizer"])
-        analysis_visualizer = self.load_class(name, path, [], kwargs_)
-
         name = setup["Analysis"]["name"]
         path = "cascade.analysis." + name
         kwargs_ = setup["Analysis"]["kwargs"]
         kwargs_.update(kwargs["Analysis"])
-        analysis = self.load_class(name, path, [generation, Execution(analysis_executor),
-                                                Visualization(analysis_visualizer)], kwargs_)
+        analysis = self.load_class(name, path, [generation, Execution(analysis_executor)], kwargs_)
 
         can_work = True
         extraction_prov = extraction.provided
@@ -139,12 +131,10 @@ class PipelineFactory:
         for gen in generators.values():
             can_work &= extraction_prov.fulfills(gen.extraction_requirements)
         can_work &= extraction_prov.fulfills(analysis_executor.extraction_requirements)
-        can_work &= extraction_prov.fulfills(analysis_visualizer.extraction_requirements)
         analysis_prov = analysis.provided
         for gen in generators.values():
             can_work &= analysis_prov.fulfills(gen.analysis_requirements)
         can_work &= analysis_prov.fulfills(analysis_executor.analysis_requirements)
-        can_work &= analysis_prov.fulfills(analysis_visualizer.analysis_requirements)
 
         pipeline = Pipeline(extraction, filter_, analysis, setup)
 

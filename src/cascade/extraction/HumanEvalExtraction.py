@@ -143,8 +143,7 @@ class HumanEvalExtraction(Extraction):
 
         for entry in raw_data:
             # ['task_id', 'prompt', 'entry_point', 'canonical_solution', 'test'])
-            temp = {}
-            temp["id"] = entry["task_id"]
+            temp = {"id": entry["task_id"]}
             func_name = entry["entry_point"]
 
             # the dict to be extracted

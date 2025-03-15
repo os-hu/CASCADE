@@ -1,8 +1,0 @@
-{
-   "Extraction"    : "HumanEvalExtraction",
-   "CodeGenerator": "GPT35CodeGenerator",
-   "TestGenerator": "GPT35TestGenerator",
-   "Analysis"      : "Full_Analysis",
-   "Executor"      : "Unittest_Executor",
-   "Visualizer"    : "Basic_Tree_Visualizer"
-}

@@ -5,11 +5,17 @@ from cascade.generation.Generator import Generator
 
 class Generation:
     """
-    TODO
+    This is the wrapper class for all types of generators
     """
     def __init__(self, code_generator: Generator, test_generator: Generator, doc_generator: Generator):
         """
-        TODO
+        Constructor for the Generation class that takes in three generators as parameters and assigns them to the class.
+
+        if one is nit needed for the analysis on hand the 'EmptyGenerator' class can be used instead.
+
+        :param code_generator: The generator that generates code
+        :param test_generator: The generator that generates tests
+        :param doc_generator: The generator that generates documentation
         """
 
         self.code_generator = code_generator
@@ -18,7 +24,7 @@ class Generation:
 
     def generate_code(self, context, input_path, output_path):
         """
-        TODO
+        code generation method
         :param input_path:
         """
         context_ = copy.deepcopy(context)

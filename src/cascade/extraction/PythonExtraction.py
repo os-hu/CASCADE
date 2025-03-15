@@ -3,7 +3,7 @@ from cascade.extraction.Extraction import Extraction
 
 class PythonExtraction(Extraction):
     """
-    An implementation of the abstract "Extraction" class.
+    A placeholder implementation of the abstract "Extraction" class.
     This is designed to extract all functions, corresponding tests, docstrings and context from a given python Project
     """
     def __init__(self):

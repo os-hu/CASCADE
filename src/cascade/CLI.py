@@ -38,8 +38,6 @@ def main():
                             help="A way to overwrite the key word arguments for the analysis.")
     run_.add_argument('-exec', '--executor', action="append",
                             help="A way to overwrite the key word arguments for the executor.")
-    run_.add_argument('-visua', '--visualizer', action="append",
-                            help="A way to overwrite the key word arguments for the visualizer.")
     run_.add_argument('-filter', '--filters', action="append",
                             help="A way to overwrite the key word arguments for the filters.")
 
@@ -68,10 +66,10 @@ def main():
 
 def run(args):
     kwargs_overrides = {"Extraction": {}, "CodeGenerator": {}, "TestGenerator": {}, "DocGenerator": {}, "Analysis": {},
-                        "Executor": {}, "Visualizer": {}, "FilterFunctions": []}
+                        "Executor": {}, "FilterFunctions": []}
     override_to_arg = {"Extraction": args.extraction, "CodeGenerator": args.code_generator,
                        "TestGenerator": args.test_generator, "DocGenerator": args.doc_generator,
-                       "Analysis": args.analysis, "Executor": args.executor, "Visualizer": args.visualizer}
+                       "Analysis": args.analysis, "Executor": args.executor}
     for key, value in override_to_arg.items():
         if value:
             for kw in value:

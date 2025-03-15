@@ -1,7 +1,7 @@
 from cascade.generation.Generator import Generator
 
 
-class NoGenerator(Generator):
+class EmptyGenerator(Generator):
     """
     TODO
     """

@@ -11,6 +11,10 @@ import os
 
 
 class GPT35JavaTestGenerator(Generator):
+    """
+        Deprecated Java test generator using GPT-3.5 model
+    """
+
     def __init__(self, max_attempts=1, max_tokens=2048, temperature=0, delay=3, dummy=False, max_prompt_tokens=2000, debug=False, freq_penalty=0.0):
         super().__init__()
         self.debug = debug

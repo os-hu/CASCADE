@@ -70,7 +70,10 @@ def check_syntax(code, type, output_path):
 
 
 def get_repair_helper_functions():
-    def build_tool(name, description, parameters):
+    """
+    Returns the available functions that can be used for 'tool' usage of common LLM APIs (e.g. OpenAI)
+    """
+    def build_tool_description(name, description, parameters):
         return {"type": "function",
                 "function": {
                     "name": name,
@@ -88,21 +91,21 @@ def get_repair_helper_functions():
                     }
                 }}
 
-    t1 = build_tool("get_child_classes", "Gets all classes that implement or extend a given class.", [
+    t1 = build_tool_description("get_child_classes", "Gets all classes that implement or extend a given class.", [
         ("class_name", "string", "The simple name of the class for which child classes are to be retrieved"),
         ("abstract_included", "boolean", "Should abstract classes be included?")])
-    t2 = build_tool("get_class_methods", "Gets a list of all methods from a given class.", [
+    t2 = build_tool_description("get_class_methods", "Gets a list of all methods from a given class.", [
         ("path_to_class", "string", "The relative path to the class"),
         ("private_included", "boolean", "Should private methods be included?")])
-    t3 = build_tool("get_class_constructors", "Gets a list of constructors for a given class.", [
+    t3 = build_tool_description("get_class_constructors", "Gets a list of constructors for a given class.", [
         ("path_to_class", "string", "The relative path to the class")])
-    t4 = build_tool("get_file_content", "Gets the entire content of a specific file.", [
+    t4 = build_tool_description("get_file_content", "Gets the entire content of a specific file.", [
         ("path_to_file", "string", "The relative path to the file")])
-    t5 = build_tool("get_class_fields", "Gets a list of fields of a given class.", [
+    t5 = build_tool_description("get_class_fields", "Gets a list of fields of a given class.", [
         ("path_to_class", "string", "The relative path to the class"),])
 
     tools = [t1, t2, t3, t4, t5]
-
+    return tools
 
 
 def repair_helper_functions(func, arguments, input_path, output_path, context):

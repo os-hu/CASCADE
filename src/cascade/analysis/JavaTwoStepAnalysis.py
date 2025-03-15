@@ -1,27 +1,23 @@
 import os
-import re
 import shutil
 import tempfile
 
 from cascade.analysis.Analysis import Analysis
 from cascade.analysis.executor.Execution import Execution
-from cascade.analysis.visualizer.Visualization import Visualization
-from cascade.extraction.JavaExtraction import JavaExtraction
 
 from cascade.generation.Generation import Generation
-from cascade.utils.Utils import load_json_from_path, log, save_dicts_list_to_json
+from cascade.utils.Utils import load_json_from_path, save_dicts_list_to_json
 
 from cascade.utils.DockerizedWrapper import DockerizedWrapper
 import xml.etree.ElementTree as ET
 
-class MultiStepDatasetAnalysis(Analysis):
-    def __init__(self, generator: Generation, executor: Execution, visualizer: Visualization, regenerate=False, reexecute=False, image="maven" , debug=0, step_size=1):
-        super().__init__(generator, executor, visualizer)
+class JavaTwoStepAnalysis(Analysis):
+    def __init__(self, generator: Generation, executor: Execution, regenerate=False, reexecute=False, image="maven" , debug=0, step_size=1):
+        super().__init__(generator, executor)
         self.reexecute = reexecute or regenerate
         self.step_size = step_size
         self.regenerate = regenerate
         self.debug = debug
-        self.visualizer.logger = "tqdm"
         self.image = image
 
     def extract_junit_version(self, input_path, output_path):

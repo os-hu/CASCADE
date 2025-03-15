@@ -11,6 +11,9 @@ import shutil
 
 
 class JavaExecutor(AnalysisExecutor):
+    """
+    This class is used to execute Java tests in a docker containers.
+    """
     def __init__(self, debug=False, builder=None):
         super().__init__()
         self.debug = debug
@@ -61,8 +64,6 @@ class JavaExecutor(AnalysisExecutor):
 
             dock_ex = DockerizedWrapper(debug=self.debug)
 
-            #test_class_name = (self.builder.test_pattern.replace('%t', context['test_package'] + "." + context['test_file_path'].split('/')[-1].split('.')[0]))
-            #debuggin verison TODO remove and uncommnet thing above
             test_command = (self.builder.test_pattern.replace('%t', "THIS_IS_A_UNIQUE_NAME_Test"))
 
             dock_context = {
@@ -80,6 +81,10 @@ class JavaExecutor(AnalysisExecutor):
 
 
     def set_up(self, data, input_path, output_path):
+        """
+        Set up the environment for the execution of the Java tests.
+        This is useful to use if several tests from the same project will be executed, to save time.
+        """
         context = data[0]
 
         with tempfile.TemporaryDirectory() as temp_dir:
