@@ -28,7 +28,6 @@ class BaselineAnalysis(Analysis):
             if "OPENAI_API_KEY" in os.environ:
                 api_key = os.environ["OPENAI_API_KEY"]
             else:
-                # TODO
                 raise Exception("No api key in environment")
 
             client = OpenAI(api_key=api_key)
@@ -163,3 +162,4 @@ class BaselineAnalysis(Analysis):
             d["answers"] = answers
 
             save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
+

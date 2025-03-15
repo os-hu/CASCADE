@@ -193,6 +193,7 @@ class MultiStepJavaTestGenerator(Generator):
 
 
     def repair(self, context, input_path, output_path, errors, key):
+        response_history = []
         tools = get_repair_helper_functions()
 
         tree = subprocess.check_output(["tree", "-P", "*.java", "--charset=ascii", input_path]).decode("utf-8")
@@ -209,7 +210,9 @@ class MultiStepJavaTestGenerator(Generator):
         promptlist.append({"role": "system", "content": system_prompt})
         promptlist.append({"role": "user", "content": prompt})
 
+        response_history.append(prompt)
         res = self.prompt_executor.execute(promptlist, tools=tools).model_dump()
+        response_history.append(res)
 
         # we allow three tool usages before we force a generation
         steps = 3
@@ -231,16 +234,14 @@ class MultiStepJavaTestGenerator(Generator):
                     res = self.prompt_executor.execute(promptlist, tools=tools).model_dump()
                 else:
                     res = self.prompt_executor.execute(promptlist).model_dump()
-
+                response_history.append(res)
         promptlist.append(res['choices'][0]['message'])
-
-        repair_response = {"prompt": promptlist, "response": res}
-
+        response_history.append(promptlist)
         new_tests = res["choices"][0]["message"]["content"]
 
         new_tests = self.extract_tests(new_tests, context, res, output_path)
 
-        return new_tests, repair_response
+        return new_tests, response_history
 
 
     def extract_json_list(self, output_path, response_text):

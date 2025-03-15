@@ -8,7 +8,7 @@ from cascade.analysis.executor.Execution import Execution
 from cascade.extraction.JavaExtraction import JavaExtraction
 
 from cascade.generation.Generation import Generation
-from cascade.utils.Utils import load_json_from_path, log, save_dicts_list_to_json
+from cascade.utils.Utils import load_json_from_path, save_dicts_list_to_json
 
 from cascade.utils.DockerizedWrapper import DockerizedWrapper
 import xml.etree.ElementTree as ET
@@ -140,6 +140,7 @@ class DatasetAnalysis(Analysis):
 
         else:
             next_phase = True
+        save_dicts_list_to_json([d], ana_path)
 
         if next_phase:
             # generate new code  -----------------------------------------------------------------------------------------------
@@ -197,7 +198,7 @@ class DatasetAnalysis(Analysis):
             else:
                 output = f"Negative; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
 
-            # calculate the new improved cool metrix for chekcign out if somethign is a positive or not.
+            # calculate the new improved metrix for checking out if something is a positive or not.
             r1 = [d["results"]["(code, new_tests)"][0], d["results"]["(code, new_tests)"][1] + d["results"]["(code, new_tests)"][2]]
             r2 = [d["results"]["(new_code, new_tests)"][0], d["results"]["(new_code, new_tests)"][1] + d["results"]["(new_code, new_tests)"][2]]
 
