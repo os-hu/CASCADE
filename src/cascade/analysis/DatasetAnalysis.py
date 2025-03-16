@@ -43,7 +43,6 @@ class DatasetAnalysis(Analysis):
         d = self.prepare_data(data[0], input_path, output_path)
         if d is None:
             return
-        return
 
         test_class_real_name = d["test_file_path"].split("/")[-1].split(".")[0]
         test_class_unique_name = "THIS_IS_A_UNIQUE_NAME_Test"
@@ -311,7 +310,7 @@ class DatasetAnalysis(Analysis):
         if "junit_version" not in d or "test_file_path" not in d:
             print("extracting Junit version")
             junit_version, source_dir, test_source_dir = extract_maven_information()
-            print("Junit version: ", junit_version)
+            d["junit_version"] = junit_version
 
             if test_source_dir is not None and source_dir is not None:
                 d["test_file_path"] = d["code_file_path"].replace(source_dir.replace("/root/", ""), test_source_dir.replace("/root/", ""))
@@ -319,8 +318,8 @@ class DatasetAnalysis(Analysis):
             else:
                 d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
 
+        if "test_package" not in d:
             d["test_package"] = d["package"]
-            d["junit_version"] = junit_version
 
         # search for junit specific imports   if they are not there add them?
         d["test_imports"] = d.get("test_imports", [])
