@@ -39,15 +39,14 @@ class DatasetAnalysis(Analysis):
         # load data for this specific run.
         data = load_json_from_path(ana_path)
 
-        # take the one element that is targeted here.
-        d = data[0]
+        # take the one element that is targeted here. and make sure evrthign we need is there.
+        d = self.prepare_data(data[0])
+        if d is None:
+            return
+        return
 
         test_class_real_name = d["test_file_path"].split("/")[-1].split(".")[0]
         test_class_unique_name = "THIS_IS_A_UNIQUE_NAME_Test"
-
-        if not "test_package" in d:
-            print("no original tests were found for this method")
-            d["test_package"] = d["package"]
 
 
         print(f"  Starting analysis of function: {d['signature']['name']}")
@@ -139,11 +138,11 @@ class DatasetAnalysis(Analysis):
                     f.write("\n-------\nNo Compiler errors.  check log\n")
                 f.write("-----------------------\n")
 
-            output = f"Negative; error; step 1 (C +T'); {str(amount_res)}; ; "
+            output = f"NoInco; error; step 1 (C +T'); {str(amount_res)}; ; "
             print(output)
 
         elif evaluated == 1:
-            output = f"Negative; pass; step 1 (C +T'); {str(amount_res)}; ; "
+            output = f"NoInco; pass; step 1 (C +T'); {str(amount_res)}; ; "
             print(output)
 
         else:
@@ -196,15 +195,15 @@ class DatasetAnalysis(Analysis):
                         f.write("\n-------\nNo Compiler errors.  check log\n")
                     f.write("-----------------------\n")
 
-                output = f"Negative; error; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                output = f"NoInco error; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
                 print(output)
 
             elif evaluated2 == 1:
-                output = f"Positive; pass; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                output = f"INCO; pass; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
                 print(output)
 
             else:
-                output = f"Negative; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                output = f"NoInco; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
 
             # calculate the new improved metrix for checking out if something is a positive or not.
             r1 = [d["results"]["(code, new_tests)"][0], d["results"]["(code, new_tests)"][1] + d["results"]["(code, new_tests)"][2]]
@@ -249,4 +248,100 @@ class DatasetAnalysis(Analysis):
         else:
             print("        Failed")
             return -1
+
+
+
+    def prepare_data(self, d, input_path, output_path):
+        def extract_maven_information():
+            with tempfile.TemporaryDirectory() as temp_dir:
+                try:
+                    shutil.copytree(input_path, temp_dir, dirs_exist_ok=True)
+                except Exception as e:
+                    print("could not copy root path")
+                    print(e)
+                    return None
+                dock_ex = DockerizedWrapper()
+
+                # get the effective pom file, which usually contains the used junit version
+                dock_context = {
+                    "image": self.image,
+                    "directory": temp_dir,
+                    "command": "mvn help:effective-pom -Doutput=effective-pom.xml",
+                    "path": "/root/effective-pom.xml"
+                }
+                dock_ex.execute(dock_context, output_path, copy=True)
+
+            try:
+                tree = ET.parse(os.path.join(output_path, "effective-pom.xml"))
+                root = tree.getroot()
+
+                # Search for JUnit dependency
+
+                # Define namespaces, if they exist in your pom.xml
+                namespaces = {'m': 'http://maven.apache.org/POM/4.0.0'}  # Default Maven namespace
+                for dependency in root.findall(".//m:dependency", namespaces):
+                    group_id = dependency.find("m:groupId", namespaces)
+                    artifact_id = dependency.find("m:artifactId", namespaces)
+                    if group_id is not None and artifact_id is not None:
+                        if group_id.text == "junit" and artifact_id.text == "junit":
+                            version = dependency.find("m:version", namespaces)
+                            if version is not None:
+                                junit_version = version.text
+                            else:
+                                junit_version = "JUnit Version not specified"
+
+                # Extract source and test source directories
+                build = root.find(".//m:build", namespaces)
+                if build is not None:
+                    source_directory = build.find("m:sourceDirectory", namespaces)
+                    test_source_directory = build.find("m:testSourceDirectory", namespaces)
+
+                    source_dir = source_directory.text if source_directory is not None else None
+                    test_source_dir = test_source_directory.text if test_source_directory is not None else None
+
+                # Return a 3-tuple with JUnit version, source directory, and test source directory
+                return junit_version, source_dir, test_source_dir
+
+            except Exception as e:
+                return f"Error parsing pom.xml: {e}", None, None
+
+        # Start of th actual function -----------------------------------
+        ana_path = os.path.join(output_path, "analyzed.json")
+
+        if "junit_version" not in d or "test_file_path" not in d:
+            print("extracting Junit version")
+            junit_version, source_dir, test_source_dir = extract_maven_information()
+            print("Junit version: ", junit_version)
+
+            if test_source_dir is not None and source_dir is not None:
+                d["test_file_path"] = d["code_file_path"].replace(source_dir.replace("/root/", ""), test_source_dir.replace("/root/", ""))
+                d["test_file_path"] = d["test_file_path"].replace(".java", "Test.java")
+            else:
+                d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
+
+            d["test_package"] = d["package"]
+            d["junit_version"] = junit_version
+
+        # search for junit specific imports   if they are not there add them?
+        d["test_imports"] = d.get("test_imports", [])
+
+        junit_found = False
+        for imp in d["test_imports"]:
+            if "junit" in imp:
+                junit_found = True
+                break
+
+        if not junit_found:
+            if d["junit_version"].startswith("3"):
+                d["test_imports"].append("import junit.framework.*;\n")
+            elif d["junit_version"].startswith("4."):
+                d["test_imports"].append("import org.junit.*;\n")
+                d["test_imports"].append("import static org.junit.Assert.*;\n")
+            else:
+                d["test_imports"].append("import org.junit.jupiter.api.*;\n")
+
+        save_dicts_list_to_json([d], ana_path)
+
+        return d
+
 

@@ -11,17 +11,28 @@ import shutil
 
 
 class JavaExecutor(AnalysisExecutor):
-    """
-    This class is used to execute Java tests in a docker containers.
-    """
+
     def __init__(self, debug=False, builder=None):
         super().__init__()
         self.debug = debug
         self.builder = builder
 
     def execute(self, code: str, tests: str, context: dict, input_path, output_path) -> (succeeded, failed, errored):
-        result = ([],[],[])
-        errors = None
+        """
+        This Method executes given test cases and code. For this it ...
+
+        :param code: The key for an entry in the context dictionary that is the code block to be tested. Should be "code"
+        :param tests: The key for an entry in the context dictionary that is the test file to be run. E.g. "tests" or if present "new_tests"
+        :param context: The context dictionary that describes the function to be tested. As created by the extractor class. Has to contain at least the keys "test_file_path", "code_file_path", "test_package", "id" as well as the keys passed in the oce and tests parameters.
+        :param input_path: The path to the root of the project under test.
+        :param output_path: The path to the output folder. This is where the results of the analysis as well as some intermediate files and logging data will be stored.
+        :return: a 2-tuple of
+            first a three-tuple of lists of strings,
+                the first list contains the names of the tests that passed,
+                the second list contains the names of the tests that failed,
+                the third list contains the names of the tests that errored
+            second a string containing any (compilation) errors that happened during execution or 'None' if none occurred
+        """
 
         with tempfile.TemporaryDirectory() as temp_dir:
             try:
@@ -34,10 +45,12 @@ class JavaExecutor(AnalysisExecutor):
             entry = os.path.join(temp_dir, "entry.json")
             with open(entry, "w") as json_entry:
                 json.dump(context, json_entry)
+
             my_path = os.path.dirname(__file__)
+
             p = subprocess.run(
                 ["java", "-jar", os.path.join(my_path, "..", "..", "resources", "tools", "JavaExtractor.jar"),
-                 "mod",
+                 "mod",  #modification mode
                  temp_dir,
                  entry,
                  code,

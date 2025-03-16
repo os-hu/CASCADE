@@ -27,7 +27,7 @@ class MavenBuilder(Builder):
                 the first list contains the names of the tests that passed,
                 the second list contains the names of the tests that failed,
                 the third list contains the names of the tests that errored
-            second a string containing any (compilation) errors that happened during execution or 'None' if none occured
+            second a string containing any (compilation) errors that happened during execution or 'None' if none occurred
         """
         # First Catch Compilation Errors
         comp_matches = re.findall(r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -*\n(.*?)\[INFO\]', x, re.DOTALL)
@@ -69,7 +69,7 @@ class MavenBuilder(Builder):
                 else:
                     passed.append(test_name)
 
-        except ET.ParseError as e:
+        except Exception as e:
             print("Error parsing XML:", e)
 
         result = [passed, failed, errored]
