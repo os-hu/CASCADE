@@ -40,7 +40,7 @@ class DatasetAnalysis(Analysis):
         data = load_json_from_path(ana_path)
 
         # take the one element that is targeted here. and make sure evrthign we need is there.
-        d = self.prepare_data(data[0])
+        d = self.prepare_data(data[0], input_path, output_path)
         if d is None:
             return
         return
