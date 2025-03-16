@@ -23,7 +23,11 @@ class GPT4JavaCodeGenerator(Generator):
         par = context['signature']['params']
         params = ", ".join(par) if len(par) > 1 else (par[0] if par else "")
 
-        system_prompt = f"You are an Expert Java developer. You will be given a class and have to implement one specific method, following its documentation as close as possible. Handle exceptions properly, and ensure all calls are correct. Do not use any new imports. The code should compile without errors. Respond only with the function."
+        system_prompt = ("You are an Expert Java developer. "
+                         "You will be given a class and have to implement one specific method, following its documentation as close as possible. "
+                         "Handle exceptions properly, and ensure all calls are correct. Do not use any new imports. "
+                         "The code should compile without errors. Respond only with the function."
+                         )
 
         packg_and_imports = f"package {context['package']};\n\n" + "".join(context["parent"]["imports"]) + "\n"
 
@@ -110,10 +114,15 @@ class GPT4JavaCodeGenerator(Generator):
     def repair(self, context, input_path, output_path, errors, key):
         tools = get_repair_helper_functions()
 
-        system_prompt = "You are an Expert Java developer. You will Fix provided compilation errors in provided code without changing its functionality. You can use tools to find out more about classes instead of making your own assumptions. You have to assume that all fields are initialized with null"
+        system_prompt = ("You are an Expert Java developer. You will Fix provided compilation errors in provided code without changing its functionality. "
+                         "You can use tools to find out more about classes instead of making your own assumptions. "
+                         "You have to assume that all fields are initialized with null"
+                         )
+        prompt = (f"The following errors occurred during compilation of the class: {context["parent"]["name"]}.\nErrors:\n```\n{errors}\n```\n\n "
+                  "Fix the errors in the following function while still following the documentation as close as possible:\n"
+                  f"```java\n{build_signature(context, doc=True) + context[key]}\n```"
 
-        prompt = f"The following errors occurred during compilation of the class: {context["parent"]["name"]}.\nErrors:\n```\n{errors}\n```\n\nFix the errors in the following function while still following the documentation as close as possible:\n```java\n{build_signature(context, doc=True) + context[key]}\n```"
-
+                  )
         promptlist = []
         promptlist.append({"role": "system", "content": system_prompt})
         promptlist.append({"role": "user", "content": prompt})

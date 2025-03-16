@@ -43,35 +43,39 @@ class MavenBuilder(Builder):
             return ([], [], []), comp_errors
         matched_line = test_overview_matches[0]
 
-
         run_fail_err_skip = list(map(int, re.findall(r"\d+", matched_line)))
         total_tests = run_fail_err_skip[0]
+        if total_tests == 0:
+            return ([], [], []), comp_errors
 
+        # get specific test results
         xml_blocks = re.findall(r'(<\?xml.*?</testsuite>)', x, re.DOTALL)
-
-        try:
-            root = ET.fromstring(xml_blocks[-1])
-        except ET.ParseError as e:
-            print("Error parsing XML:", e)
 
         passed = []
         failed = []
         errored = []
 
-        # Loop over each <testcase> element.
-        for testcase in root.findall('testcase'):
-            test_name = testcase.attrib.get('name')
-            # If a <failure> or <error> tag exists as a child, mark accordingly.
-            if testcase.find('failure') is not None:
-                failed.append(test_name)
-            elif testcase.find('error') is not None:
-                errored.append(test_name)
-            else:
-                passed.append(test_name)
+        try:
+            root = ET.fromstring(xml_blocks[-1])
+
+            # Loop over each <testcase> element.
+            for testcase in root.findall('testcase'):
+                test_name = testcase.attrib.get('name')
+                # If a <failure> or <error> tag exists as a child, mark accordingly.
+                if testcase.find('failure') is not None:
+                    failed.append(test_name)
+                elif testcase.find('error') is not None:
+                    errored.append(test_name)
+                else:
+                    passed.append(test_name)
+
+        except ET.ParseError as e:
+            print("Error parsing XML:", e)
 
         result = [passed, failed, errored]
 
         return result, comp_errors
+
 
     def set_up(self, temp_dir, _, output_path):
         """
@@ -88,6 +92,7 @@ class MavenBuilder(Builder):
             "command": f"timeout 120 mvn {self.set_up_maven_command} {self.set_up_maven_args}; RET=$?; rm -rf ../root/*; exit $RET;",
         }
         return wrapper.setup_image(dock_context, output_path)
+
 
     def tear_down(self, _):
         wrapper = DockerizedWrapper(debug=True)

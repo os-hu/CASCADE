@@ -16,12 +16,9 @@ from cascade.utils.JavaUtils import build_context, check_syntax, repair_helper_f
 
 class MultiStepJavaTestGenerator(Generator):
     def __init__(self, max_attempts=1, max_tokens=16000, temperature=0, delay=3, max_prompt_tokens=10000,
-                 model="gpt-4o-mini-2024-07-18", freq_penalty=0.0, dummy=False, ask_for_imports=False,
-                 import_prompt_finisher="Reply with the missing imports, leave out those you don't know the correct package of."):
+                 model="gpt-4o-mini-2024-07-18", freq_penalty=0.0, dummy=False):
         super().__init__()
-        self.ask_for_imports = ask_for_imports
         self.model = model
-        self.import_prompt_finisher = import_prompt_finisher
         self.max_prompt_tokens = max_prompt_tokens
         self.prompt_executor = OpenAIChatCompletionExecutor(max_attempts=max_attempts, model=model,
                                                             max_tokens=max_tokens, temperature=temperature,
@@ -70,7 +67,7 @@ class MultiStepJavaTestGenerator(Generator):
         return promptlist
 
     def generate(self, context, input_path, output_path, response_step2=None):
-        print("generation Phase 1")
+        print("      Test generation Phase 1")
         # first given the method documentation and signature, we want to extract possible testcases or properties.
         prompt_step1 = [
             {"role": "system",
@@ -81,7 +78,7 @@ class MultiStepJavaTestGenerator(Generator):
         chat_history = [prompt_step1]
         response_step1a = self.prompt_executor.execute(prompt_step1).model_dump()
         if not response_step1a["choices"]:
-            print("error during generation")
+            print("      error during generation")
             return [], chat_history
 
         prompt_step1.append(response_step1a["choices"][0]["message"])
@@ -108,7 +105,7 @@ class MultiStepJavaTestGenerator(Generator):
             return [], chat_history
         context["test_list"] = test_list
 
-        print("generation Phase 2")
+        print("      Test generation Phase 2")
         # now we have a list of testable properties, we want to generate a testclass with them all.
         prompt_step2 = self.build_prompt(context)
 
@@ -135,7 +132,15 @@ class MultiStepJavaTestGenerator(Generator):
             new_tests = self.extract_tests(response_step2a["choices"][0]["message"]["content"], context, response_step2b, output_path)
         # prompt_step2.append({"role": "assistant", "content": f"```java\n{new_tests}\n```"})
 
-        print(check_syntax(new_tests, "class", output_path))
+        syntax_correct = check_syntax(new_tests, "class", output_path)
+        if not syntax_correct:
+            results_path = os.path.join(output_path, "results.txt")
+            errors_path = os.path.join(output_path, "errors.txt")
+            with open(results_path, "w") as f:
+                f.write("Negative, No syntactically correct tests generated")
+            with open(errors_path, "w") as f:
+                f.write(f"No syntactically correct tests generated \nResponse text:\n{response_text}")
+            return "", chat_history
 
         return new_tests, chat_history
 
@@ -180,12 +185,11 @@ class MultiStepJavaTestGenerator(Generator):
 
         if code_blocks:
             new_tests = code_blocks[0]
-            # new_tests = self.try_to_fix(new_tests, response, context, output_path)   # probably not needed anymore as most classes seem to be correct.
+
         else:
-            print("no code block could be extracted for generated Tests")
+            print("      no code block could be extracted for generated Tests")
             errors_path = os.path.join(output_path, "errors.txt")
             with open(errors_path, "w") as f:
-                # Use "\n" for a proper newline.
                 f.write(f"Could not get tests from response:\n{response}")
             new_tests = ""
 
@@ -254,7 +258,6 @@ class MultiStepJavaTestGenerator(Generator):
             with open(results_path, "w") as f:
                 f.write("Negative, JSON test extraction error")
             with open(errors_path, "w") as f:
-                # Use "\n" for a proper newline.
                 f.write(f"Could not parse JSON: {error_message}\nResponse text:\n{response_text}")
 
         json_blocks = re.findall(r"```json(.*?)\n\s*```", response_text, flags=re.DOTALL)
@@ -287,61 +290,6 @@ class MultiStepJavaTestGenerator(Generator):
             log_json_error("No test case with the correct keys found in extracted JSON")
             return []
 
-        print(f"    Got {len(clean_test_list)} potential tests: {[test['test_name'] for test in clean_test_list]}")
+        test_names = [test['test_name'] for test in clean_test_list]
+        print(f"      Got {len(clean_test_list)} potential tests:\n        {"\n        ".join(test_names)}")
         return  clean_test_list
-
-    def try_to_fix(self, new_tests, response, context, output_path):
-        """
-        this can be used to fix incompletely created classes.
-        """
-        # check if the class is complete
-        chunk = ""
-        braces = 2
-        for letter in new_tests:
-            chunk += letter
-            if letter == "{":
-                braces += 1
-            elif letter == "}":
-                braces -= 1
-            if braces == 0:
-                break
-
-        # we have to complete the class
-        if braces == 0:
-            return self.build_tests(context) + chunk
-
-        if braces == 1:
-            # two possible cases  full class with a brace too much   or a completion with a brace to few
-            #full class
-            to_check = [chunk[:chunk.rfind("}")], self.build_tests(context) + chunk + "}", self.build_tests(context) + chunk[chunk.find("{") + 1:]]
-            for check in to_check:
-                if check_syntax(check, "class", output_path):
-                    return check
-
-        # the class is complete
-        if braces == 2:
-            check = chunk
-            if check_syntax(check, "class", output_path):
-                return check   # TODO This seems to be the majority now. so everything else might not be needed anymore
-            check = self.build_tests(context) + chunk[chunk.find("{") + 1:] + "}"
-            if check_syntax(check, "class", output_path):
-                return check
-
-
-        if braces > 2:
-            # if it broke because the message was to long. we try to cut of the last broken tests and end the class here
-            if response['choices'][0]["finish_reason"] == "length":
-                last_test = 0
-                lines = new_tests.splitlines()
-
-                for num, line in enumerate(lines):
-                    if not self.is_three:
-                        if "@Test" in line:
-                            last_test = num
-                    else:
-                        if "public void test" in line:
-                            last_test = num
-
-                return "\n".join(lines[:last_test]) + "\n}"
-
-        return new_tests + "}"*(braces-2)
