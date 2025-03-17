@@ -64,6 +64,8 @@ class DatasetAnalysis(Analysis):
         else:
             print("      new tests already generated")
 
+        self.executor.set_up(data, input_path, output_path)
+
         print("      execute new tests")
 
         d["results"] = {}
@@ -86,19 +88,22 @@ class DatasetAnalysis(Analysis):
         evaluated = self.evaluate(res1)
 
         # this is the compilation error loop.  so far hard coded number for tries. TODO could be a parameter
-        max_repair_tries = 2
+        max_repair_tries = 3
         current_repair_tries = 0
+        d["repair_history"] = []
         for i in range(max_repair_tries):
             # repair step
             # if there were actually compiler errors with the tests:
             if evaluated == 0 and comp_errors:
                 current_repair_tries += 1
                 print("      Try to generate repaired tests")
-                repaired_tests, _ = self.generator.repair_tests(d, input_path, output_path, comp_errors, 'new_tests')
+                repaired_tests, response_history = self.generator.repair_tests(d, input_path, output_path, comp_errors, 'new_tests')
+                d["repair_history"].append(response_history)
 
                 old_tests_key = "tests_pre_repairstep_" + str(i + 1)
                 d[old_tests_key] = d["new_tests"]
                 d["new_tests"] = repaired_tests
+
 
                 print("      execute repaired tests")
 
@@ -194,7 +199,7 @@ class DatasetAnalysis(Analysis):
                         f.write("\n-------\nNo Compiler errors.  check log\n")
                     f.write("-----------------------\n")
 
-                output = f"NoInco error; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                output = f"NoInco; error; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
                 print(output)
 
             elif evaluated2 == 1:

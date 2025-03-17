@@ -40,7 +40,7 @@ class MultiStepJavaTestGenerator(Generator):
         system_prompt = (
             f"You are an expert Java developer. You will generate JUnit tests for a specific method in a provided test class.{test_framework_instruction} "
             "You can import anything from the project itself. Make sure to handle all exceptions properly, and ensure that all method signatures and calls are correct. "
-            "The code should compile without errors."
+            "The code should compile on its own without errors."
             )
 
         #
@@ -53,7 +53,7 @@ class MultiStepJavaTestGenerator(Generator):
         test_header = (
             "Make changes or add classes to the imports if necessary. Every object you use has to be properly instantiated, every method has to be imported. "
             "Handle any checked exceptions using try-catch or throws, do not forget type parameters. Match method signatures exactly when overriding or implementing methods. "
-            f"\n## Test class:"
+            f"Respond with the filled Test Class:\n"
             )
 
         test_level_prompt = test_header + "\n```java\n" + self.build_tests(context) + "\n```"
@@ -67,6 +67,7 @@ class MultiStepJavaTestGenerator(Generator):
         return promptlist
 
     def generate(self, context, input_path, output_path, response_step2=None):
+        chat_history = []
         print("      Test generation Phase 1")
         # first given the method documentation and signature, we want to extract possible testcases or properties.
         prompt_step1 = [
@@ -75,8 +76,11 @@ class MultiStepJavaTestGenerator(Generator):
             {"role": "user",
              "content": f"Give a complete description of the behavior that we should test when we want to asure that the code matches its documentation from the following Java method:\n```java\n{build_signature(context, doc=True)}\n```\n\nMake sure you consider the entire functionality exactly as described in the documentation, and cover all edge cases but make no assumptions that are not stated in the documentation."}
         ]
-        chat_history = [prompt_step1]
+
         response_step1a = self.prompt_executor.execute(prompt_step1).model_dump()
+        chat_history.append(copy.deepcopy(prompt_step1))
+        chat_history.append(response_step1a)
+
         if not response_step1a["choices"]:
             print("      error during generation")
             return [], chat_history
@@ -95,12 +99,16 @@ class MultiStepJavaTestGenerator(Generator):
         #  - "compile time tests (e.g. for return types)"
 
         prompt_step1.append(prompt_json_list)
-        chat_history = [prompt_step1]
+
         response_step1b = self.prompt_executor.execute(prompt_step1).model_dump()
         response_text = response_step1b["choices"][0]["message"]["content"]
-        chat_history = [prompt_step1.append(response_step1b["choices"][0]["message"])]
+
 
         test_list = self.extract_json_list(output_path, response_text)
+
+        chat_history.append(copy.deepcopy(prompt_step1))
+        chat_history.append(response_step1b)
+
         if not test_list:
             return [], chat_history
         context["test_list"] = test_list
@@ -109,7 +117,6 @@ class MultiStepJavaTestGenerator(Generator):
         # now we have a list of testable properties, we want to generate a testclass with them all.
         prompt_step2 = self.build_prompt(context)
 
-        chat_history.append(prompt_step2)
         response_step2a = self.prompt_executor.execute(prompt_step2).model_dump()
 
         prompt_step2.append(response_step2a["choices"][0]["message"])
@@ -121,9 +128,7 @@ class MultiStepJavaTestGenerator(Generator):
         #     repair_question = f"{', '.join(calls)} {'are' if len(calls) > 1 else 'is'} 'new', check if there are missing imports and fix them using this directory structure:\n```\n{tree}\n```"
         #     prompt_step2.append({"role": "user", "content": repair_question})
 
-        chat_history[-1] = prompt_step2
         response_step2b = self.prompt_executor.execute(prompt_step2).model_dump()
-        chat_history[-1] = prompt_step2.append(response_step2b["choices"][0]["message"])
 
         new_tests = self.extract_tests(response_step2b["choices"][0]["message"]["content"], context, response_step2b, output_path)
 
@@ -131,6 +136,9 @@ class MultiStepJavaTestGenerator(Generator):
         if new_tests == "":
             new_tests = self.extract_tests(response_step2a["choices"][0]["message"]["content"], context, response_step2b, output_path)
         # prompt_step2.append({"role": "assistant", "content": f"```java\n{new_tests}\n```"})
+
+        chat_history.append(copy.deepcopy(prompt_step2))
+        chat_history.append(response_step2b)
 
         syntax_correct = check_syntax(new_tests, "class", output_path)
         if not syntax_correct:
@@ -214,10 +222,9 @@ class MultiStepJavaTestGenerator(Generator):
         promptlist.append({"role": "system", "content": system_prompt})
         promptlist.append({"role": "user", "content": prompt})
 
-        response_history.append(prompt)
         res = self.prompt_executor.execute(promptlist, tools=tools).model_dump()
+        response_history.append(copy.deepcopy(promptlist))
         response_history.append(res)
-
         # we allow three tool usages before we force a generation
         steps = 3
         for i in range(steps):
@@ -238,13 +245,16 @@ class MultiStepJavaTestGenerator(Generator):
                     res = self.prompt_executor.execute(promptlist, tools=tools).model_dump()
                 else:
                     res = self.prompt_executor.execute(promptlist).model_dump()
+                response_history.append(copy.deepcopy(promptlist))
                 response_history.append(res)
+
         promptlist.append(res['choices'][0]['message'])
-        response_history.append(promptlist)
         new_tests = res["choices"][0]["message"]["content"]
 
         new_tests = self.extract_tests(new_tests, context, res, output_path)
 
+        response_history.append(copy.deepcopy(promptlist))
+        response_history.append(res)
         return new_tests, response_history
 
 
