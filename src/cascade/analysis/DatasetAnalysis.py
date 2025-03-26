@@ -78,8 +78,17 @@ class DatasetAnalysis(Analysis):
         res1 = list(exec_results[0])
         comp_errors = exec_results[1]
 
+        # debugging --------------------
+        if comp_errors == 0:
+            with open(output_path + "/errors.txt", "a") as f:
+                f.write("weird negative error thing: ----------------\n")
+                f.write(str(res1))
+            return
+
+
         with open(output_path + "/log.txt", "a") as f:
             f.write("COMP ERRORS:" + str(comp_errors) + "\n-------\n")
+            f.write("TEST RESULTS:" + str(res1) + "\n-------\n")
         d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
         d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
         if comp_errors:
@@ -140,6 +149,7 @@ class DatasetAnalysis(Analysis):
                     f.write(comp_errors)
                 else:
                     f.write("\n-------\nNo Compiler errors.  check log\n")
+                    f.write("Here is the to be parsed document:" , )
                 f.write("-----------------------\n")
 
             output = f"NoInco; error; step 1 (C +T'); {str(amount_res)}; ; "

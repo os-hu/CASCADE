@@ -56,7 +56,7 @@ class DockerizedWrapper:
 
 
     def set_up(self, dock_context: dict):
-        client = docker.from_env(timeout=240)
+        client = docker.from_env(timeout=300)
         container = client.containers.run(dock_context["image"], "tail -f /dev/null", detach=True)
         if "directory" in dock_context:
             buffer = io.BytesIO()
@@ -100,7 +100,7 @@ class DockerizedWrapper:
 
     def setup_image(self, dock_context: dict, output_path: str):
         container = None
-        client = docker.from_env(timeout=240)
+        client = docker.from_env(timeout=300)
         images = client.images.list(dock_context["new_image"])
         exit_code = False
         try:
@@ -116,7 +116,7 @@ class DockerizedWrapper:
 
 
     def remove_image(self, dock_context: dict):
-        client = docker.from_env(timeout=240)
+        client = docker.from_env(timeout=300)
         try:
             image_name = dock_context["new_image"]
             containers = client.containers.list(all=True,

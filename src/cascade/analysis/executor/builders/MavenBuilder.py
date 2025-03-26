@@ -5,7 +5,7 @@ from cascade.utils.DockerizedWrapper import DockerizedWrapper
 import xml.etree.ElementTree as ET
 
 class MavenBuilder(Builder):
-    def __init__(self, new_image_name, maven_args, set_up_maven_command, set_up_maven_args, image, timeout=120):
+    def __init__(self, new_image_name, maven_args, set_up_maven_command, set_up_maven_args, image, timeout=300):
         super().__init__(
             test_pattern = f"echo \"[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0\" > out; timeout {timeout} mvn test {maven_args} -Dtest=\"%t\" -DfailIfNoTests=false -Dsurefire.reportsDirectory=target/surefire-reports > output 2>&1; cat output > out; cat target/surefire-reports/TEST-*.xml >> out; cat output",
 
@@ -40,7 +40,8 @@ class MavenBuilder(Builder):
         # get general test results
         test_overview_matches = re.search(r"Tests run: \d+, Failures: \d+, Errors: \d+, Skipped: \d+, Time", x)
         if not test_overview_matches:
-            return ([], [], []), comp_errors
+            #return ([], [], []), comp_errors
+            return x, 0  # this is for debugging
         matched_line = test_overview_matches[0]
 
         run_fail_err_skip = list(map(int, re.findall(r"\d+", matched_line)))
@@ -89,7 +90,7 @@ class MavenBuilder(Builder):
             "image": self.old_image_name,
             "new_image": self.image,
             "directory": temp_dir,
-            "command": f"timeout 120 mvn {self.set_up_maven_command} {self.set_up_maven_args}; RET=$?; rm -rf ../root/*; exit $RET;",
+            "command": f"timeout 180 mvn {self.set_up_maven_command} {self.set_up_maven_args}; RET=$?; rm -rf ../root/*; exit $RET;",
         }
         return wrapper.setup_image(dock_context, output_path)
 

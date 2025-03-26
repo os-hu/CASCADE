@@ -13,7 +13,7 @@ class DatasetMavenJavaExecutor(MavenJavaExecutor):
 
         # this can be changed to include more arguments that might be used for executing maven
         self.id = str(uuid.uuid4())
-        self.args = ["-fae -Drat.skip=true -DforkMode=never -Dsurefire.failIfNoSpecifiedTests=false"]#["-fae -Dsurefire.failIfNoSpecifiedTests=false", "-fae -Drat.skip=true -Dsurefire.failIfNoSpecifiedTests=false", "-fae -Drat.skip=true -DforkMode=never -Dsurefire.failIfNoSpecifiedTests=false"]
+        self.args = ["-fae -Drat.skip=true -DforkMode=never -Dsurefire.failIfNoSpecifiedTests=false > /dev/null 2>&1"]#["-fae -Dsurefire.failIfNoSpecifiedTests=false", "-fae -Drat.skip=true -Dsurefire.failIfNoSpecifiedTests=false", "-fae -Drat.skip=true -DforkMode=never -Dsurefire.failIfNoSpecifiedTests=false"]
 
     def execute(self, code: str, tests: str, context: dict, input_path, output_path) -> (succeeded, failed, errored):
         if not self.initialized:
@@ -34,7 +34,7 @@ class DatasetMavenJavaExecutor(MavenJavaExecutor):
                 set_up_maven_command="test",
                 set_up_maven_args=arg,
                 image="maven",
-                timeout=240
+                timeout=300
             )
 
             result = super().execute(code, tests, context, input_path, output_path)
