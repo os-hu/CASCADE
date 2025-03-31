@@ -127,7 +127,12 @@ class DatasetAnalysis(Analysis):
                 if comp_errors:
                     comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
 
-                evaluated = self.evaluate(res1)
+                # for debugging:
+                if comp_errors == 0:
+                    evaluated = 0
+
+
+                #evaluated = self.evaluate(res1)
                 save_dicts_list_to_json([d], ana_path)
 
 
@@ -149,7 +154,6 @@ class DatasetAnalysis(Analysis):
                     f.write(comp_errors)
                 else:
                     f.write("\n-------\nNo Compiler errors.  check log\n")
-                    f.write("Here is the to be parsed document:" , )
                 f.write("-----------------------\n")
 
             output = f"NoInco; error; step 1 (C +T'); {str(amount_res)}; ; "

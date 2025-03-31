@@ -74,6 +74,9 @@ class MavenBuilder(Builder):
             print("Error parsing XML:", e)
 
         result = [passed, failed, errored]
+        # ddebugging:
+        if result[0] == [] and result[1] == [] and result[2] == []:
+            return "nothing foudn i nhtmlblocks\n" + x, 0
 
         return result, comp_errors
 
