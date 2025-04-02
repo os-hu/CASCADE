@@ -90,7 +90,7 @@ class MavenBuilder(Builder):
         :param output_path:
         :return: The
         """
-        wrapper = DockerizedWrapper(debug=True)
+        wrapper = DockerizedWrapper()
         dock_context = {
             "image": self.old_image_name,
             "new_image": self.image,
@@ -101,7 +101,7 @@ class MavenBuilder(Builder):
 
 
     def tear_down(self, _):
-        wrapper = DockerizedWrapper(debug=True)
+        wrapper = DockerizedWrapper()
         dock_context = {
             "new_image": self.image,
         }

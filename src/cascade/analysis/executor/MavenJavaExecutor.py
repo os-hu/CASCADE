@@ -34,5 +34,6 @@ class MavenJavaExecutor(JavaExecutor):
                              maven_args=maven_args,
                              image=image,
                              set_up_maven_command=set_up_maven_command,
-                             set_up_maven_args=set_up_maven_args
+                             set_up_maven_args=set_up_maven_args,
+                             timeout=300
                          ))
