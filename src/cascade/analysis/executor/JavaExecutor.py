@@ -88,9 +88,9 @@ class JavaExecutor(AnalysisExecutor):
                 "eval_function" : self.builder.eval_function
             }
 
-            result, errors = dock_ex.execute(dock_context, output_path)
+            result = dock_ex.execute(dock_context, output_path)
 
-        return result, errors
+        return result
 
 
     def set_up(self, data, input_path, output_path):

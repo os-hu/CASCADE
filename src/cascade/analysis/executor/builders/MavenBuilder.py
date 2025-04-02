@@ -1,5 +1,5 @@
 import re
-
+from cascade.analysis.executor.ExecutionResults import ExecutionResults
 from cascade.analysis.executor.builders.Builder import Builder
 from cascade.utils.DockerizedWrapper import DockerizedWrapper
 import xml.etree.ElementTree as ET
@@ -22,40 +22,45 @@ class MavenBuilder(Builder):
         An implementation of the function that has to be given to a builder to evaluate the output of the tests.
         :param x: a string containing the output produced in the docker,
                     which should contain the output of the tests which are then parsed here.
-        :return: result, a 2-tuple of
+        :return: result, a class of TODO ...
             first a three-tuple of lists of strings,
                 the first list contains the names of the tests that passed,
                 the second list contains the names of the tests that failed,
                 the third list contains the names of the tests that errored
             second a string containing any (compilation) errors that happened during execution or 'None' if none occurred
         """
+        results = ExecutionResults()
+        results.parsed_file = x
+
         # First Catch Compilation Errors
         comp_matches = re.findall(r'\[ERROR\] COMPILATION ERROR :[\s\S]*?\[INFO\] -*\n(.*?)\[INFO\]', x, re.DOTALL)
 
         if comp_matches:
-            comp_errors = comp_matches[-1].strip()
-        else:
-            comp_errors = None
+            results.comp_error_matches = comp_matches
+            results.comp_errors = comp_matches[-1].strip()
 
         # get general test results
         test_overview_matches = re.search(r"Tests run: \d+, Failures: \d+, Errors: \d+, Skipped: \d+, Time", x)
-        if not test_overview_matches:
-            #return ([], [], []), comp_errors
-            return x, 0  # this is for debugging
-        matched_line = test_overview_matches[0]
+        results.test_overview_matches = test_overview_matches
 
+        if not test_overview_matches:
+            return results
+
+        matched_line = test_overview_matches[0]
         run_fail_err_skip = list(map(int, re.findall(r"\d+", matched_line)))
         total_tests = run_fail_err_skip[0]
+        results.results_numbers = total_tests - sum(run_fail_err_skip[1:]) , run_fail_err_skip[1], run_fail_err_skip[2]
+
         if total_tests == 0:
-            return ([], [], []), comp_errors
+            return results
 
         # get specific test results
         xml_blocks = re.findall(r'(<\?xml.*?</testsuite>)', x, re.DOTALL)
+        results.xml_blocks = xml_blocks
 
         passed = []
         failed = []
         errored = []
-
         try:
             root = ET.fromstring(xml_blocks[-1])
 
@@ -73,12 +78,9 @@ class MavenBuilder(Builder):
         except Exception as e:
             print("Error parsing XML:", e)
 
-        result = [passed, failed, errored]
-        # ddebugging:
-        if result[0] == [] and result[1] == [] and result[2] == []:
-            return "nothing foudn i nhtmlblocks\n" + x, 0
+        results.results = passed, failed, errored
 
-        return result, comp_errors
+        return results
 
 
     def set_up(self, temp_dir, _, output_path):

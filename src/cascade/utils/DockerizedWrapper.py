@@ -11,7 +11,7 @@ from cascade.analysis.executor.AnalysisExecutor import succeeded, failed, errore
 
 class DockerizedWrapper:
     """
-    This class is used to create a docker container for the prepared tests directory, copie the directory into the docker,
+    This class is used to create a docker container for the prepared tests directory, copy the directory into the docker,
     execute a (test) command and/or an evaluation command, and lastly kill and remove the container.
     """
 

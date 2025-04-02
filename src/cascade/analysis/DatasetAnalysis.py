@@ -5,6 +5,7 @@ import tempfile
 
 from cascade.analysis.Analysis import Analysis
 from cascade.analysis.executor.Execution import Execution
+from cascade.analysis.executor.ExecutionResults import ExecutionResults
 from cascade.extraction.JavaExtraction import JavaExtraction
 
 from cascade.generation.Generation import Generation
@@ -73,22 +74,15 @@ class DatasetAnalysis(Analysis):
 
         d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
         d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
-        exec_results = self.executor.execute("code", "new_tests", d, input_path, output_path)
+        exec_results: ExecutionResults = self.executor.execute("code", "new_tests", d, input_path, output_path)
 
-        res1 = list(exec_results[0])
-        comp_errors = exec_results[1]
-
-        # debugging --------------------
-        if comp_errors == 0:
-            with open(output_path + "/errors.txt", "a") as f:
-                f.write("weird negative error thing: ----------------\n")
-                f.write(str(res1))
-            return
-
+        res1 = exec_results.results
+        comp_errors = exec_results.comp_errors
 
         with open(output_path + "/log.txt", "a") as f:
-            f.write("COMP ERRORS:" + str(comp_errors) + "\n-------\n")
-            f.write("TEST RESULTS:" + str(res1) + "\n-------\n")
+            f.write("Results after step 1\n")
+            f.write(str(exec_results))
+
         d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
         d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
         if comp_errors:
@@ -119,24 +113,24 @@ class DatasetAnalysis(Analysis):
                 d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
                 d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
 
-                res1, comp_errors = self.executor.execute("code", "new_tests", d, input_path, output_path)
-                res1 = list(res1)
+                exec_results: ExecutionResults = self.executor.execute("code", "new_tests", d, input_path, output_path)
+                res1 = exec_results.results
+                comp_errors = exec_results.comp_errors
 
                 d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
                 d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
                 if comp_errors:
                     comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
 
-                # for debugging:
-                if comp_errors == 0:
-                    evaluated = 0
-
+                with open(output_path + "/log.txt", "a") as f:
+                    f.write(f"Results after step 1 Repairstep {current_repair_tries}\n")
+                    f.write(str(exec_results))
 
                 #evaluated = self.evaluate(res1)
                 save_dicts_list_to_json([d], ana_path)
 
 
-        amount_res = [len(r) for r in res1]
+        amount_res = exec_results.results_numbers
         d["results"]["(code, new_tests)"] = res1
 
         next_phase = False
@@ -180,8 +174,14 @@ class DatasetAnalysis(Analysis):
             d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
             d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
 
-            res2, comp_errors = self.executor.execute("new_code", "new_tests", d, input_path, output_path)
-            res2 = list(res2)
+            exec_results: ExecutionResults = self.executor.execute("new_code", "new_tests", d, input_path, output_path)
+
+            res2 = exec_results.results
+            comp_errors = exec_results.comp_errors
+
+            with open(output_path + "/log.txt", "a") as f:
+                f.write("Results after step 2\n")
+                f.write(str(exec_results))
 
             d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
             d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
@@ -193,10 +193,9 @@ class DatasetAnalysis(Analysis):
             #TODO repair loop for code?
             save_dicts_list_to_json([d], ana_path)
 
-            amount_res2 = [len(r) for r in res2]
+            amount_res2 = exec_results.results_numbers
             d["results"]["(new_code, new_tests)"] = res2
 
-            next_phase = False
             if evaluated2 == 0:
                 # loggin ----------
                 with open(output_path + "/errors.txt", "a") as f:
