@@ -11,7 +11,7 @@ class OllamaCaller(LLMCaller):
 
 
     def execute(self, prompt, **kwargs):
-        response = self.client.generate(model=self.model, prompt=prompt, stream=False)
+        response = self.client.chat(model=self.model, messages=prompt, stream=False)
         print(response)
 
         def describe_structure(data, path="root"):
