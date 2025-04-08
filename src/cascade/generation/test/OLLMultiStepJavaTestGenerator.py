@@ -80,7 +80,7 @@ class OLLMultiStepJavaTestGenerator(Generator):
         chat_history.append(copy.deepcopy(prompt_step1))
         chat_history.append(response_step1a)
 
-        if not response_step1a["choices"]:
+        if not response_step1a:
             print("      error during generation")
             return [], chat_history
 
