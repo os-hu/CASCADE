@@ -14,4 +14,4 @@ class OllamaCaller(LLMCaller):
         response = self.client.chat(model=self.model, messages=prompt, stream=False)
         print(response)
 
-        return dict(response)
+        return response.model_dump()
