@@ -99,7 +99,7 @@ class OLLMultiStepJavaTestGenerator(Generator):
 
         prompt_step1.append(prompt_json_list)
 
-        response_step1b = self.prompt_executor.execute(prompt_step1).model_dump()
+        response_step1b = self.prompt_executor.execute(prompt_step1)
         response_text = response_step1b["message"]["content"]
 
 
@@ -116,7 +116,7 @@ class OLLMultiStepJavaTestGenerator(Generator):
         # now we have a list of testable properties, we want to generate a testclass with them all.
         prompt_step2 = self.build_prompt(context)
 
-        response_step2a = self.prompt_executor.execute(prompt_step2).model_dump()
+        response_step2a = self.prompt_executor.execute(prompt_step2)
 
         prompt_step2.append(response_step2a["message"])
         prompt_step2.append({"role": "user", "content": "Make sure that this class compiles without errors. Check if everything that is used is imported correctly and all exceptions are properly caught. Replay with the corrected class"})
@@ -127,7 +127,7 @@ class OLLMultiStepJavaTestGenerator(Generator):
         #     repair_question = f"{', '.join(calls)} {'are' if len(calls) > 1 else 'is'} 'new', check if there are missing imports and fix them using this directory structure:\n```\n{tree}\n```"
         #     prompt_step2.append({"role": "user", "content": repair_question})
 
-        response_step2b = self.prompt_executor.execute(prompt_step2).model_dump()
+        response_step2b = self.prompt_executor.execute(prompt_step2)
 
         new_tests = self.extract_tests(response_step2b["message"]["content"], context, response_step2b, output_path)
 
@@ -221,7 +221,7 @@ class OLLMultiStepJavaTestGenerator(Generator):
         promptlist.append({"role": "system", "content": system_prompt})
         promptlist.append({"role": "user", "content": prompt})
 
-        res = self.prompt_executor.execute(promptlist, tools=tools).model_dump()
+        res = self.prompt_executor.execute(promptlist, tools=tools)
         response_history.append(copy.deepcopy(promptlist))
         response_history.append(res)
         # we allow three tool usages before we force a generation
@@ -242,9 +242,9 @@ class OLLMultiStepJavaTestGenerator(Generator):
                     promptlist.append({"role": "tool", "content": json.dumps(results), "tool_call_id": tool_call["id"]})
 
                 if i < steps - 1:
-                    res = self.prompt_executor.execute(promptlist, tools=tools).model_dump()
+                    res = self.prompt_executor.execute(promptlist, tools=tools)
                 else:
-                    res = self.prompt_executor.execute(promptlist).model_dump()
+                    res = self.prompt_executor.execute(promptlist)
                 response_history.append(copy.deepcopy(promptlist))
                 response_history.append(res)
 
