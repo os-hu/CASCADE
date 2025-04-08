@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-class PromptExecutor(ABC):
+class LLMCaller(ABC):
     """
         Abstract base class for prompt executors.
     """

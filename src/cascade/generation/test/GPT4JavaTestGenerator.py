@@ -8,7 +8,7 @@ from platform import system
 import tiktoken
 
 from cascade.generation.Generator import Generator
-from cascade.generation.executor.OpenAIChatCompletionExecutor import OpenAIChatCompletionExecutor
+from cascade.generation.executor.OpenAICaller import OpenAICaller
 from cascade.utils.JavaUtils import build_context, check_syntax, repair_helper_functions, get_repair_helper_functions
 
 
@@ -19,8 +19,8 @@ class GPT4JavaTestGenerator(Generator):
         self.model = model
         self.import_prompt_finisher = import_prompt_finisher
         self.max_prompt_tokens = max_prompt_tokens
-        self.prompt_executor = OpenAIChatCompletionExecutor(max_attempts=max_attempts, model=model, max_tokens=max_tokens, temperature=temperature,
-                                                            delay=delay, freq_penalty=freq_penalty, dummy=dummy)
+        self.prompt_executor = OpenAICaller(max_attempts=max_attempts, model=model, max_tokens=max_tokens, temperature=temperature,
+                                            delay=delay, freq_penalty=freq_penalty, dummy=dummy)
 
         self.is_three = False
 

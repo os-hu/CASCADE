@@ -3,3 +3,4 @@ docker~=7.0.0
 openai~=1.23.6
 setuptools~=75.0.0
 tiktoken~=0.7.0
+ollama~=0.4.7
