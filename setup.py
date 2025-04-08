@@ -9,7 +9,8 @@ setup(name='CASCADE',
           'tqdm',
           'openai',
           'docker',
-          'tiktoken'
+          'tiktoken',
+          'ollama'
       ],
       include_package_data=True
 )
