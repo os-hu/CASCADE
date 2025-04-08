@@ -53,10 +53,15 @@ class DatasetAnalysis(Analysis):
         print("    Step 1 - New Tests")
 
         if not "new_tests" in d:
+            print(type(d))
             new_tests, chat_history = self.generator.generate_tests(d, input_path, output_path)
+            print(type(d))
 
             d["new_tests"] = new_tests
             d["new_tests_history"] = chat_history
+
+            print(type(d))
+
             save_dicts_list_to_json([d], ana_path)
 
             if new_tests == "":
