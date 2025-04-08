@@ -15,12 +15,14 @@ from cascade.utils.JavaUtils import build_context, check_syntax, repair_helper_f
 
 
 class OLLMultiStepJavaTestGenerator(Generator):
-    def __init__(self, max_attempts=1, max_tokens=16000, temperature=0, delay=3, max_prompt_tokens=10000,
-                 model="", freq_penalty=0.0, dummy=False):
+    def __init__(self, host='http://localhost:11434',
+                model="deepseek-r1:70b", max_attempts=1,
+                max_tokens=16000, temperature=0, delay=3,
+                max_prompt_tokens=10000, freq_penalty=0.0, dummy=False):
         super().__init__()
         self.model = model
         self.max_prompt_tokens = max_prompt_tokens
-        self.prompt_executor = OllamaCaller()
+        self.prompt_executor = OllamaCaller(host=host, model=model)
         self.is_junit3 = False
 
     def build_prompt(self, context):

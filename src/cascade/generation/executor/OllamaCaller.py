@@ -4,7 +4,7 @@ from cascade.generation.executor.LLMCaller import LLMCaller
 
 
 class OllamaCaller(LLMCaller):
-    def __init__(self, host='http://localhost:11434', model="deepseek-r1:70b",  **kwargs):
+    def __init__(self, host, model):
         self.host = host
         self.model = model
         self.client = Client(self.host)
