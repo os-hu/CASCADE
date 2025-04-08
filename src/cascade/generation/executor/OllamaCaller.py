@@ -32,5 +32,4 @@ class OllamaCaller(LLMCaller):
 
         print("----------------------")
         describe_structure(response)
-        exit()
         return response

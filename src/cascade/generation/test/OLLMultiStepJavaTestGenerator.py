@@ -76,7 +76,7 @@ class OLLMultiStepJavaTestGenerator(Generator):
              "content": f"Give a complete description of the behavior that we should test when we want to asure that the code matches its documentation from the following Java method:\n```java\n{build_signature(context, doc=True)}\n```\n\nMake sure you consider the entire functionality exactly as described in the documentation, and cover all edge cases but make no assumptions that are not stated in the documentation."}
         ]
 
-        response_step1a = self.prompt_executor.execute(prompt_step1).model_dump()
+        response_step1a = self.prompt_executor.execute(prompt_step1)
         chat_history.append(copy.deepcopy(prompt_step1))
         chat_history.append(response_step1a)
 
@@ -84,7 +84,7 @@ class OLLMultiStepJavaTestGenerator(Generator):
             print("      error during generation")
             return [], chat_history
 
-        prompt_step1.append(response_step1a["choices"][0]["message"])
+        prompt_step1.append(response_step1a["message"])
 
         # now the goal is to convert this text into a usable format and extract the testable properties
         prompt_json_list = {"role": "user", "content": f"Now turn this into a JSON array of unit tests we should write for test driven development for based on the documentation above. Where each entry has: \"test_name\": a descriptive method name starting with 'test' referencing the specified behavior and \"test_description\": a detailed description for the developer of what this tests should do and which specific behavior from the documentation it tests. In particular, I want testable statements of the 'if this then that' type.\nFocus on those tests that follow directly from the documentation, e.g. no performance based ones."}
@@ -100,7 +100,7 @@ class OLLMultiStepJavaTestGenerator(Generator):
         prompt_step1.append(prompt_json_list)
 
         response_step1b = self.prompt_executor.execute(prompt_step1).model_dump()
-        response_text = response_step1b["choices"][0]["message"]["content"]
+        response_text = response_step1b["message"]["content"]
 
 
         test_list = self.extract_json_list(output_path, response_text)
@@ -118,7 +118,7 @@ class OLLMultiStepJavaTestGenerator(Generator):
 
         response_step2a = self.prompt_executor.execute(prompt_step2).model_dump()
 
-        prompt_step2.append(response_step2a["choices"][0]["message"])
+        prompt_step2.append(response_step2a["message"])
         prompt_step2.append({"role": "user", "content": "Make sure that this class compiles without errors. Check if everything that is used is imported correctly and all exceptions are properly caught. Replay with the corrected class"})
 
         # calls = re.findall(r"new (.*?)\(", new_tests, flags=re.DOTALL)
@@ -129,11 +129,11 @@ class OLLMultiStepJavaTestGenerator(Generator):
 
         response_step2b = self.prompt_executor.execute(prompt_step2).model_dump()
 
-        new_tests = self.extract_tests(response_step2b["choices"][0]["message"]["content"], context, response_step2b, output_path)
+        new_tests = self.extract_tests(response_step2b["message"]["content"], context, response_step2b, output_path)
 
         # this is a fallback if the second reply did not include a code block
         if new_tests == "":
-            new_tests = self.extract_tests(response_step2a["choices"][0]["message"]["content"], context, response_step2b, output_path)
+            new_tests = self.extract_tests(response_step2a["message"]["content"], context, response_step2b, output_path)
         # prompt_step2.append({"role": "assistant", "content": f"```java\n{new_tests}\n```"})
 
         chat_history.append(copy.deepcopy(prompt_step2))
@@ -227,10 +227,11 @@ class OLLMultiStepJavaTestGenerator(Generator):
         # we allow three tool usages before we force a generation
         steps = 3
         for i in range(steps):
-            if res["choices"][0]["finish_reason"] == "tool_calls":
+            if res["done_reason"] == "tool_calls":
                 promptlist.append(res['choices'][0]['message'])
 
-                tool_calls = res["choices"][0]["message"]["tool_calls"]
+                # is this stil lexisiitng
+                tool_calls = res["message"]["tool_calls"]
 
                 for tool_call in tool_calls:
                     func = tool_call["function"]["name"]
@@ -247,8 +248,8 @@ class OLLMultiStepJavaTestGenerator(Generator):
                 response_history.append(copy.deepcopy(promptlist))
                 response_history.append(res)
 
-        promptlist.append(res['choices'][0]['message'])
-        new_tests = res["choices"][0]["message"]["content"]
+        promptlist.append(res['message'])
+        new_tests = res["message"]["content"]
 
         new_tests = self.extract_tests(new_tests, context, res, output_path)
 
