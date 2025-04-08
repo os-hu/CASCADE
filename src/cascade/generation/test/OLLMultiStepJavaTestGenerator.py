@@ -116,10 +116,10 @@ class OLLMultiStepJavaTestGenerator(Generator):
         # now we have a list of testable properties, we want to generate a testclass with them all.
         prompt_step2 = self.build_prompt(context)
 
-        response_step2a = self.prompt_executor.execute(prompt_step2)
+        # response_step2a = self.prompt_executor.execute(prompt_step2)
 
-        prompt_step2.append(response_step2a["message"])
-        prompt_step2.append({"role": "user", "content": "Make sure that this class compiles without errors. Check if everything that is used is imported correctly and all exceptions are properly caught. Replay with the corrected class"})
+        # prompt_step2.append(response_step2a["message"])
+        # prompt_step2.append({"role": "user", "content": "Make sure that this class compiles without errors. Check if everything that is used is imported correctly and all exceptions are properly caught. Replay with the corrected class"})
 
         # calls = re.findall(r"new (.*?)\(", new_tests, flags=re.DOTALL)
         # if calls:
@@ -132,8 +132,8 @@ class OLLMultiStepJavaTestGenerator(Generator):
         new_tests = self.extract_tests(response_step2b["message"]["content"], context, response_step2b, output_path)
 
         # this is a fallback if the second reply did not include a code block
-        if new_tests == "":
-            new_tests = self.extract_tests(response_step2a["message"]["content"], context, response_step2b, output_path)
+        # if new_tests == "":
+        #    new_tests = self.extract_tests(response_step2a["message"]["content"], context, response_step2b, output_path)
         # prompt_step2.append({"role": "assistant", "content": f"```java\n{new_tests}\n```"})
 
         chat_history.append(copy.deepcopy(prompt_step2))
