@@ -6,8 +6,6 @@ import io
 
 from docker.models.containers import Container
 
-from cascade.analysis.executor.AnalysisExecutor import succeeded, failed, errored
-
 
 class DockerizedWrapper:
     """
@@ -22,7 +20,7 @@ class DockerizedWrapper:
 
     def execute(self, dock_context: dict, output_path: str, copy: bool = False):
         """
-        Executes a command in a docker container and evaluates the results (or copys a given file out of the container)
+        Executes a command in a docker container and evaluates the results (or copies a given file out of the container)
 
         :param dock_context: a dictionary containing the necessary information for the docker container. these are:
             image           - image is the docker image to run

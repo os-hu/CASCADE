@@ -27,9 +27,9 @@ class MultiStepJavaTestGenerator(Generator):
         self.is_junit3 = False
 
     def build_prompt(self, context):
-        # enc = tiktoken.encoding_for_model(self.model) TODO this could be used again to ensure the prompt is not to long.
+        # enc = tiktoken.encoding_for_model(self.model) TODO this could be used to ensure the prompt is not to long.
 
-        testframework = ""
+        test_framework_instruction = ""
         if "junit_version" in context:
             version = context["junit_version"]
             test_framework_instruction = " Use JUnit version " + (version if version[0].isdigit() else "5") + "."
@@ -45,9 +45,10 @@ class MultiStepJavaTestGenerator(Generator):
 
         #
         class_level_prompt = (
-            f"The interesting function under test is:\n```Java{build_signature(context, doc=True)}```\n\nThe other methods will be tested later. " 
-            "Fill the tests in the test class below. This is for test driven development so the tests should be designed to fail if the later implementation does not exactly conform to the documentation.\n"
-            f"This is the class the method resides in:\n## Parent class\n```java\n{build_context(context, doc=True, no_fields=False, no_constructors=False, no_other_method_docs=True, no_other_methods=True)}"+"    ; // this is the function to be tested\n\n}\n```\n\n"
+            f"The interesting function under test is:\n```Java\n{build_signature(context, doc=True)}```\n\nThe other methods will be tested later. " 
+            "Fill all tests in the provided test class below. This is for test driven development so the tests should be designed to fail if the later implementation does not exactly conform to the documentation.\n"
+            f"This is the parent class the method under test resides in:\n## Parent class\n```java\n{build_context(context, doc=True, imports=True, no_fields=False, no_constructors=False, no_other_method_docs=True, no_other_methods=True)}"
+            " {\n        // this is the function to be tested\n\n}\n}\n```\n\n"
             )
 
         test_header = (
@@ -67,31 +68,40 @@ class MultiStepJavaTestGenerator(Generator):
         return promptlist
 
     def generate(self, context, input_path, output_path, response_step2=None):
+        results_path = os.path.join(output_path, "results.txt")
+        errors_path = os.path.join(output_path, "errors.txt")
+
         chat_history = []
         print("      Test generation Phase 1")
         # first given the method documentation and signature, we want to extract possible testcases or properties.
         prompt_step1 = [
             {"role": "system",
-             "content": "You are an expert Java developer and requirements engineer. You will be given a method signature and its documentation. Your task is to extract behavior specifications from the documentation that can later be turned into unit tests to ensure the code is a bug free and faithful to its documentation."},
+             "content": "You are an expert Java developer and requirements engineer. You will be given a method signature and its documentation. Your task is to extract behavior specifications from the documentation that can be turned into unit tests to ensure the code is bug free and faithful to its documentation."},
             {"role": "user",
              "content": f"Give a complete description of the behavior that we should test when we want to asure that the code matches its documentation from the following Java method:\n```java\n{build_signature(context, doc=True)}\n```\n\nMake sure you consider the entire functionality exactly as described in the documentation, and cover all edge cases but make no assumptions that are not stated in the documentation."}
         ]
 
-        response_step1a = self.prompt_executor.execute(prompt_step1).model_dump()
         chat_history.append(copy.deepcopy(prompt_step1))
+        response_step1a = self.prompt_executor.execute(prompt_step1).model_dump()
         chat_history.append(response_step1a)
 
         if not response_step1a["choices"]:
             print("      error during generation")
-            return [], chat_history
+            with open(results_path, "w") as f:
+                f.write("Negative, error during test generation")
+            with open(errors_path, "w") as f:
+                f.write("error during test generation")
+
+            return "", chat_history
 
         prompt_step1.append(response_step1a["choices"][0]["message"])
 
         # now the goal is to convert this text into a usable format and extract the testable properties
-        prompt_json_list = {"role": "user", "content": f"Now turn this into a JSON array of unit tests we should write for test driven development for based on the documentation above. Where each entry has: \"test_name\": a descriptive method name starting with 'test' referencing the specified behavior and \"test_description\": a detailed description for the developer of what this tests should do and which specific behavior from the documentation it tests. In particular, I want testable statements of the 'if this then that' type.\nFocus on those tests that follow directly from the documentation, e.g. no performance based ones."}
+        prompt_json_list = {"role": "user", "content": f"Now turn this into a JSON array of unit tests we should write for test driven development. Each entry in the array should have: \"test_name\": a descriptive test method name starting with 'test' and \"test_description\": a detailed description for the developer of what this tests should do and which specific behavior from the documentation it tests. In particular, I want testable statements of the 'if this then that' type.\nFocus on those tests that follow directly from the documentation, e.g. no performance based ones."}
 
         # possible alterations to later filter out unnecessary tests
-        # To ensure the correctness of the `uniqueIterable` method, we can derive several testable behavior specifications based on the provided documentation. Here are the key behaviors to test, structured in an "if this then that" format:
+        # To ensure the correctness of the `uniqueIterable` method, we can derive several testable behavior specifications based on the provided documentation.
+        # Here are the key behaviors to test, structured in an "if this then that" format:
         # classes:
         #  - "directly from documentation"
         #  - "additional meaningful tests"
@@ -110,16 +120,24 @@ class MultiStepJavaTestGenerator(Generator):
         chat_history.append(response_step1b)
 
         if not test_list:
-            return [], chat_history
+            with open(results_path, "w") as f:
+                f.write("Negative, error during test from json extraction")
+            with open(errors_path, "w") as f:
+                f.write("error during test extraction from json")
+            return "", chat_history
+
+
         context["test_list"] = test_list
 
         print("      Test generation Phase 2")
-        # now we have a list of testable properties, we want to generate a testclass with them all.
+        # now we have a list of testable properties, we want to generate a testclass filled with these.
         prompt_step2 = self.build_prompt(context)
 
         response_step2a = self.prompt_executor.execute(prompt_step2).model_dump()
 
         prompt_step2.append(response_step2a["choices"][0]["message"])
+
+        # TODO test if this step is helpfull or not.
         prompt_step2.append({"role": "user", "content": "Make sure that this class compiles without errors. Check if everything that is used is imported correctly and all exceptions are properly caught. Replay with the corrected class"})
 
         # calls = re.findall(r"new (.*?)\(", new_tests, flags=re.DOTALL)
@@ -128,7 +146,10 @@ class MultiStepJavaTestGenerator(Generator):
         #     repair_question = f"{', '.join(calls)} {'are' if len(calls) > 1 else 'is'} 'new', check if there are missing imports and fix them using this directory structure:\n```\n{tree}\n```"
         #     prompt_step2.append({"role": "user", "content": repair_question})
 
+
         response_step2b = self.prompt_executor.execute(prompt_step2).model_dump()
+        chat_history.append(copy.deepcopy(prompt_step2))
+        chat_history.append(response_step2b)
 
         new_tests = self.extract_tests(response_step2b["choices"][0]["message"]["content"], context, response_step2b, output_path)
 
@@ -137,33 +158,24 @@ class MultiStepJavaTestGenerator(Generator):
             new_tests = self.extract_tests(response_step2a["choices"][0]["message"]["content"], context, response_step2b, output_path)
         # prompt_step2.append({"role": "assistant", "content": f"```java\n{new_tests}\n```"})
 
-        chat_history.append(copy.deepcopy(prompt_step2))
-        chat_history.append(response_step2b)
-
-        syntax_correct = check_syntax(new_tests, "class", output_path)
-        if not syntax_correct:
-            results_path = os.path.join(output_path, "results.txt")
-            errors_path = os.path.join(output_path, "errors.txt")
+        if new_tests == "":
             with open(results_path, "w") as f:
-                f.write("Negative, No syntactically correct tests generated")
+                f.write("Negative, No syntactically correct test class generated")
             with open(errors_path, "w") as f:
-                f.write(f"No syntactically correct tests generated \nResponse text:\n{response_text}")
-            return "", chat_history
+                f.write(f"No syntactically correct test class generated \nResponse text:\n{response_text}")
 
         return new_tests, chat_history
 
 
     def build_tests(self, context):
         packg_declaration = f"package {context['test_package']};\n\n"
-        imports = "".join(context["test_imports"]) + "\n" + "// add all necessary imports here\n\n"
+        imports = "".join(context["test_imports"]) + "\n" + "// add all other needed imports here\n\n"
 
         # check if we are using junit 3 as there is a difference in structure
         for import_ in context["test_imports"]:
             if ("junit.framework") in import_:
                 self.is_junit3 = True
                 break
-
-        name = str(context["signature"]["name"])
 
         #class_name = context["test_file_path"].split("/")[-1].split(".")[0]
         class_name = os.path.splitext(os.path.basename(context["test_file_path"]))[0]
@@ -176,7 +188,6 @@ class MultiStepJavaTestGenerator(Generator):
             class_definition = class_definition + test_suite_method
 
             for test in context["test_list"]:
-                functions += "\n    public void " + test["test_name"] + "(){" + "\n        // " + test["test_description"] + "\n    }\n\n"
                 functions += f"\n    public void {test['test_name']}() {{\n        // {test['test_description']}\n    }}\n\n"
 
         else:
@@ -190,16 +201,20 @@ class MultiStepJavaTestGenerator(Generator):
 
     def extract_tests(self, new_tests, context, response, output_path):
         code_blocks = re.findall(r"```java(.*?)\n\s*```", new_tests, flags=re.DOTALL)
+        new_tests = ""
 
         if code_blocks:
-            new_tests = code_blocks[0]
-
+            sorted_code_blocks = sorted(code_blocks, key=len, reverse=True)
+            for code_block in sorted_code_blocks:
+                if check_syntax(code_block, "class", output_path):
+                    new_tests = code_block
+                    break
         else:
             print("      no code block could be extracted for generated Tests")
             errors_path = os.path.join(output_path, "errors.txt")
             with open(errors_path, "w") as f:
                 f.write(f"Could not get tests from response:\n{response}")
-            new_tests = ""
+
 
         return new_tests
 
@@ -210,12 +225,12 @@ class MultiStepJavaTestGenerator(Generator):
 
         tree = subprocess.check_output(["tree", "-P", "*.java", "--charset=ascii", input_path]).decode("utf-8")
 
-        system_prompt = "You are an expert Java developer. You will fix compilation errors in a provided test class. Use tools to find out more about classes instead of making assumptions."
+        system_prompt = "You are an expert Java developer. You will fix compilation errors in a provided test class and return the entire repaired class. Use tools to find out more about classes instead of making assumptions."
 
         prompt = (f"During the compilation of my test class some errors occurred.\nErrors:\n```\n{errors}\n```\n\nTest Class:\n```java\n{context[key]}\n```\n"
                   "Dont change the content of the tests, but make sure that the class compiles without errors. " 
                   "Check if all necessary imports are present and if all exceptions are properly caught. "
-                  f"If you need to add imports, use the following directory structure:\n```\n{tree}\n```\n\nNow fix the class so that it compiles without errors."
+                  f"If you need to add imports, use the following directory structure:\n```\n{tree}\n```\n\nNow fix the class so that it compiles without errors, and respond with the entire fixed class."
                   )
 
         promptlist = []
@@ -270,7 +285,8 @@ class MultiStepJavaTestGenerator(Generator):
             with open(errors_path, "w") as f:
                 f.write(f"Could not parse JSON: {error_message}\nResponse text:\n{response_text}")
 
-        json_blocks = re.findall(r"```json(.*?)\n\s*```", response_text, flags=re.DOTALL)
+        json_blocks = re.findall(r"```json\s*(.*?)\s*```", response_text, flags=re.DOTALL)
+
 
         if not json_blocks:
             log_json_error("Error extracting JSON block from response")
@@ -284,12 +300,12 @@ class MultiStepJavaTestGenerator(Generator):
             return []
 
         # make sure that all tests begin with test (e.g. instead of ending) and adding numbers to test cases that have the name
-        # and check if the elements have the correct keys.
+        # also check if the elements have the correct keys.
         clean_test_list = []
         seen_names = {}
         for et in extracted_test_list:
             if "test_name" in et and "test_description" in et:
-                base_name = et["test_name"].replace("test", "").replace("Test", "").strip()
+                base_name = et["test_name"].replace("test", "").replace("Test", "").replace("TEST", "").strip()
                 seen_names[base_name] = seen_names.get(base_name, 0) + 1
                 ct = {
                     "test_name": (f"test{base_name}" if seen_names[base_name] == 1 else f"test{base_name}{seen_names[base_name]}"),
@@ -301,5 +317,5 @@ class MultiStepJavaTestGenerator(Generator):
             return []
 
         test_names = [test['test_name'] for test in clean_test_list]
-        print(f"      Got {len(clean_test_list)} potential tests:\n        {"\n        ".join(test_names)}")
+        print(f"      Got {len(clean_test_list)} potential tests:\n        {'\n        '.join(test_names)}")
         return  clean_test_list
