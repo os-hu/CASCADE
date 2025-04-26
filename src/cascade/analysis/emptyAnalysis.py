@@ -19,7 +19,7 @@ class EmptyAnalysis(Analysis):
         self.extraction_requirements = Requirements(Requirements.Kind.EXPECTED, name="Analysis-Extraction-Expected")
 
 
-    def analyse(self, data, input_path, output_path):
+    def analyze(self, data, input_path, output_path):
         """
         This analysis should do nothing.
         """

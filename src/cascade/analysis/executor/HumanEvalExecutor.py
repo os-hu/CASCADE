@@ -1,4 +1,3 @@
-from cascade.analysis.executor.AnalysisExecutor import succeeded, failed, errored
 from cascade.analysis.executor.UnittestExecutor import UnittestExecutor
 from cascade.utils.PythonUtils import build_signature
 
@@ -26,7 +25,7 @@ class HumanEvalExecutor(UnittestExecutor):
 
         return full_func
 
-    def execute(self, code: str, tests: str, context: dict, input_path, output_path) -> (succeeded, failed, errored):
+    def execute(self, code: str, tests: str, context: dict, input_path, output_path):
         result = ([], [], [])
 
         with tempfile.TemporaryDirectory() as temp_dir:

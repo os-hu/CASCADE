@@ -57,6 +57,6 @@ class Pipeline():
             return
 
         print("Analysis started")
-        self.analysis.analyse(filtered_data, input_path, output_path)
+        self.analysis.analyze(filtered_data, input_path, output_path)
         print("Analysis finished")
 

@@ -2,6 +2,7 @@ import os
 import re
 import shutil
 import tempfile
+from datetime import datetime
 
 from cascade.analysis.Analysis import Analysis
 from cascade.analysis.executor.Execution import Execution
@@ -22,49 +23,56 @@ class DatasetAnalysis(Analysis):
         self.regenerate = regenerate
         self.debug = debug
         self.image = image
+        self.output_path = ""
 
 
-    def analyse(self, data: list, input_path, output_path):
+    def analyze(self, data: list, input_path, output_path):
         """
         This is the main analysis of the dataset.
         It will run the analysis on single methods as they are provided in the dataset.
 
-        :param data: a list wit hone element. The context dictionary for the method under test.
+        :param data: a list with one element. The context dictionary for the method under test.
         :param input_path
         :param output_path:
         """
+        def log(header, message):
+            with open(output_path + "/log.txt", "a") as f:
+                f.write(header + "/n")
+                f.write(message)
 
-        output = ""
+
+        output_string = ""
         ana_path = os.path.join(output_path, "analyzed.json")
 
-        # load data for this specific run.
+        # load data for this specific run
         data = load_json_from_path(ana_path)
 
-        # take the one element that is targeted here. and make sure evrthign we need is there.
+        # take the one element that is targeted here and make sure everything we need is there.
         d = self.prepare_data(data[0], input_path, output_path)
         if d is None:
+
             return
 
+        # to avoid name clashes with existing tests we define a unique name for the test class
         test_class_real_name = d["test_file_path"].split("/")[-1].split(".")[0]
         test_class_unique_name = "THIS_IS_A_UNIQUE_NAME_Test"
 
 
-        print(f"  Starting analysis of function: {d['signature']['name']}")
+
+        current_time = datetime.now().strftime("%H:%M:%S")
+        print(f"{current_time}  Starting analysis of function: {d['signature']['name']}")
         print("    Step 1 - New Tests")
 
         if not "new_tests" in d:
-            print(type(d))
             new_tests, chat_history = self.generator.generate_tests(d, input_path, output_path)
-            print(type(d))
 
             d["new_tests"] = new_tests
             d["new_tests_history"] = chat_history
 
-            print(type(d))
-
             save_dicts_list_to_json([d], ana_path)
 
             if new_tests == "":
+                log("GENERATION: no test could be generated:", str(chat_history))
                 return
 
         else:
@@ -128,10 +136,10 @@ class DatasetAnalysis(Analysis):
                     comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
 
                 with open(output_path + "/log.txt", "a") as f:
-                    f.write(f"Results after step 1 Repairstep {current_repair_tries}\n")
+                    f.write(f"Results after step 1 Repairstep: {current_repair_tries}\n")
                     f.write(str(exec_results))
 
-                #evaluated = self.evaluate(res1)
+                evaluated = self.evaluate(res1)
                 save_dicts_list_to_json([d], ana_path)
 
 
@@ -155,12 +163,12 @@ class DatasetAnalysis(Analysis):
                     f.write("\n-------\nNo Compiler errors.  check log\n")
                 f.write("-----------------------\n")
 
-            output = f"NoInco; error; step 1 (C +T'); {str(amount_res)}; ; "
-            print(output)
+            output_string = f"NoInco; error; step 1 (C +T'); {str(amount_res)}; ; "
+            print(output_string)
 
         elif evaluated == 1:
-            output = f"NoInco; pass; step 1 (C +T'); {str(amount_res)}; ; "
-            print(output)
+            output_string = f"NoInco; pass; step 1 (C +T'); {str(amount_res)}; ; "
+            print(output_string)
 
         else:
             next_phase = True
@@ -217,43 +225,43 @@ class DatasetAnalysis(Analysis):
                         f.write("\n-------\nNo Compiler errors.  check log\n")
                     f.write("-----------------------\n")
 
-                output = f"NoInco; error; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
-                print(output)
+                output_string = f"NoInco; error; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                print(output_string)
 
             elif evaluated2 == 1:
-                output = f"INCO; pass; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
-                print(output)
+                output_string = f"INCO; pass; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                print(output_string)
 
             else:
-                output = f"NoInco; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                output_string = f"NoInco; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
 
             # calculate the new improved metrix for checking out if something is a positive or not.
             r1 = [d["results"]["(code, new_tests)"][0], d["results"]["(code, new_tests)"][1] + d["results"]["(code, new_tests)"][2]]
             r2 = [d["results"]["(new_code, new_tests)"][0], d["results"]["(new_code, new_tests)"][1] + d["results"]["(new_code, new_tests)"][2]]
 
-            metric = {"vv": [], "vx": [], "xx": [], "xv": []}
+            metric = {"p2p": [], "f2f": [], "p2f": [], "f2p": []}
 
             for i in r1[0]:
                 if i in r2[0]:
-                    metric["vv"].append(i)
+                    metric["p2p"].append(i)
                 elif i in r2[1]:
-                    metric["vx"].append(i)
+                    metric["p2f"].append(i)
             for i in r1[1]:
                 if i in r2[0]:
-                    metric["xv"].append(i)
+                    metric["f2p"].append(i)
                 elif i in r2[1]:
-                    metric["xx"].append(i)
+                    metric["f2f"].append(i)
             d["metric"] = metric
 
             save_dicts_list_to_json([d], ana_path)
             metric_lengths = ", ".join(f"{k}: {len(v)}" for k, v in metric.items())
-            output += f"; {metric_lengths}"
+            output_string += f"; {metric_lengths}"
 
         save_dicts_list_to_json([d], ana_path)
         with open("result.txt", "w") as f:
-            output+= f"; {str("og tests exist" if "tests" in d else " no og tests")}; {current_repair_tries}"
-            f.write(output)
-            print("result:" , output)
+            output_string+= f"; {str("og tests exist" if "tests" in d else " no og tests")}; {current_repair_tries}"
+            f.write(output_string)
+            print("result:" , output_string)
 
         self.executor.tear_down(data)
 
@@ -274,6 +282,11 @@ class DatasetAnalysis(Analysis):
 
 
     def prepare_data(self, d, input_path, output_path):
+        """
+        This function prepares the data for the analysis.
+        It will check if the data is complete and if not it will try to extract the missing information,
+        like the junit version and the test file path.
+        """
         def extract_maven_information():
             with tempfile.TemporaryDirectory() as temp_dir:
                 try:
@@ -298,8 +311,7 @@ class DatasetAnalysis(Analysis):
                 root = tree.getroot()
 
                 # Search for JUnit dependency
-
-                # Define namespaces, if they exist in your pom.xml
+                # Define namespaces, if they exist in the pom.xml
                 namespaces = {'m': 'http://maven.apache.org/POM/4.0.0'}  # Default Maven namespace
                 for dependency in root.findall(".//m:dependency", namespaces):
                     group_id = dependency.find("m:groupId", namespaces)
@@ -327,7 +339,7 @@ class DatasetAnalysis(Analysis):
             except Exception as e:
                 return f"Error parsing pom.xml: {e}", None, None
 
-        # Start of th actual function -----------------------------------
+        # Start of the actual function -----------------------------------
         ana_path = os.path.join(output_path, "analyzed.json")
 
         if "junit_version" not in d or "test_file_path" not in d:
@@ -363,7 +375,6 @@ class DatasetAnalysis(Analysis):
                 d["test_imports"].append("import org.junit.jupiter.api.*;\n")
 
         save_dicts_list_to_json([d], ana_path)
-
         return d
 
 

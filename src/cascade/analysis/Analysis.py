@@ -17,7 +17,7 @@ class Analysis(ABC):
 
 
     @abstractmethod
-    def analyse(self, data, input_path, output_path):
+    def analyze(self, data, input_path, output_path):
         """
         TODO
         :param data:

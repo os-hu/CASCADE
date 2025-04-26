@@ -82,7 +82,7 @@ class JavaTwoStepAnalysis(Analysis):
         except ET.ParseError as e:
             return f"Error parsing pom.xml: {e}", None, None
 
-    def analyse(self, data: list, input_path, output_path):
+    def analyze(self, data: list, input_path, output_path):
         """
         This is the new and improved analysis.  it does not use or require the original tests.
 

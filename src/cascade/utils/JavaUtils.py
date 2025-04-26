@@ -4,14 +4,19 @@ import ast
 import subprocess
 
 
-def build_context(context, doc=False, no_fields=False, no_other_method_docs=False , no_other_methods=False, no_constructors=False):
+def build_context(context, doc=False, imports = False, no_fields=False, no_other_method_docs=False , no_other_methods=False, no_constructors=False):
     generics = context["parent"]["generics"]
     implements = context["parent"]["implements"]
     extends = context["parent"]["extends"]
     constructors = context["parent"]["constructors"] if not no_constructors else []
     fields = context["parent"]["variables"] if not no_fields else []
-    class_ = f"public class {context['parent']['name']}{('<' + ', '.join(generics) + '>' + ' ' if generics else '')} {('extends ' + ', '.join(extends) + ' ' if extends else '')}{('implements ' + ', '.join(implements)  + ' ' if implements else '')}{{\n"
-
+    imports_ = context["parent"]["imports"]
+    class_ = (f"{''.join(imports_) + '\n' if imports else ''}"
+              f"public class {context['parent']['name']}"
+              f"{('<' + ', '.join(generics) + '>' + ' ' if generics else '')}" 
+              f"{('extends ' + ', '.join(extends) + ' ' if extends else '')}"
+              f"{('implements ' + ', '.join(implements)  + ' ' if implements else '')}{{\n"
+              )
     field_string = "\n".join(fields) + "\n"
 
     constructor_string = "\n".join(constructors) + "\n"

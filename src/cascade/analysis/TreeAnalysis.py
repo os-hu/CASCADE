@@ -22,7 +22,7 @@ class TreeAnalysis(Analysis):
         self.debug = debug
 
 
-    def analyse(self, data: list, input_path, output_path):
+    def analyze(self, data: list, input_path, output_path):
         """
         This is the basic tree analysis as described in the paper.
         it contains of a loop going through the data array.

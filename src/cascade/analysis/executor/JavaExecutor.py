@@ -1,7 +1,7 @@
 import json
 import subprocess
 
-from cascade.analysis.executor.AnalysisExecutor import AnalysisExecutor, succeeded, failed, errored
+from cascade.analysis.executor.AnalysisExecutor import AnalysisExecutor
 from cascade.utils.DockerizedWrapper import DockerizedWrapper
 
 import re
@@ -17,7 +17,7 @@ class JavaExecutor(AnalysisExecutor):
         self.debug = debug
         self.builder = builder
 
-    def execute(self, code: str, tests: str, context: dict, input_path, output_path) -> (succeeded, failed, errored):
+    def execute(self, code: str, tests: str, context: dict, input_path, output_path):
         """
         This Method executes given test cases and code. For this it ...
 

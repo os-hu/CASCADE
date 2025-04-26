@@ -22,7 +22,7 @@ class BaselineAnalysis(Analysis):
         self.debug = debug
 
 
-    def analyse(self, data: list, input_path, output_path):
+    def analyze(self, data: list, input_path, output_path):
         model = "gpt-4o-mini-2024-07-18"
         def makeModelRequest(promptList, max_tokens=1200, temperature=0, freq_penalty=0.0):
             if "OPENAI_API_KEY" in os.environ:

@@ -1,6 +1,6 @@
 import ast
 
-from cascade.analysis.executor.AnalysisExecutor import AnalysisExecutor, succeeded, failed, errored
+from cascade.analysis.executor.AnalysisExecutor import AnalysisExecutor
 from cascade.utils.DockerizedWrapper import DockerizedWrapper
 import os
 import tempfile
@@ -31,7 +31,7 @@ class UnittestExecutor(AnalysisExecutor):
             # Return the modified node
             return node
 
-    def execute(self, code: str, tests: str, context: dict, input_path, output_path) -> (succeeded, failed, errored):
+    def execute(self, code: str, tests: str, context: dict, input_path, output_path):
 
         # copy project
         my_path = os.path.dirname(__file__)
