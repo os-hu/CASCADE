@@ -228,43 +228,51 @@ class DatasetAnalysis(Analysis):
                 output_string = f"NoInco; error; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
                 print(output_string)
 
-            elif evaluated2 == 1:
-                output_string = f"INCO; pass; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
-                print(output_string)
-
             else:
-                output_string = f"NoInco; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                # calculate the new improved metrix for checking out if something is a positive or not.
+                r1 = [d["results"]["(code, new_tests)"][0],
+                      d["results"]["(code, new_tests)"][1] + d["results"]["(code, new_tests)"][2]]
+                r2 = [d["results"]["(new_code, new_tests)"][0],
+                      d["results"]["(new_code, new_tests)"][1] + d["results"]["(new_code, new_tests)"][2]]
 
-            # calculate the new improved metrix for checking out if something is a positive or not.
-            r1 = [d["results"]["(code, new_tests)"][0], d["results"]["(code, new_tests)"][1] + d["results"]["(code, new_tests)"][2]]
-            r2 = [d["results"]["(new_code, new_tests)"][0], d["results"]["(new_code, new_tests)"][1] + d["results"]["(new_code, new_tests)"][2]]
+                metric = {"p2p": [], "f2f": [], "p2f": [], "f2p": []}
 
-            metric = {"p2p": [], "f2f": [], "p2f": [], "f2p": []}
+                for i in r1[0]:
+                    if i in r2[0]:
+                        metric["p2p"].append(i)
+                    elif i in r2[1]:
+                        metric["p2f"].append(i)
+                for i in r1[1]:
+                    if i in r2[0]:
+                        metric["f2p"].append(i)
+                    elif i in r2[1]:
+                        metric["f2f"].append(i)
+                d["metric"] = metric
 
-            for i in r1[0]:
-                if i in r2[0]:
-                    metric["p2p"].append(i)
-                elif i in r2[1]:
-                    metric["p2f"].append(i)
-            for i in r1[1]:
-                if i in r2[0]:
-                    metric["f2p"].append(i)
-                elif i in r2[1]:
-                    metric["f2f"].append(i)
-            d["metric"] = metric
+                save_dicts_list_to_json([d], ana_path)
+                metric_lengths = ", ".join(f"{k}: {len(v)}" for k, v in metric.items())
 
-            save_dicts_list_to_json([d], ana_path)
-            metric_lengths = ", ".join(f"{k}: {len(v)}" for k, v in metric.items())
+                if evaluated == 1:
+                    output_string = f"INCO; pass; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+
+                else:
+                    if len(metric["f2p"]) > 0:
+                        output_string = f"INCO; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                    else:
+                        output_string = f"NoInco; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+
+            print(output_string)
             output_string += f"; {metric_lengths}"
 
+
         save_dicts_list_to_json([d], ana_path)
-        with open("result.txt", "w") as f:
+        with open(output_path + "/result.txt", "w") as f:
             output_string+= f"; {str("og tests exist" if "tests" in d else " no og tests")}; {current_repair_tries}"
             f.write(output_string)
             print("result:" , output_string)
 
         self.executor.tear_down(data)
-
+    # TODO change all the 'with opens' to use os.path.join
 
     def evaluate(self, res):
         if res[0] == [] and res[1] == [] and res[2] == []:
