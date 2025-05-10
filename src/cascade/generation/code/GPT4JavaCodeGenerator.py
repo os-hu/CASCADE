@@ -18,7 +18,8 @@ class GPT4JavaCodeGenerator(Generator):
                                             delay=delay, freq_penalty=freq_penalty, dummy=dummy)
 
     def build_prompt(self, context):
-        enc = tiktoken.encoding_for_model(self.model)
+        #enc = tiktoken.encoding_for_model(self.model)
+        enc = tiktoken.get_encoding("o200k_base")
 
         par = context['signature']['params']
         params = ", ".join(par) if len(par) > 1 else (par[0] if par else "")
