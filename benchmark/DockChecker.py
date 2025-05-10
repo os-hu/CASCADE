@@ -2,7 +2,13 @@ from DocChecker.utils import inference
 import json
 import re
 
-from cascade.utils.JavaUtils import build_signature
+def build_signature(method_context, doc=False):
+    doc_string = method_context["doc"] if doc else ""
+    ctsig = method_context["signature"]
+
+    return doc_string + (" ".join(ctsig["modifier"]) + " " + ('<' + ', '.join(ctsig["generics"]) + '> ' if ctsig["generics"] else '') +
+                 ctsig["returns"] + " " + ctsig["name"] + "(" + ", ".join(ctsig["params"]) + ")" +
+                         (" throws " + ", ".join(ctsig["exceptions"]) if ctsig.get("exceptions") else ""))
 
 
 def get_prediction(target):

@@ -54,6 +54,10 @@ def get_prediction(file_path):
 
 def eval_cascade(gt, pd):
     """Returns a dict with the specific results (TP TN etc.) for each version  (phase 1  and phase 2)"""
+    # results look like this:
+
+
+
     result = {
         "phase2" : "",
         "phase1" : ""
@@ -75,11 +79,33 @@ def eval_cascade(gt, pd):
 
 
 def eval_baseline(gt, pd):
-    pass
+    # results look like this:     Negative; Negative; Negative; Negative;    simple-Consistent; simple-Inconsistent; complex-Consistent; complex-Inconsistent
+    split_predictions = pd.replace(" ", "").split(";")
+    labels = ["simpleConsistent", "simpleInconsistent", "complexConsistent", "complexInconsistent"]
+    results = {}
+
+    for i in range(4):
+        if split_predictions[i] == "Positive":
+            results[labels[i]] = "TP" if gt else "FP"
+        else:
+            results[labels[i]] = "FN" if gt else "TN"
+
+    return results
 
 
 def eval_docchecker(gt, pd):
-    pass
+    # results look like this:     Error; Negative; Positive; [Negative,Positive,Negative]       asCodeis, oneLine, singleLines, whole results
+    split_predictions = pd.replace(" ", "").split(";")
+    labels = ["asCodeis", "oneLine", "singleLines"]
+    results = {}
+
+    for i in range(3):
+        if split_predictions[i] == "Positive":
+            results[labels[i]] = "TP" if gt else "FP"
+        else:
+            results[labels[i]] = "FN" if gt else "TN"
+
+    return results
 
 
 def eval_jdoctor(gt, pd):
@@ -121,12 +147,18 @@ def print_report(driver_name, results, to_file=False):
 
 if __name__ == '__main__':
     mapping = {"c": "CASCADE", "b": "Baseline", "d": "DocChecker", "j": "JDoctor"}
-    if len(sys.argv) != 2:
-        sys.exit("Usage: python main.py <letters>")
-    try:
-        drivers = [mapping[ch.lower()] for ch in sys.argv[1]]
-    except KeyError as bad:
-        sys.exit(f"Unknown letter code: {bad.args[0]!r}")
+    # Need at least one letter after the script name
+    if len(sys.argv) < 2:
+        sys.exit("Usage: python eval.py <letter> [<letter> ...]")
+
+    drivers = []
+    for arg in sys.argv[1:]:  # every extra CLI token, not one long string
+        try:
+            drivers.append(mapping[arg.lower()])
+        except KeyError:
+            sys.exit(f"Unknown letter code: {arg!r}")
+
+
 
     for driver in drivers:
         versions = evaluate_driver(driver)
