@@ -137,7 +137,7 @@ class MultiStepJavaTestGenerator(Generator):
 
         prompt_step2.append(response_step2a["choices"][0]["message"])
 
-        # TODO test if this step is helpfull or not.
+        # TODO test if this step is actually improving things or not.
         prompt_step2.append({"role": "user", "content": "Make sure that this class compiles without errors. Check if everything that is used is imported correctly and all exceptions are properly caught. Replay with the corrected class"})
 
         # calls = re.findall(r"new (.*?)\(", new_tests, flags=re.DOTALL)

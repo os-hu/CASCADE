@@ -4,7 +4,7 @@ class ExecutionResults():
     """
     a return type for the executor.
     It contains:
-        - the individual test results of the executionby name,
+        - the individual test results of the execution by name,
         - the numbers of failing/passing and erroring tests cases,
         - the compilation errors,
         - the parsed file which is the stdout nad stderr caught during execution.

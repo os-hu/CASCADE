@@ -33,7 +33,7 @@ class DockerizedWrapper:
         :param copy: if True the file/folder specified in "path" in the dock_context dictionary is copied out of the container
         :return: the result of the eval_function on the output of the eval_command in the docker container
         """
-
+        result = None
         container = None
         try:
             container = self.set_up(dock_context)
@@ -44,7 +44,6 @@ class DockerizedWrapper:
                 result = True
             else:
                 result = self.eval(container, dock_context, output_path)
-
 
         finally:
             if container:

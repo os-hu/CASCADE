@@ -1,7 +1,7 @@
 import ast
 import sys
 import os
-
+import re
 
 def compute_metrics(counts):
     TP = counts['TP']
@@ -56,30 +56,57 @@ def eval_cascade(gt, pd):
     """Returns a dict with the specific results (TP TN etc.) for each version  (phase 1  and phase 2)"""
     # results look like this:
 
-
-
-    result = {
-        "phase2" : "",
-        "phase1" : ""
+    results = {
     }
-
-    if "Positive" in pd:
-        result["phase2"] = "TP" if gt else "FP"
-    else:
-        result["phase2"] = "FN" if gt else "TN"
 
     # here just getting into phase 2 already means we have predicted a positive
     prediction = "Positive" if "step 2" in pd else "Negative"
     if prediction == "Positive":
-        result["phase1"] = "TP" if gt else "FP"
+        results["phase1"] = "TP" if gt else "FP"
     else:
-        result["phase1"] = "FN" if gt else "TN"
+        results["phase1"] = "FN" if gt else "TN"
 
-    return result
+
+    if "INCO" in pd:
+        results["phase2"] = "TP" if gt else "FP"
+    else:
+        results["phase2"] = "FN" if gt else "TN"
+
+
+    # parse the result string which looks like this: NoInco; fail; step 2 (C'+T'); (9, 1, 0); (9, 1, 0); p2p: 9, f2f: 1, p2f: 0, f2p: 0; og tests exist; 1
+    parts = [p.strip() for p in pd.split(";")]
+
+    num_repair_steps = parts[-1]
+
+
+    segment = parts[5] if len(parts) > 5 else ""
+    if not segment:
+        info = {"p2p": 0, "f2f": 0, "p2f": 0, "f2p": 0}
+    else:
+        # turn  p2p: 9, f2f: 1, …   into   "p2p": 9, "f2f": 1, …
+        quoted = re.sub(r"(\w+)\s*:", r'"\1":', segment)
+        info = ast.literal_eval("{" + quoted + "}")
+
+    if info["f2p"] > 0:
+        results["f2p>0"] = "TP" if gt else "FP"
+    else:
+        results["f2p>0"] = "FN" if gt else "TN"
+
+    if info["f2p"] > info["p2f"]:
+        results["f2p>p2f"] = "TP" if gt else "FP"
+    else:
+        results["f2p>p2f"] = "FN" if gt else "TN"
+
+    if info["f2p"] > 0  and info["p2f"] == 0:
+        results["nop2f"] = "TP" if gt else "FP"
+    else:
+        results["nop2f"] = "FN" if gt else "TN"
+
+    return results
 
 
 def eval_baseline(gt, pd):
-    # results look like this:     Negative; Negative; Negative; Negative;    simple-Consistent; simple-Inconsistent; complex-Consistent; complex-Inconsistent
+    # results look like this:     e.g. Negative; Negative; Positive; Negative;    labels simple-Consistent; simple-Inconsistent; complex-Consistent; complex-Inconsistent
     split_predictions = pd.replace(" ", "").split(";")
     labels = ["simpleConsistent", "simpleInconsistent", "complexConsistent", "complexInconsistent"]
     results = {}
@@ -89,6 +116,15 @@ def eval_baseline(gt, pd):
             results[labels[i]] = "TP" if gt else "FP"
         else:
             results[labels[i]] = "FN" if gt else "TN"
+
+    more_labels = ["atLeast1", "atLeast2", "atLeast3", "all4"]
+    num_of_positives = split_predictions.count("Positive")
+
+    for i in range(4):
+        if num_of_positives >= i + 1:
+            results[more_labels[i]] = "TP" if gt else "FP"
+        else:
+            results[more_labels[i]] = "FN" if gt else "TN"
 
     return results
 

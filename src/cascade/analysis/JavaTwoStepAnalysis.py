@@ -1,9 +1,13 @@
 import os
+import re
 import shutil
 import tempfile
+from datetime import datetime
 
 from cascade.analysis.Analysis import Analysis
 from cascade.analysis.executor.Execution import Execution
+from cascade.analysis.executor.ExecutionResults import ExecutionResults
+from cascade.extraction.JavaExtraction import JavaExtraction
 
 from cascade.generation.Generation import Generation
 from cascade.utils.Utils import load_json_from_path, save_dicts_list_to_json
@@ -11,7 +15,7 @@ from cascade.utils.Utils import load_json_from_path, save_dicts_list_to_json
 from cascade.utils.DockerizedWrapper import DockerizedWrapper
 import xml.etree.ElementTree as ET
 
-class JavaTwoStepAnalysis(Analysis):
+class DatasetAnalysis(Analysis):
     def __init__(self, generator: Generation, executor: Execution, regenerate=False, reexecute=False, image="maven" , debug=0, step_size=1):
         super().__init__(generator, executor)
         self.reexecute = reexecute or regenerate
@@ -19,228 +23,136 @@ class JavaTwoStepAnalysis(Analysis):
         self.regenerate = regenerate
         self.debug = debug
         self.image = image
+        self.output_path = ""
 
-    def extract_junit_version(self, input_path, output_path):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            try:
-                shutil.copytree(input_path, temp_dir, dirs_exist_ok=True)
-
-            except Exception as e:
-                print("could not copy root path")
-                print(e)
-
-            dock_ex = DockerizedWrapper(debug=0)
-
-            # get the effective pom file, which usually contains the used junit version
-            dock_context = {
-                "image" : self.image,
-                "directory" : temp_dir,
-                "command" : "mvn help:effective-pom -Doutput=effective-pom.xml",
-                "path" : "/root/effective-pom.xml"
-            }
-
-            dock_ex.execute(dock_context, output_path, copy=True)
-
-        try:
-            tree = ET.parse(os.path.join(output_path, "effective-pom.xml"))
-            root = tree.getroot()
-
-            # Define namespaces, if they exist in your pom.xml
-            namespaces = {'m': 'http://maven.apache.org/POM/4.0.0'}  # Default Maven namespace
-
-            # Initialize variables for return values
-            junit_version = "JUnit dependency not found"
-            source_dir = "Source directory not specified"
-            test_source_dir = "Test source directory not specified"
-
-            # Search for JUnit dependency
-            for dependency in root.findall(".//m:dependency", namespaces):
-                group_id = dependency.find("m:groupId", namespaces)
-                artifact_id = dependency.find("m:artifactId", namespaces)
-                if group_id is not None and artifact_id is not None:
-                    if group_id.text == "junit" and artifact_id.text == "junit":
-                        version = dependency.find("m:version", namespaces)
-                        if version is not None:
-                            junit_version = version.text
-                        else:
-                            junit_version = "Version not specified"
-
-            # Extract source and test source directories
-            build = root.find(".//m:build", namespaces)
-            if build is not None:
-                source_directory = build.find("m:sourceDirectory", namespaces)
-                test_source_directory = build.find("m:testSourceDirectory", namespaces)
-
-                if source_directory is not None:
-                    source_dir = source_directory.text
-                if test_source_directory is not None:
-                    test_source_dir = test_source_directory.text
-
-            # Return a 3-tuple with JUnit version, source directory, and test source directory
-            return junit_version, source_dir, test_source_dir
-
-        except ET.ParseError as e:
-            return f"Error parsing pom.xml: {e}", None, None
 
     def analyze(self, data: list, input_path, output_path):
         """
-        This is the new and improved analysis.  it does not use or require the original tests.
+        This is the main analysis of the dataset.
+        It will run the analysis on single methods as they are provided in the dataset.
 
-        :param data:
-        :param input_path:
+        :param data: a list with one element. The context dictionary for the method under test.
+        :param input_path
         :param output_path:
         """
+        def log(header, message):
+            with open(output_path + "/log.txt", "a") as f:
+                f.write(header + "/n")
+                f.write(message)
 
-        output = ""
-
+        output_string = ""
         ana_path = os.path.join(output_path, "analyzed.json")
 
-        # load data for this specific run.
+            # load data for this specific run
         data = load_json_from_path(ana_path)
+        for d in data:
+            # take the one element that is targeted here and make sure everything we need is there.
+            d = self.prepare_data(d, input_path, output_path)
+            if d is None:
 
-        d = data[0]
+                return
 
-        # extract functions   I DONT KNOW WHY THIS WAS HERE?
-        #extractor = JavaExtraction()
-        #extractor.extract(input_path, output_path)
+            # to avoid name clashes with existing tests we define a unique name for the test class
+            test_class_real_name = d["test_file_path"].split("/")[-1].split(".")[0]
+            test_class_unique_name = "THIS_IS_A_UNIQUE_NAME_Test"
 
-        if "junit_version" not in d or "test_file_path" not in d:
-            print(output_path)
-            print("extracting Junit version")
-            junit_version, source_dir, test_source_dir = self.extract_junit_version(input_path, output_path )
-            print("Junit version: ", junit_version)
 
-            if test_source_dir is not None and source_dir is not None:
-                d["test_file_path"] = d["code_file_path"].replace(source_dir.replace("/root/" , ""), test_source_dir.replace("/root/" , ""))
-                d["test_file_path"] = d["test_file_path"].replace(".java", "Test.java")
+
+            current_time = datetime.now().strftime("%H:%M:%S")
+            print(f"{current_time}  Starting analysis of function: {d['signature']['name']}")
+            print("    Step 1 - New Tests")
+
+            if not "new_tests" in d:
+                new_tests, chat_history = self.generator.generate_tests(d, input_path, output_path)
+
+                d["new_tests"] = new_tests
+                d["new_tests_history"] = chat_history
+
+                save_dicts_list_to_json([d], ana_path)
+
+                if new_tests == "":
+                    log("GENERATION: no test could be generated:", str(chat_history))
+                    return
+
             else:
-                d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
+                print("      new tests already generated")
 
-            d["junit_version"] = junit_version
-            save_dicts_list_to_json([d], ana_path)
+            self.executor.set_up(data, input_path, output_path)
 
-            # basically a one step thing to run once over the dataset to provide all nesscary information. thats why we return here.
-            return
+            print("      execute new tests")
 
-        else:
-            junit_version = d["junit_version"]
+            d["results"] = {}
+            d["results"]["(code, new_tests)"] = [[],[],[]]
 
-        test_class_real_name = d["test_file_path"].split("/")[-1].split(".")[0]
-        test_class_unique_name = "THIS_IS_A_UNIQUE_NAME_Test"
+            d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
+            d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
+            exec_results: ExecutionResults = self.executor.execute("code", "new_tests", d, input_path, output_path)
 
-        # found in imports ?
-        junit_found = False
-
-        if not "test_package" in d:
-            print("no original tests were found for this method")
-            d["test_package"] = d["package"]
-
-        else:
-            for imp in d["test_imports"]:
-                if "junit" in imp:
-                    junit_found = True
-                    break
-
-        if not junit_found:
-            if junit_version.startswith("3"):
-                d["test_imports"] = ["import junit.framework.*;\n"]
-            elif junit_version.startswith("4."):
-                d["test_imports"] = ["import org.junit.*;\n" , "import static org.junit.Assert.*;\n"]
-            else:
-                d["test_imports"] = ["import org.junit.jupiter.api.*;\n"]
-
-
-        print(f"Starting analysis of function: {d['signature']['name']}")
-        print("  Step 1 - New Tests")
-
-        if not "new_tests" in d:
-            new_tests, chat_history = self.generator.generate_tests(d, input_path, output_path)
-
-            d["new_tests"] = new_tests
-            d["new_tests_history"] = chat_history   #for debugging only
-
-        else:
-            print("    new tests already generated")
-
-        print("    execute new tests")
-
-        d["results"] = {}
-        d["results"]["(code, new_tests)"] = [[],[],[]]
-
-        self.executor.set_up(data, input_path, output_path)
-
-        # for every test in the new tests list
-        for test in d["new_tests"]:
-            print("        testing property:", test["property"])
-
-            test["test_class"] = test["test_class"].replace(test_class_real_name, test_class_unique_name)
-            d["intermediate_test"] = test["test_class"]
-            d["test_file_path"] = d["test_file_path"].replace( test_class_real_name, test_class_unique_name )
-
-            # for debugging.  TODO uncomment later:
-            #res1, comp_errors = self.executor.execute("code", "intermediate_test", d, input_path, output_path)
-            #res1 = list(res1)
-            # for debugging.  remove later:
-            inter_res = self.executor.execute("code", "intermediate_test", d, input_path, output_path)
+            res1 = exec_results.results
+            comp_errors = exec_results.comp_errors
 
             with open(output_path + "/log.txt", "a") as f:
-                f.write(f"\nDEBUGTHIS result of first execute: {str(inter_res)}\n")  # debugging only  TODO remove this later
+                f.write("Results after step 1\n")
+                f.write(str(exec_results))
 
-            print(str(inter_res))
-            if len(inter_res) > 2:
-                with open(output_path + "/errors.txt", "a") as f:
-                    f.write(f"FOUND The weird execution error: {str(inter_res)}")   # debugging only  TODO remove this later
-                exit()
-            res1 = list(inter_res[0])
-            comp_errors = inter_res[1]
-
-            test["test_class"] = test["test_class"].replace(test_class_unique_name, test_class_real_name)
-            d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name,  test_class_real_name)
+            d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
+            d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
             if comp_errors:
                 comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
 
-
-
             evaluated = self.evaluate(res1)
 
-            # this is the compilation error loop.  turn back on if needed by either making this a true or removing the check.
-            repairloop_tests = False
-            if repairloop_tests:
-                for i in range(2):
-                    # repair step
-                    if evaluated == 0 and comp_errors:
-                        print("        Try to generate repaired tests")
-                        repaired_tests , _ = self.generator.repair_tests(d, input_path, output_path, comp_errors, 'intermediate_test')
+            # this is the compilation error loop.  so far hard coded number for tries. TODO could be a parameter
+            max_repair_tries = 3
+            current_repair_tries = 0
+            d["repair_history"] = []
+            for i in range(max_repair_tries):
+                # repair step
+                # if there were actually compiler errors with the tests:
+                if evaluated == 0 and comp_errors:
+                    current_repair_tries += 1
+                    print("      Try to generate repaired tests")
+                    repaired_tests, response_history = self.generator.repair_tests(d, input_path, output_path, comp_errors, 'new_tests')
+                    d["repair_history"].append(response_history)
 
-                        test["test_class"] = repaired_tests
+                    old_tests_key = "tests_pre_repairstep_" + str(i + 1)
+                    d[old_tests_key] = d["new_tests"]
+                    d["new_tests"] = repaired_tests
 
-                        print("        execute repaired tests")
 
-                        test["test_class"] = test["test_class"].replace(test_class_real_name, test_class_unique_name)
-                        d["intermediate_test"] = test["test_class"]
-                        d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
+                    print("      execute repaired tests")
 
-                        res1, comp_errors = self.executor.execute("code", "intermediate_test", d, input_path, output_path)
-                        res1 = list(res1)
+                    d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
+                    d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
 
-                        print("RES:" + str(res1))
-                        print("COMP ERRORS:" + str(comp_errors))
+                    exec_results: ExecutionResults = self.executor.execute("code", "new_tests", d, input_path, output_path)
+                    res1 = exec_results.results
+                    comp_errors = exec_results.comp_errors
 
-                        test["test_class"] = test["test_class"].replace(test_class_unique_name, test_class_real_name)
-                        d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
-                        if comp_errors:
-                            comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
+                    d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
+                    d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
+                    if comp_errors:
+                        comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
 
-                        evaluated = self.evaluate(res1)
+                    with open(output_path + "/log.txt", "a") as f:
+                        f.write(f"Results after step 1 Repairstep: {current_repair_tries}\n")
+                        f.write(str(exec_results))
 
-                        save_dicts_list_to_json([d], ana_path)
+                    evaluated = self.evaluate(res1)
+                    save_dicts_list_to_json([d], ana_path)
 
+
+            amount_res = exec_results.results_numbers
+            d["results"]["(code, new_tests)"] = res1
+
+            next_phase = False
             if evaluated == 0:
                 # loggin ----------
                 with open(output_path + "/errors.txt", "a") as f:
-                    f.write(f"S1 Error in test: {test["property"]}\n")
+                    f.write(f"S1 Error in tests")
                     f.write(f"{str(res1)}")
-                    f.write(f"{test["test_class"]}\n")
+                    f.write("------\nTests:\n")
+                    f.write(f"{d["new_tests"]}\n")
                     f.write("------\nCode:\n")
                     f.write(d["code"])
                     if comp_errors:
@@ -250,171 +162,226 @@ class JavaTwoStepAnalysis(Analysis):
                         f.write("\n-------\nNo Compiler errors.  check log\n")
                     f.write("-----------------------\n")
 
-                test["phase1"] = "error"
-                d["results"]["(code, new_tests)"][2].append({"property" : test["property"] , "results": res1})
+                output_string = f"NoInco; error; step 1 (C +T'); {str(amount_res)}; ; "
+                print(output_string)
 
             elif evaluated == 1:
-                d["results"]["(code, new_tests)"][0].append({"property" : test["property"] , "results": res1})
-                test["phase1"] = "pass"
+                output_string = f"NoInco; pass; step 1 (C +T'); {str(amount_res)}; ; "
+                print(output_string)
 
             else:
-                d["results"]["(code, new_tests)"][1].append({"property" : test["property"] , "results": res1})
-                test["phase1"] = "fail"
-
+                next_phase = True
             save_dicts_list_to_json([d], ana_path)
 
+            if next_phase:
+                # generate new code  -----------------------------------------------------------------------------------------------
+                print("    Step 2 - New Code")
+                d["results"]["(new_code, new_tests)"] = [[], [], []]
+                new_code, response = self.generator.generate_code(d, input_path, output_path)
+                #TODO overhaul code generation?
+                d["new_code"] = new_code
+                d["new_code_response"] = response
+                print("      execute new code (with new tests)")
 
-            # check if overall tests passed or failed or errored
-        print("    evaluate overall results for function (s1):" , end="")
+                d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
+                d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
 
+                exec_results: ExecutionResults = self.executor.execute("new_code", "new_tests", d, input_path, output_path)
 
-        go_to_step2 = True
-        lengths = [len(d["results"]["(code, new_tests)"][i]) for i in range(3)]
+                res2 = exec_results.results
+                comp_errors = exec_results.comp_errors
 
-        if lengths[0] > 0 and lengths[1] == 0:
-            # ALL passed (or errored)
-            go_to_step2 = False
-            output = f"Negative, pass  in step 1 (C +T') [{lengths[0]},{lengths[1]},{lengths[2]}]"
-            output += f"  junit: {junit_version}"
+                with open(output_path + "/log.txt", "a") as f:
+                    f.write("Results after step 2\n")
+                    f.write(str(exec_results))
 
-        elif lengths[1] > 0:
-            # some failed
-            go_to_step2 = True
+                d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
+                d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
+                if comp_errors:
+                    comp_errors = comp_errors.replace( test_class_unique_name , test_class_real_name )
 
-        else:
-            go_to_step2 = False
-            output = f"Negative, error in step 1 (C +T') [{lengths[0]},{lengths[1]},{lengths[2]}]"
-            output += f"  junit: {junit_version}"
+                evaluated2 = self.evaluate(res2)
 
+                #TODO repair loop for code?
+                save_dicts_list_to_json([d], ana_path)
 
+                amount_res2 = exec_results.results_numbers
+                d["results"]["(new_code, new_tests)"] = res2
 
-        if go_to_step2:
-            # generate new code  -----------------------------------------------------------------------------------------------
-            print("  Step 2 - New Code")
-            d["results"]["(new_code, new_tests)"] = [[], [], []]
-            new_code, response = self.generator.generate_code(d, input_path, output_path)
+                if evaluated2 == 0:
+                    # loggin ----------
+                    with open(output_path + "/errors.txt", "a") as f:
+                        f.write(f"S2 Error in code?")
+                        f.write(f"{str(res1)}")
+                        f.write("------\nTests:\n")
+                        f.write(f"{d["new_tests"]}\n")
+                        f.write("------\nCode:\n")
+                        f.write(d["code"])
+                        if comp_errors:
+                            f.write("\n------\nCompiler errors:\n")
+                            f.write(comp_errors)
+                        else:
+                            f.write("\n-------\nNo Compiler errors.  check log\n")
+                        f.write("-----------------------\n")
 
-            d["new_code"] = new_code
-            d["new_code_response"] = response
+                    output_string = f"NoInco; error; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                    print(output_string)
 
-            print("    execute new code (with new tests)")
+                else:
+                    # calculate the new improved metrix for checking out if something is a positive or not.
+                    r1 = [d["results"]["(code, new_tests)"][0],
+                          d["results"]["(code, new_tests)"][1] + d["results"]["(code, new_tests)"][2]]
+                    r2 = [d["results"]["(new_code, new_tests)"][0],
+                          d["results"]["(new_code, new_tests)"][1] + d["results"]["(new_code, new_tests)"][2]]
 
-            # TODO somehow check if this compiles... and is good etc.  the loop should be here
+                    metric = {"p2p": [], "f2f": [], "p2f": [], "f2p": []}
 
-
-            for test in d["new_tests"]:
-                if test["phase1"] == "fail" or test["phase1"] == "pass":  # errors ignroed.  passes should still pass
-                    print("        testing property:", test["property"])
-
-                    test["test_class"] = test["test_class"].replace(test_class_real_name, test_class_unique_name)
-                    d["intermediate_test"] = test["test_class"]
-                    d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
-
-                    res2, comp_errors = self.executor.execute("new_code", "intermediate_test", d, input_path, output_path)
-                    res2 = list(res2)
-
-                    print("RES:" + str(res2))
-                    print("COMP ERRORS:" + str(comp_errors))
-
-                    test["test_class"] = test["test_class"].replace(test_class_unique_name, test_class_real_name)
-                    d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
-                    if comp_errors:
-                        comp_errors = comp_errors.replace( test_class_unique_name , test_class_real_name )
-
-                    evaluated = self.evaluate(res2)
-
-
-                    if evaluated == 0:
-                        # loggin ----------
-                        with open(output_path + "/errors.txt", "a") as f:
-                            f.write(f"S2 Error in test: {test["property"]}\n")
-                            f.write(f"{str(res2)}")
-                            f.write(f"{test["test_class"]}\n")
-                            f.write("------\nCode:\n")
-                            f.write(d["new_code"])
-                            if comp_errors:
-                                f.write("\n------\nCompiler errors:\n")
-                                f.write(comp_errors)
-                            else:
-                                f.write("\n-------\nNo Compiler errors.  check log\n")
-                            f.write("-----------------------\n")
-
-                        d["results"]["(new_code, new_tests)"][2].append({"property" : test["property"] , "results": res2})
-                        test["phase2"] = "error"
-
-                    elif evaluated == 1:
-                        d["results"]["(new_code, new_tests)"][0].append({"property" : test["property"] , "results": res2})
-                        test["phase2"] = "pass"
-
-                    else:
-                        d["results"]["(new_code, new_tests)"][1].append({"property" : test["property"] , "results": res2})
-                        test["phase2"] = "fail"
+                    for i in r1[0]:
+                        if i in r2[0]:
+                            metric["p2p"].append(i)
+                        elif i in r2[1]:
+                            metric["p2f"].append(i)
+                    for i in r1[1]:
+                        if i in r2[0]:
+                            metric["f2p"].append(i)
+                        elif i in r2[1]:
+                            metric["f2f"].append(i)
+                    d["metric"] = metric
 
                     save_dicts_list_to_json([d], ana_path)
+                    metric_lengths = ", ".join(f"{k}: {len(v)}" for k, v in metric.items())
+
+                    if evaluated == 1:
+                        output_string = f"INCO; pass; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+
+                    else:
+                        if len(metric["f2p"]) > 0:
+                            output_string = f"INCO; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                        else:
+                            output_string = f"NoInco; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+
+                print(output_string)
+                output_string += f"; {metric_lengths}"
 
 
-            # check if it errored
-            print("    evaluate overall results for function (s2):", end="")
-            evaluated_full = self.evaluate(d["results"]["(new_code, new_tests)"])
-
-            # TODO still needs to be adjusted for new format
-            # repairloop_code = False
-            # if repairloop_code:
-            #     for i in range(1):
-            #         if evaluated == 0 and comp_errors:
-            #
-            #             new_code, response = self.generator.repair_code(d, input_path, output_path, comp_errors, 'new_code')
-            #             d["new_code"] = new_code
-            #             print("        execute repaired code")
-            #
-            #             # TODO is the intermediate test realy the best option here? shoudl we change the acutall code or just the instance that is for this specific test???
-            #             d["intermediate_test"] = d["intermediate_test"].replace(test_class_real_name, test_class_unique_name)
-            #             d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
-            #
-            #             res2, comp_errors = self.executor.execute("new_code", "intermediate_test", d, input_path, output_path)
-            #             res2 = list(res2)
-            #
-            #             d["intermediate_test"] = d["intermediate_test"].replace(test_class_unique_name, test_class_real_name)
-            #             d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
-            #             if comp_errors:
-            #                 comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
-            #
-            #             evaluated = self.evaluate(res2)
-            #
-            #             save_dicts_list_to_json([d], ana_path)
-
-            lengths2 = [len(d["results"]["(new_code, new_tests)"][i]) for i in range(3)]
-            if lengths2[0] > 0 and lengths2[1] == 0:
-                # ALL passed (or errored)
-                output = f"Positive, pass  in step 2 (C'+T') [{lengths[0]},{lengths[1]},{lengths2[2]}][{lengths2[0]},{lengths2[1]},{lengths2[2]}]"
-                output += f"  junit: {junit_version}"
-
-            elif lengths2[1] > 0:
-                # some failed
-                output = f"Negative, fail in step 2 (C'+T') [{lengths[0]},{lengths[1]},{lengths2[2]}][{lengths2[0]},{lengths2[1]},{lengths2[2]}]"
-                output += f"  junit: {junit_version}"
-
-            else:
-                output = f"Negative, error in step 2 (C'+T') [{lengths[0]},{lengths[1]},{lengths2[2]}][{lengths2[0]},{lengths2[1]},{lengths2[2]}]"
-                output += f"  junit: {junit_version}"
-
-
-        with open("result.txt", "w") as f:
-            f.write(output)
-            print("result:" , output)
+            save_dicts_list_to_json([d], ana_path)
+            with open(output_path + "/result.txt", "w") as f:
+                output_string+= f"; {str("og tests exist" if "tests" in d else " no og tests")}; {current_repair_tries}"
+                f.write(output_string)
+                print("result:" , output_string)
 
         self.executor.tear_down(data)
-
+    # TODO change all the 'with opens' to use os.path.join
 
     def evaluate(self, res):
-        if res[0] == [] and res[1] == []:
-            print("            Error")
+        if res[0] == [] and res[1] == [] and res[2] == []:
+            print("        Error")
             # error
             return 0
         elif res[1] == [] and res[2] == []:
-            print("            Passed")
+            print("        Passed")
             # if no errors or failures  then passed
             return 1
         else:
-            print("            Failed")
+            print("        Failed")
             return -1
+
+
+
+    def prepare_data(self, d, input_path, output_path):
+        """
+        This function prepares the data for the analysis.
+        It will check if the data is complete and if not it will try to extract the missing information,
+        like the junit version and the test file path.
+        """
+        def extract_maven_information():
+            with tempfile.TemporaryDirectory() as temp_dir:
+                try:
+                    shutil.copytree(input_path, temp_dir, dirs_exist_ok=True)
+                except Exception as e:
+                    print("could not copy root path")
+                    print(e)
+                    return None
+                dock_ex = DockerizedWrapper()
+
+                # get the effective pom file, which usually contains the used junit version
+                dock_context = {
+                    "image": self.image,
+                    "directory": temp_dir,
+                    "command": "mvn help:effective-pom -Doutput=effective-pom.xml",
+                    "path": "/root/effective-pom.xml"
+                }
+                dock_ex.execute(dock_context, output_path, copy=True)
+
+            try:
+                tree = ET.parse(os.path.join(output_path, "effective-pom.xml"))
+                root = tree.getroot()
+
+                # Search for JUnit dependency
+                # Define namespaces, if they exist in the pom.xml
+                namespaces = {'m': 'http://maven.apache.org/POM/4.0.0'}  # Default Maven namespace
+                for dependency in root.findall(".//m:dependency", namespaces):
+                    group_id = dependency.find("m:groupId", namespaces)
+                    artifact_id = dependency.find("m:artifactId", namespaces)
+                    if group_id is not None and artifact_id is not None:
+                        if group_id.text == "junit" and artifact_id.text == "junit":
+                            version = dependency.find("m:version", namespaces)
+                            if version is not None:
+                                junit_version = version.text
+                            else:
+                                junit_version = "JUnit Version not specified"
+
+                # Extract source and test source directories
+                build = root.find(".//m:build", namespaces)
+                if build is not None:
+                    source_directory = build.find("m:sourceDirectory", namespaces)
+                    test_source_directory = build.find("m:testSourceDirectory", namespaces)
+
+                    source_dir = source_directory.text if source_directory is not None else None
+                    test_source_dir = test_source_directory.text if test_source_directory is not None else None
+
+                # Return a 3-tuple with JUnit version, source directory, and test source directory
+                return junit_version, source_dir, test_source_dir
+
+            except Exception as e:
+                return f"Error parsing pom.xml: {e}", None, None
+
+        # Start of the actual function -----------------------------------
+        ana_path = os.path.join(output_path, "analyzed.json")
+
+        if "junit_version" not in d or "test_file_path" not in d:
+            print("extracting Junit version")
+            junit_version, source_dir, test_source_dir = extract_maven_information()
+            d["junit_version"] = junit_version
+
+            if test_source_dir is not None and source_dir is not None:
+                d["test_file_path"] = d["code_file_path"].replace(source_dir.replace("/root/", ""), test_source_dir.replace("/root/", ""))
+                d["test_file_path"] = d["test_file_path"].replace(".java", "Test.java")
+            else:
+                d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
+
+        if "test_package" not in d:
+            d["test_package"] = d["package"]
+
+        # search for junit specific imports   if they are not there add them?
+        d["test_imports"] = d.get("test_imports", [])
+
+        junit_found = False
+        for imp in d["test_imports"]:
+            if "junit" in imp:
+                junit_found = True
+                break
+
+        if not junit_found:
+            if d["junit_version"].startswith("3"):
+                d["test_imports"].append("import junit.framework.*;\n")
+            elif d["junit_version"].startswith("4."):
+                d["test_imports"].append("import org.junit.*;\n")
+                d["test_imports"].append("import static org.junit.Assert.*;\n")
+            else:
+                d["test_imports"].append("import org.junit.jupiter.api.*;\n")
+
+        save_dicts_list_to_json([d], ana_path)
+        return d
+
+

@@ -189,21 +189,31 @@ class DatasetAnalysis(Analysis):
 
             exec_results: ExecutionResults = self.executor.execute("new_code", "new_tests", d, input_path, output_path)
 
-            res2 = exec_results.results
-            comp_errors = exec_results.comp_errors
-
             with open(output_path + "/log.txt", "a") as f:
                 f.write("Results after step 2\n")
                 f.write(str(exec_results))
+
+            if exec_results is None:
+                res2 = [[], [], []]
+                comp_errors = None
+            else:
+                res2 = exec_results.results
+                comp_errors = exec_results.comp_errors
 
             d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
             d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
             if comp_errors:
                 comp_errors = comp_errors.replace( test_class_unique_name , test_class_real_name )
 
+                with open(output_path + "/log.txt", "a") as f:
+                    f.write(f"Results after new Code execution:\n")
+                    f.write(str(exec_results))
+
             evaluated2 = self.evaluate(res2)
 
             #TODO repair loop for code?
+
+            #TODO  ask again if results are the same as before????
             save_dicts_list_to_json([d], ana_path)
 
             amount_res2 = exec_results.results_numbers
@@ -226,6 +236,7 @@ class DatasetAnalysis(Analysis):
                     f.write("-----------------------\n")
 
                 output_string = f"NoInco; error; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                metric_lengths = ""
                 print(output_string)
 
             else:
