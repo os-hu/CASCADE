@@ -25,7 +25,7 @@ class GPT4JavaCodeGenerator(Generator):
         params = ", ".join(par) if len(par) > 1 else (par[0] if par else "")
 
         system_prompt = ("You are an Expert Java developer. "
-                         "You will be given a class and have to implement one specific method, following its documentation as close as possible. ",
+                         "You will be given a class and have to implement one specific method, following its documentation as close as possible. "
                          "The documentation is the ground truth and should be seen as correct, even if the function name contradicts it. "
                          "Handle exceptions properly, and ensure all calls are correct. Do not use any new imports. "
                          "The code should compile without errors. Respond only with the function."
