@@ -113,6 +113,9 @@ class DatasetAnalysis(Analysis):
             if evaluated == 0 and comp_errors:
                 current_repair_tries += 1
                 print("      Try to generate repaired tests")
+                with open(output_path + "/log.txt", "a") as f:
+                    f.write(f"start repair generation, trial {current_repair_tries}\n")
+
                 repaired_tests, response_history = self.generator.repair_tests(d, input_path, output_path, comp_errors, 'new_tests')
                 d["repair_history"].append(response_history)
 
@@ -125,6 +128,9 @@ class DatasetAnalysis(Analysis):
 
                 d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
                 d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
+
+                with open(output_path + "/log.txt", "a") as f:
+                    f.write(f"execute repaired tests (trial {current_repair_tries})\n")
 
                 exec_results: ExecutionResults = self.executor.execute("code", "new_tests", d, input_path, output_path)
                 res1 = exec_results.results
