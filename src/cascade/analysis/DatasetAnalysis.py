@@ -40,12 +40,14 @@ class DatasetAnalysis(Analysis):
                 f.write(header + "/n")
                 f.write(message)
 
-
         output_string = ""
         ana_path = os.path.join(output_path, "analyzed.json")
 
         # load data for this specific run
         data = load_json_from_path(ana_path)
+
+        with open(output_path + "/result.txt", "w") as f:
+            f.write("NoInco; error; ; ; ; ; ; ")
 
         # take the one element that is targeted here and make sure everything we need is there.
         d = self.prepare_data(data[0], input_path, output_path)

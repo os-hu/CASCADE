@@ -3,26 +3,51 @@ import sys
 import os
 import re
 
-def compute_metrics(counts):
-    TP = counts['TP']
-    FP = counts['FP']
-    FN = counts['FN']
-    TN = counts['TN']
+def compute_metrics(counts, mapping):
+    always_positive = 0
+    always_negative = 0
+
+    self_consistent_correct = 0
+
+    for fix, inco in mapping.items():
+        if inco in counts["TP"] and fix in counts["TN"]:
+            self_consistent_correct += 1
+
+        if inco in counts["TP"] and fix in counts["FP"]:
+            always_positive += 1
+        if fix in counts["TN"] and inco in counts["FN"]:
+            always_negative += 1
+
+
+    TP = len(counts['TP'])
+    FP = len(counts['FP'])
+    FN = len(counts['FN'])
+    TN = len(counts['TN'])
     prec = TP / (TP + FP) if (TP + FP) > 0 else 0
     rec = TP / (TP + FN) if (TP + FN) > 0 else 0
     spec = TN / (TN + FP) if (TN + FP) > 0 else 0
     acc = (TP + TN) / (TP + TN + FP + FN) if (TP + TN + FP + FN) > 0 else 0
     f1 = (2 * prec * rec / (prec + rec)) if (prec + rec) > 0 else 0
+    documentation_invariant = (always_positive + always_negative) / len(mapping)
+    scc = self_consistent_correct / TP if TP > 0 else 0
+    wins = self_consistent_correct / len(mapping) if len(mapping) > 0 else 0
+
     return {
         "TP": TP,
         "FP": FP,
         "TN": TN,
         "FN": FN,
-        "Prec": f"{prec:.4f}",
-        "Rec": f"{rec:.4f}",
-        "F1": f"{f1:.4f}",
-        "Spec": f"{spec:.4f}",
-        "acc": f"{acc:.4f}"
+        "Prec": f"{prec:.3f}",
+        "Rec": f"{rec:.3f}",
+        "F1": f"{f1:.3f}",
+        "Spec": f"{spec:.3f}",
+        "acc": f"{acc:.3f}",
+        "documentation_invariant": f"{documentation_invariant:.3f}",
+        "always_positive": always_positive,
+        "always_negative": always_negative,
+        "self_consistent_correct": self_consistent_correct,
+        "scc_rate": f"{scc:.3f}",
+        "wins": f"{wins:.3f}"
     }
 
 def walk_directory(target, root='./java/'):
@@ -164,14 +189,18 @@ def evaluate_driver(driver):
 
     counts = {}
     for result_path in walk_directory(driver):
+        # get qualitiatve id
+        id = os.path.dirname(result_path).replace("./java/", "")
+
         gt = get_groundtruth(result_path)
         pd = get_prediction(result_path)
         eval_results = eval(gt, pd)
 
         for version, result in eval_results.items():
             if version not in counts:
-                counts[version] = {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
-            counts[version][result] += 1
+                counts[version] = {"TP": [], "FP": [], "FN": [], "TN": []}
+
+            counts[version][result].append(id)
 
     return counts
 
@@ -182,7 +211,10 @@ def print_report(driver_name, results, to_file=False):
     print()
 
 if __name__ == '__main__':
-    mapping = {"c": "CASCADE", "b": "Baseline", "d": "DocChecker", "j": "JDoctor"}
+    from dataset_mapping_dict import mapping
+    # read in pairs of consistent/inconsistent pairs
+
+    driver_abbreviations = {"c": "CASCADE", "b": "Baseline", "d": "DocChecker", "j": "JDoctor"}
     # Need at least one letter after the script name
     if len(sys.argv) < 2:
         sys.exit("Usage: python eval.py <letter> [<letter> ...]")
@@ -190,7 +222,7 @@ if __name__ == '__main__':
     drivers = []
     for arg in sys.argv[1:]:  # every extra CLI token, not one long string
         try:
-            drivers.append(mapping[arg.lower()])
+            drivers.append(driver_abbreviations[arg.lower()])
         except KeyError:
             sys.exit(f"Unknown letter code: {arg!r}")
 
@@ -201,7 +233,7 @@ if __name__ == '__main__':
 
         results = {}
         for version, counts in versions.items():
-            metrics = compute_metrics(counts)
+            metrics = compute_metrics(counts, mapping)
             results[version] = metrics
 
         print_report(driver, results)
