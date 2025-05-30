@@ -71,9 +71,10 @@ if __name__ == '__main__':
     Then we ask (3) are code and doc consistent.
     and (4) is there an inconsistency between them
  """
-    # model = "gpt-4o-mini-2024-07-18"
-    with open("./model.txt") as f:
-        model = f.read()
+    model = "gpt-4o-mini-2024-07-18"
+    # with open("./model.txt") as f:
+    #     model = f.read()
+    #model = "gpt-4.1-mini-2025-04-14"
 
     # read in analyze file
     print("start baseline")
@@ -88,14 +89,13 @@ if __name__ == '__main__':
 
     log.append("started Phase 1:\nFull code:")
     full_code = build_signature(d, doc=True) + code + "\n"
-
     log.append(full_code)
 
     try:
         # Phase 1 -----------------------------------------------------------------------------------------------
         promptList = []
         promptList.append({"role": "system",
-                           "content": "Are the following docstring and code consistent. Answer first with Yes or No, then explain why"})
+                           "content": "Are the following docstring and code consistent? Answer first with Yes or No, then explain why."})
         promptList.append({"role": "user", "content": f"{full_code}"})
 
         answer = makeModelRequest(promptList)
@@ -124,7 +124,7 @@ if __name__ == '__main__':
         # Phase 2 -----------------------------------------------------------------------------------------------
         promptList = []
         promptList.append({"role": "system",
-                           "content": "Is there an inconsistency between the following docstring and code. Answer first with Yes or No, then explain why"})
+                           "content": "Is there an inconsistency between the following docstring and code? Answer first with Yes or No, then explain why."})
         promptList.append({"role": "user", "content": f"{full_code}"})
 
         answer = makeModelRequest(promptList)
@@ -153,7 +153,9 @@ if __name__ == '__main__':
         # Phase 3 -----------------------------------------------------------------------------------------------
         full_code = build_context(d, doc=True) + code + "\n}\n"
 
-        log.append("started Phase 3:\nFull code:")
+        log.append("started Phase 3:")
+
+
         promptList = []
         promptList.append({"role": "system",
                            "content": "You will get a snippet of a Java class. I want to know for a specific method if its code and documentation are consistent. Allways answer with Yes or No before you explain."})
@@ -183,11 +185,10 @@ if __name__ == '__main__':
 
     try:
         # Phase 4 -----------------------------------------------------------------------------------------------
-        log.append("started Phase 4:\nFull code:")
-        log.append(full_code)
+        log.append("started Phase 4:")
         promptList = []
         promptList.append({"role": "system",
-                           "content": "You will get a snippet of a Java class. I want to know for a specific method if there is an inconsistency between the documentation adn the code. Allways answer with Yes or No before you explain."})
+                           "content": "You will get a snippet of a Java class. I want to know for a specific method if there is an inconsistency between the documentation and the code. Allways answer with Yes or No before you explain."})
         promptList.append({"role": "user",
                            "content": f"{full_code}\n\n\n Is there an inconsistency between code and documentation of {d['signature']['name']}? The Documentation is {d['doc']}\n\n Answer with Yes or No?"})
 
@@ -207,6 +208,9 @@ if __name__ == '__main__':
             log.append("could not parse answer correctly in phase 4")
         else:
             print(results[3])
+
+        log.append("full code:\n")
+        log.append(full_code)
 
     except Exception as e:
         print("error4")

@@ -87,10 +87,9 @@ def eval_cascade(gt, pd):
     # here just getting into phase 2 already means we have predicted a positive
     prediction = "Positive" if "step 2" in pd else "Negative"
     if prediction == "Positive":
-        results["phase1"] = "TP" if gt else "FP"
+        results["Justphase1"] = "TP" if gt else "FP"
     else:
-        results["phase1"] = "FN" if gt else "TN"
-
+        results["Justphase1"] = "FN" if gt else "TN"
 
     if "INCO" in pd:
         results["phase2"] = "TP" if gt else "FP"
@@ -102,7 +101,6 @@ def eval_cascade(gt, pd):
     parts = [p.strip() for p in pd.split(";")]
 
     num_repair_steps = parts[-1]
-
 
     segment = parts[5] if len(parts) > 5 else ""
     if not segment:
