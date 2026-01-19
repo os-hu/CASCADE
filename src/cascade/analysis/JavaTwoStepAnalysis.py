@@ -325,7 +325,7 @@ class DatasetAnalysis(Analysis):
         full_Statistics = {
             "start_time": time_start.strftime("%Y-%m-%d %H:%M:%S"),
             "end_time": time_end.strftime("%Y-%m-%d %H:%M:%S"),
-            "total_time": time_total
+            "total_time": time_total,
             "average_time_per_element": str((datetime.now() - time_start) / len(data)).split('.')[0],
             "analyzed_elements": 0,
         }

@@ -15,14 +15,24 @@ from cascade.utils.JavaUtils import build_context, check_syntax, repair_helper_f
 
 
 class MultiStepJavaTestGenerator(Generator):
-    def __init__(self, max_attempts=1, max_tokens=16000, temperature=0, delay=3, max_prompt_tokens=10000,
-                 model="gpt-4o-mini-2024-07-18", freq_penalty=0.0, dummy=False):
+    def __init__(self,
+                 model="gpt-4o-mini-2024-07-18",
+                 max_attempts=1, delay=3,
+                 max_tokens=16000,
+                 temperature=0,
+                 max_prompt_tokens=10000,
+                 freq_penalty=0.0, dummy=False,
+                 base_url=None, api_key=None
+                 ):
+
         super().__init__()
-        self.model = model
-        self.max_prompt_tokens = max_prompt_tokens
         self.prompt_executor = OpenAICaller(max_attempts=max_attempts, model=model,
                                             max_tokens=max_tokens, temperature=temperature,
-                                            delay=delay, freq_penalty=freq_penalty, dummy=dummy)
+                                            delay=delay, freq_penalty=freq_penalty, dummy=dummy,
+                                            api_key=api_key, base_url=base_url)
+
+        self.model = model
+        self.max_prompt_tokens = max_prompt_tokens
 
         self.is_junit3 = False
 

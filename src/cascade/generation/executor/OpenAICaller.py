@@ -1,27 +1,47 @@
 import os
-
-from openai import OpenAI
 import time
-
+from openai import OpenAI
 from cascade.generation.executor.LLMCaller import LLMCaller
 
 
 class OpenAICaller(LLMCaller):
-    def __init__(self, max_attempts=1, max_tokens=1200, temperature=0, delay=5, dummy=False, model="gpt-4o-mini", freq_penalty=0.0):
+    def __init__(
+        self,
+        max_attempts=1,
+        max_tokens=1200,
+        temperature=0,
+        delay=5,
+        dummy=False,
+        model="Qwen/Qwen3-Coder-30B-A3B-Instruct",
+        freq_penalty=0.0,
+        base_url=None,          # ← optional
+        api_key=None,           # ← optional
+        timeout=60.0,
+    ):
         self.max_attempts = max_attempts
         self.max_tokens = max_tokens
         self.temperature = temperature
         self.delay = delay
         self.freq_penalty = freq_penalty
         self.model = model
-        # read in api key
-        if not dummy:
-            if "OPENAI_API_KEY" in os.environ:
-                api_key = os.environ["OPENAI_API_KEY"]
-            else:
-                raise Exception("No api key in environment")
-            self.client = OpenAI(api_key=api_key)
 
+        if dummy:
+            self.client = None
+            return
+
+        client_kwargs = {
+            "timeout": timeout,
+        }
+
+        if base_url is not None:
+            # we expect this to be a vLLM OpenAI-compatible server
+            client_kwargs["base_url"] = base_url
+            client_kwargs["api_key"] = os.environ.get("VLLM_API_KEY", api_key or "dummy")
+        else:
+            # Normal OpenAI
+            client_kwargs["api_key"] = os.environ.get("OPENAI_API_KEY", api_key)
+
+        self.client = OpenAI(**client_kwargs)
 
     def execute(self, prompt, **kwargs):
         attempt = 0
@@ -33,15 +53,14 @@ class OpenAICaller(LLMCaller):
                     max_tokens=self.max_tokens,
                     temperature=self.temperature,
                     frequency_penalty=self.freq_penalty,
-                    **kwargs
+                    **kwargs,
                 )
                 return response
 
             except Exception as e:
                 print(f"Generation attempt {attempt + 1} failed: {e}")
                 attempt += 1
-                time.sleep(self.delay)  # Wait for delay seconds before retrying
+                time.sleep(self.delay)
 
         return {}
-
 
