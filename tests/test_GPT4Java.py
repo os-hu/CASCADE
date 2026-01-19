@@ -3,7 +3,7 @@ import unittest
 
 from cascade.filters.Filter import Filter
 from cascade.filters.NoTestsFilterFunction import NoTestsFilterFunction
-from cascade.generation.code.GPT4JavaCodeGenerator import GPT4JavaCodeGenerator
+from cascade.generation.code.JavaCodeGenerator import JavaCodeGenerator
 from cascade.generation.test.GPT4JavaTestGenerator import GPT4JavaTestGenerator
 from cascade.utils.Utils import load_json_from_path
 

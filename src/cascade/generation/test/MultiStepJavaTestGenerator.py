@@ -22,7 +22,7 @@ class MultiStepJavaTestGenerator(Generator):
                  temperature=0,
                  max_prompt_tokens=10000,
                  freq_penalty=0.0, dummy=False,
-                 base_url=None, api_key=None
+                 base_url=None, api_key=None #Base url for vllm should be "http://127.0.0.1:8000/v1"
                  ):
 
         super().__init__()

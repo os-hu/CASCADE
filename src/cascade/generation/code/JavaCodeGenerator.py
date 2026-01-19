@@ -9,13 +9,26 @@ import copy
 import tiktoken
 import json
 
-class GPT4JavaCodeGenerator(Generator):
-    def __init__(self, max_attempts=1, max_tokens=16000, temperature=0, delay=3, max_prompt_tokens=5000, model="gpt-4o-mini-2024-07-18", freq_penalty=0.0, dummy=False):
+class JavaCodeGenerator(Generator):
+    def __init__(self,
+                 max_attempts=1,
+                 max_tokens=16000,
+                 temperature=0,
+                 delay=3,
+                 max_prompt_tokens=5000,
+                 model="gpt-4o-mini-2024-07-18",
+                 freq_penalty=0.0,
+                 dummy=False,
+                 base_url=None, api_key=None
+                 ):
         super().__init__()
         self.model = model
         self.max_prompt_tokens = max_prompt_tokens
-        self.prompt_executor = OpenAICaller(max_attempts=max_attempts, model=model, max_tokens=max_tokens, temperature=temperature,
-                                            delay=delay, freq_penalty=freq_penalty, dummy=dummy)
+        self.prompt_executor = OpenAICaller(max_attempts=max_attempts, model=model,
+                                            max_tokens=max_tokens, temperature=temperature,
+                                            delay=delay, freq_penalty=freq_penalty, dummy=dummy,
+                                            api_key=api_key, base_url=base_url)
+
 
     def build_prompt(self, context):
         #enc = tiktoken.encoding_for_model(self.model)
