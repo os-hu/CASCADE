@@ -18,7 +18,7 @@ class MultiStepJavaTestGenerator(Generator):
     def __init__(self,
                  model="gpt-4o-mini-2024-07-18",
                  max_attempts=1, delay=3,
-                 max_tokens=8000,
+                 max_tokens=3800, #TODO start server with larger model?
                  temperature=0,
                  max_prompt_tokens=4000,
                  freq_penalty=0.0, dummy=False,
