@@ -15,7 +15,7 @@ from cascade.utils.Utils import load_json_from_path, save_dicts_list_to_json
 from cascade.utils.DockerizedWrapper import DockerizedWrapper
 import xml.etree.ElementTree as ET
 
-class DatasetAnalysis(Analysis):
+class JavaTwoStepAnalyses(Analysis):
     def __init__(self,
                  generator: Generation,
                  executor: Execution,
