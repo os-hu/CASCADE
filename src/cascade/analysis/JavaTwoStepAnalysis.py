@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import shutil
@@ -28,38 +29,50 @@ class DatasetAnalysis(Analysis):
 
     def analyze(self, data: list, input_path, output_path):
         """
-        This is the main analysis of the dataset.
-        It will run the analysis on single methods as they are provided in the dataset.
+        This is the main analysis tool
 
-        :param data: a list with one element. The context dictionary for the method under test.
-        :param input_path
+        :param data: a list with the methods from the program under test. Contains a context dictionary for each method under test.
+        :param input_path:
         :param output_path:
         """
         def log(header, message):
-            with open(output_path + "/log.txt", "a") as f:
+            with open(os.path.join(output_path, "log.txt"), "a") as f:
                 f.write(header + "/n")
                 f.write(message)
 
         output_string = ""
         ana_path = os.path.join(output_path, "analyzed.json")
 
-            # load data for this specific run
-        data = load_json_from_path(ana_path)
-        for d in data:
-            # take the one element that is targeted here and make sure everything we need is there.
-            d = self.prepare_data(d, input_path, output_path)
-            if d is None:
+        # load data for this specific run
 
-                return
+        data = load_json_from_path(ana_path)
+        print(f"analyzing {len(data)} elements")
+        # preparing/ finding out junit version etc.
+
+
+        self.prepare_data(data)
+        self.executor.set_up(data, input_path, output_path)
+        time_start = datetime.now()
+        for i, d in enumerate(data):
 
             # to avoid name clashes with existing tests we define a unique name for the test class
             test_class_real_name = d["test_file_path"].split("/")[-1].split(".")[0]
             test_class_unique_name = "THIS_IS_A_UNIQUE_NAME_Test"
 
+            time_now = datetime.now()
+            time_elapsed = time_now - time_start
+            time_avg = time_elapsed / (i + 1)
+            time_remaining = time_avg * (len(data) - (i + 1))
+
+            print(
+                f"{time_now.strftime('%H:%M:%S')}  "
+                f"Analyzing: {d['signature']['name']}. "
+                f"{i}/{len(data)} "
+                f"time so far: {str(time_elapsed).split('.')[0]} "
+                f"Estimated remaining: {str(time_remaining).split('.')[0]}"
+            )
 
 
-            current_time = datetime.now().strftime("%H:%M:%S")
-            print(f"{current_time}  Starting analysis of function: {d['signature']['name']}")
             print("    Step 1 - New Tests")
 
             if not "new_tests" in d:
@@ -68,19 +81,14 @@ class DatasetAnalysis(Analysis):
                 d["new_tests"] = new_tests
                 d["new_tests_history"] = chat_history
 
-                save_dicts_list_to_json([d], ana_path)
-
                 if new_tests == "":
-                    log("GENERATION: no test could be generated:", str(chat_history))
+                    log("GENERATION: no test could be generated.\n Chathistory:\n", str(chat_history))
                     return
 
             else:
                 print("      new tests already generated")
 
-            self.executor.set_up(data, input_path, output_path)
-
             print("      execute new tests")
-
             d["results"] = {}
             d["results"]["(code, new_tests)"] = [[],[],[]]
 
@@ -91,7 +99,7 @@ class DatasetAnalysis(Analysis):
             res1 = exec_results.results
             comp_errors = exec_results.comp_errors
 
-            with open(output_path + "/log.txt", "a") as f:
+            with open(os.path.join(output_path, "log.txt"), "a") as f:
                 f.write("Results after step 1\n")
                 f.write(str(exec_results))
 
@@ -134,13 +142,11 @@ class DatasetAnalysis(Analysis):
                     if comp_errors:
                         comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
 
-                    with open(output_path + "/log.txt", "a") as f:
-                        f.write(f"Results after step 1 Repairstep: {current_repair_tries}\n")
+                    with open(os.path.join(output_path, "log.txt"), "a") as f:
+                        f.write(f"Results after step 1-Repairstep Nr. {current_repair_tries}:\n")
                         f.write(str(exec_results))
 
                     evaluated = self.evaluate(res1)
-                    save_dicts_list_to_json([d], ana_path)
-
 
             amount_res = exec_results.results_numbers
             d["results"]["(code, new_tests)"] = res1
@@ -148,7 +154,7 @@ class DatasetAnalysis(Analysis):
             next_phase = False
             if evaluated == 0:
                 # loggin ----------
-                with open(output_path + "/errors.txt", "a") as f:
+                with open(os.path.join(output_path, "errors.txt"), "a") as f:
                     f.write(f"S1 Error in tests")
                     f.write(f"{str(res1)}")
                     f.write("------\nTests:\n")
@@ -162,18 +168,13 @@ class DatasetAnalysis(Analysis):
                         f.write("\n-------\nNo Compiler errors.  check log\n")
                     f.write("-----------------------\n")
 
-                output_string = f"NoInco; error; step 1 (C +T'); {str(amount_res)}; ; "
-                print(output_string)
+                d["verdict"] = f"NoInco; error; step 1 (C +T'); {str(amount_res)}; ; "
 
             elif evaluated == 1:
-                output_string = f"NoInco; pass; step 1 (C +T'); {str(amount_res)}; ; "
-                print(output_string)
+                d["verdict"] = f"NoInco; pass; step 1 (C +T'); {str(amount_res)}; ; "
 
             else:
-                next_phase = True
-            save_dicts_list_to_json([d], ana_path)
-
-            if next_phase:
+                #start next phase
                 # generate new code  -----------------------------------------------------------------------------------------------
                 print("    Step 2 - New Code")
                 d["results"]["(new_code, new_tests)"] = [[], [], []]
@@ -191,7 +192,7 @@ class DatasetAnalysis(Analysis):
                 res2 = exec_results.results
                 comp_errors = exec_results.comp_errors
 
-                with open(output_path + "/log.txt", "a") as f:
+                with open(os.path.join(output_path, "log.txt"), "a") as f:
                     f.write("Results after step 2\n")
                     f.write(str(exec_results))
 
@@ -202,15 +203,13 @@ class DatasetAnalysis(Analysis):
 
                 evaluated2 = self.evaluate(res2)
 
-                #TODO repair loop for code?
-                save_dicts_list_to_json([d], ana_path)
-
                 amount_res2 = exec_results.results_numbers
                 d["results"]["(new_code, new_tests)"] = res2
 
+
                 if evaluated2 == 0:
                     # loggin ----------
-                    with open(output_path + "/errors.txt", "a") as f:
+                    with open(os.path.join(output_path, "errors.txt"), "a") as f:
                         f.write(f"S2 Error in code?")
                         f.write(f"{str(res1)}")
                         f.write("------\nTests:\n")
@@ -224,8 +223,7 @@ class DatasetAnalysis(Analysis):
                             f.write("\n-------\nNo Compiler errors.  check log\n")
                         f.write("-----------------------\n")
 
-                    output_string = f"NoInco; error; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
-                    print(output_string)
+                    d["verdict"] = f"NoInco; error; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
 
                 else:
                     # calculate the new improved metrix for checking out if something is a positive or not.
@@ -246,32 +244,92 @@ class DatasetAnalysis(Analysis):
                             metric["f2p"].append(i)
                         elif i in r2[1]:
                             metric["f2f"].append(i)
-                    d["metric"] = metric
 
-                    save_dicts_list_to_json([d], ana_path)
+                    d["metric"] = metric
                     metric_lengths = ", ".join(f"{k}: {len(v)}" for k, v in metric.items())
 
                     if evaluated == 1:
-                        output_string = f"INCO; pass; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                        d["verdict"] = f"INCO; pass; step 2 (C'+T');"
 
                     else:
                         if len(metric["f2p"]) > 0:
-                            output_string = f"INCO; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                            d["verdict"] = f"INCO; fail; step 2 (C'+T');"
                         else:
-                            output_string = f"NoInco; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                            d["verdict"] = f"NoInco; fail; step 2 (C'+T');"
 
-                print(output_string)
-                output_string += f"; {metric_lengths}"
+                    d["verdict"] += f" {str(amount_res)}; {str(amount_res2)}; {metric_lengths}"
 
+            # end:  if next phase --------------------------------------
 
-            save_dicts_list_to_json([d], ana_path)
-            with open(output_path + "/result.txt", "w") as f:
-                output_string+= f"; {str("og tests exist" if "tests" in d else " no og tests")}; {current_repair_tries}"
-                f.write(output_string)
-                print("result:" , output_string)
+            print(d["verdict"])
+
+            # quicksave last step.
+            with open(os.path.join(output_path, "intermediateResults.jsonl"), "a") as f:
+                f.write(json.dumps(d) + "\n")
+
+        # end:  for d in data
+        time_end = datetime.now()
+        time_total = str(datetime.now() - time_start).split('.')[0],
+        print(f"finished analysis ({time_total})")
 
         self.executor.tear_down(data)
-    # TODO change all the 'with opens' to use os.path.join
+        #save final results
+        save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
+
+        stats = {
+            "Step1_passed": 0,
+            "Step1_failed": 0,
+            "Step1_error": 0,
+            "Step2_passed": 0,
+            "Step2_error": 0,
+            "step2_failed": 0,
+            "step2_f2p>0": 0,
+            "incos" : 0,
+            "likely_incos": 0,
+        }
+        incos = []
+        likely_incos = []
+
+
+        for d in data:
+            # TODO check if this is right???
+            if d["verdict"].startswith("INCO"):
+                stats["incos"] += 1
+                incos.append(d)
+            elif "f2p: 0" not in d["verdict"]:
+                stats["likely_incos"] += 1
+                likely_incos.append(d)
+
+            if "step 1" in d["verdict"]:
+                if "pass" in d["verdict"]:
+                    stats["Step1_passed"] += 1
+                elif "fail" in d["verdict"]:
+                    stats["Step1_failed"] += 1
+                else:
+                    stats["Step1_error"] += 1
+            elif "step 2" in d["verdict"]:
+                if "pass" in d["verdict"]:
+                    stats["Step2_passed"] += 1
+                elif "fail" in d["verdict"]:
+                    stats["step2_failed"] += 1
+                    if "f2p: 0" not in d["verdict"]:
+                        stats["step2_f2p>0"] += 1
+                else:
+                    stats["Step2_error"] += 1
+
+
+
+
+
+
+        full_Statistics = {
+            "start_time": time_start.strftime("%Y-%m-%d %H:%M:%S"),
+            "end_time": time_end.strftime("%Y-%m-%d %H:%M:%S"),
+            "total_time": time_total
+            "average_time_per_element": str((datetime.now() - time_start) / len(data)).split('.')[0],
+            "analyzed_elements": 0,
+        }
+
 
     def evaluate(self, res):
         if res[0] == [] and res[1] == [] and res[2] == []:
@@ -291,9 +349,10 @@ class DatasetAnalysis(Analysis):
     def prepare_data(self, d, input_path, output_path):
         """
         This function prepares the data for the analysis.
-        It will check if the data is complete and if not it will try to extract the missing information,
+        It will check if the data is complete based on the first element and if not it will try to extract the missing information,
         like the junit version and the test file path.
         """
+        # Helper function ----------------------------------------
         def extract_maven_information():
             with tempfile.TemporaryDirectory() as temp_dir:
                 try:
@@ -381,7 +440,6 @@ class DatasetAnalysis(Analysis):
             else:
                 d["test_imports"].append("import org.junit.jupiter.api.*;\n")
 
-        save_dicts_list_to_json([d], ana_path)
         return d
 
 
