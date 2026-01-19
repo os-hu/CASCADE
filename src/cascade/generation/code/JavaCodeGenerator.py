@@ -12,10 +12,10 @@ import json
 class JavaCodeGenerator(Generator):
     def __init__(self,
                  max_attempts=1,
-                 max_tokens=8000,
+                 max_tokens=20000,
                  temperature=0,
                  delay=3,
-                 max_prompt_tokens=4000,
+                 max_prompt_tokens=10000,
                  model="gpt-4o-mini-2024-07-18",
                  freq_penalty=0.0,
                  dummy=False,
