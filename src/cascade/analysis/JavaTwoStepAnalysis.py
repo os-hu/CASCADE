@@ -1,16 +1,16 @@
 import json
 import os
-import re
 import shutil
 import tempfile
 from datetime import datetime
+from tqdm import tqdm
 
 from cascade.analysis.Analysis import Analysis
 from cascade.analysis.executor.Execution import Execution
 from cascade.analysis.executor.ExecutionResults import ExecutionResults
 
 from cascade.generation.Generation import Generation
-from cascade.utils.Utils import load_json_from_path, save_dicts_list_to_json
+from cascade.utils.Utils import save_dicts_list_to_json, load_json_from_path
 
 from cascade.utils.DockerizedWrapper import DockerizedWrapper
 import xml.etree.ElementTree as ET
@@ -69,8 +69,14 @@ class JavaTwoStepAnalysis(Analysis):
 
         print(f"analyzing {len(data)} elements")
 
-        # preparing/ finding out junit version etc.
-        data = self.prepare_data(data, input_path, output_path)
+        #TODO check if the intermedatie reustls can / shoudl be used somewehre
+        if os.path.exists(os.path.join(output_path, "analyzed.json")):
+            data = load_json_from_path(os.path.join(output_path, "analyzed.json"))
+            print(f"loaded existing analyzed data with {len(data)} elements")
+        else:
+            # preparing/ finding out junit version etc.
+            data = self.prepare_data(data, input_path, output_path)
+
         self.executor.set_up(data, input_path, output_path)
         time_start = datetime.now()
         for idx, d in enumerate(data):
@@ -87,7 +93,7 @@ class JavaTwoStepAnalysis(Analysis):
             print(
                 f"{time_now.strftime('%H:%M:%S')}  "
                 f"Analyzing: {d['signature']['name']}. "
-                f"{i}/{len(data)} "
+                f"{idx}/{len(data)} "
                 f"time so far: {str(time_elapsed).split('.')[0]} "
                 f"Estimated remaining: {str(time_remaining).split('.')[0]}"
             )
@@ -373,6 +379,7 @@ class JavaTwoStepAnalysis(Analysis):
         """
         # Helper function ----------------------------------------
         def extract_maven_information():
+            junit_version, source_dir, test_source_dir = None, None, None
             with tempfile.TemporaryDirectory() as temp_dir:
                 try:
                     shutil.copytree(input_path, temp_dir, dirs_exist_ok=True)
@@ -431,11 +438,12 @@ class JavaTwoStepAnalysis(Analysis):
         if  "junit_version" not in data[0] or "test_file_path" not in data[0]:
             print("extracting Junit version")
             junit_version, source_dir, test_source_dir = extract_maven_information()
+            print(f"junit_version: {junit_version}")
         else :
             junit_version = data[0]["junit_version"]
 
-        for d in data:
-
+        print("prepare data")
+        for d in tqdm(data):
             if "junit_version" not in d or "test_file_path" not in d:
                 d["junit_version"] = junit_version
 
