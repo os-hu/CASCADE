@@ -77,7 +77,9 @@ class JavaTwoStepAnalysis(Analysis):
             # preparing/ finding out junit version etc.
             data = self.prepare_data(data, input_path, output_path)
 
+        print("setup executor mvn image")
         self.executor.set_up(data, input_path, output_path)
+
         time_start = datetime.now()
         for idx, d in enumerate(data):
 
@@ -376,6 +378,7 @@ class JavaTwoStepAnalysis(Analysis):
         This function prepares the data for the analysis.
         It will check if the data is complete based on the first element and if not it will try to extract the missing information,
         like the junit version and the test file path.
+        TODO should be improved to better find different version. Defaulting to Junit5 instead of finding it directly might lead to wrong cases.
         """
         # Helper function ----------------------------------------
         def extract_maven_information():
@@ -438,7 +441,9 @@ class JavaTwoStepAnalysis(Analysis):
         if  "junit_version" not in data[0] or "test_file_path" not in data[0]:
             print("extracting Junit version")
             junit_version, source_dir, test_source_dir = extract_maven_information()
-            print(f"junit_version: {junit_version}")
+            if junit_version is None:
+                print("could not extract junit version from maven project. Probably is Junit 5\n")
+            print(f"Used Junit Version: {junit_version}")
         else :
             junit_version = data[0]["junit_version"]
 

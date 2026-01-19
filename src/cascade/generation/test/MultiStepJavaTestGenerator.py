@@ -18,9 +18,9 @@ class MultiStepJavaTestGenerator(Generator):
     def __init__(self,
                  model="gpt-4o-mini-2024-07-18",
                  max_attempts=1, delay=3,
-                 max_tokens=16000,
+                 max_tokens=8000,
                  temperature=0,
-                 max_prompt_tokens=10000,
+                 max_prompt_tokens=4000,
                  freq_penalty=0.0, dummy=False,
                  base_url=None, api_key=None #Base url for vllm should be "http://127.0.0.1:8000/v1"
                  ):
