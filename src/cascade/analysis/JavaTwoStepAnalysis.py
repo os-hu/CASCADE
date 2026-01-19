@@ -8,7 +8,6 @@ from datetime import datetime
 from cascade.analysis.Analysis import Analysis
 from cascade.analysis.executor.Execution import Execution
 from cascade.analysis.executor.ExecutionResults import ExecutionResults
-from cascade.extraction.JavaExtraction import JavaExtraction
 
 from cascade.generation.Generation import Generation
 from cascade.utils.Utils import load_json_from_path, save_dicts_list_to_json
@@ -17,7 +16,16 @@ from cascade.utils.DockerizedWrapper import DockerizedWrapper
 import xml.etree.ElementTree as ET
 
 class DatasetAnalysis(Analysis):
-    def __init__(self, generator: Generation, executor: Execution, regenerate=False, reexecute=False, image="maven" , debug=0, step_size=1):
+    def __init__(self,
+                 generator: Generation,
+                 executor: Execution,
+                 regenerate=False,
+                 reexecute=False,
+                 image="maven" ,
+                 debug=0,
+                 step_size=1,
+                 max_repair_tries=3
+                 ):
         super().__init__(generator, executor)
         self.reexecute = reexecute or regenerate
         self.step_size = step_size
@@ -25,6 +33,7 @@ class DatasetAnalysis(Analysis):
         self.debug = debug
         self.image = image
         self.output_path = ""
+        self.max_repair_tries = max_repair_tries
 
 
     def analyze(self, data: list, input_path, output_path):
@@ -37,23 +46,34 @@ class DatasetAnalysis(Analysis):
         """
         def log(header, message):
             with open(os.path.join(output_path, "log.txt"), "a") as f:
-                f.write(header + "/n")
-                f.write(message)
+                f.write(header + "\n")
+                f.write(message+ "\n")
 
-        output_string = ""
-        ana_path = os.path.join(output_path, "analyzed.json")
+        # TODO refactor and use these acutally....
+        def has_nonempty(dct, key: str) -> bool:
+            return key in dct and isinstance(dct[key], str) and dct[key].strip() != ""
 
-        # load data for this specific run
+        def has_results(dct, results_key: str) -> bool:
+            return "results" in dct and results_key in dct["results"] and dct["results"][results_key] not in (None, [], [[], [], []])
 
-        data = load_json_from_path(ana_path)
+        def should_generate(dct, key: str) -> bool:
+            # regenerate forces regeneration
+            return self.regenerate or (key not in dct)
+
+        def should_execute(dct, results_key: str) -> bool:
+            # reexecute forces execution
+            return self.reexecute or (not has_results(dct, results_key))
+
+
+
+
         print(f"analyzing {len(data)} elements")
+
         # preparing/ finding out junit version etc.
-
-
-        self.prepare_data(data)
+        data = self.prepare_data(data, input_path, output_path)
         self.executor.set_up(data, input_path, output_path)
         time_start = datetime.now()
-        for i, d in enumerate(data):
+        for idx, d in enumerate(data):
 
             # to avoid name clashes with existing tests we define a unique name for the test class
             test_class_real_name = d["test_file_path"].split("/")[-1].split(".")[0]
@@ -61,8 +81,8 @@ class DatasetAnalysis(Analysis):
 
             time_now = datetime.now()
             time_elapsed = time_now - time_start
-            time_avg = time_elapsed / (i + 1)
-            time_remaining = time_avg * (len(data) - (i + 1))
+            time_avg = time_elapsed / (idx + 1)
+            time_remaining = time_avg * (len(data) - (idx + 1))
 
             print(
                 f"{time_now.strftime('%H:%M:%S')}  "
@@ -75,7 +95,8 @@ class DatasetAnalysis(Analysis):
 
             print("    Step 1 - New Tests")
 
-            if not "new_tests" in d:
+            if not "new_tests" in d or self.regenerate:
+                print("      generate new tests")
                 new_tests, chat_history = self.generator.generate_tests(d, input_path, output_path)
 
                 d["new_tests"] = new_tests
@@ -99,9 +120,7 @@ class DatasetAnalysis(Analysis):
             res1 = exec_results.results
             comp_errors = exec_results.comp_errors
 
-            with open(os.path.join(output_path, "log.txt"), "a") as f:
-                f.write("Results after step 1\n")
-                f.write(str(exec_results))
+            log("Results after step 1", str(exec_results))
 
             d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
             d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
@@ -110,15 +129,13 @@ class DatasetAnalysis(Analysis):
 
             evaluated = self.evaluate(res1)
 
-            # this is the compilation error loop.  so far hard coded number for tries. TODO could be a parameter
-            max_repair_tries = 3
-            current_repair_tries = 0
+            # this is the compilation error loop.  so far hard coded number for tries.
+            # TODO  currently it is allways regenerating tests if they have compiler errors even if regenerate == False
             d["repair_history"] = []
-            for i in range(max_repair_tries):
+            for i in range(self.max_repair_tries):
                 # repair step
                 # if there were actually compiler errors with the tests:
                 if evaluated == 0 and comp_errors:
-                    current_repair_tries += 1
                     print("      Try to generate repaired tests")
                     repaired_tests, response_history = self.generator.repair_tests(d, input_path, output_path, comp_errors, 'new_tests')
                     d["repair_history"].append(response_history)
@@ -142,9 +159,7 @@ class DatasetAnalysis(Analysis):
                     if comp_errors:
                         comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
 
-                    with open(os.path.join(output_path, "log.txt"), "a") as f:
-                        f.write(f"Results after step 1-Repairstep Nr. {current_repair_tries}:\n")
-                        f.write(str(exec_results))
+                    log(f"Results after step 1-Repairstep Nr. {i+1}:" , str(exec_results))
 
                     evaluated = self.evaluate(res1)
 
@@ -158,7 +173,7 @@ class DatasetAnalysis(Analysis):
                     f.write(f"S1 Error in tests")
                     f.write(f"{str(res1)}")
                     f.write("------\nTests:\n")
-                    f.write(f"{d["new_tests"]}\n")
+                    f.write(f"{d['new_tests']}\n")
                     f.write("------\nCode:\n")
                     f.write(d["code"])
                     if comp_errors:
@@ -177,27 +192,27 @@ class DatasetAnalysis(Analysis):
                 #start next phase
                 # generate new code  -----------------------------------------------------------------------------------------------
                 print("    Step 2 - New Code")
-                d["results"]["(new_code, new_tests)"] = [[], [], []]
-                new_code, response = self.generator.generate_code(d, input_path, output_path)
-                #TODO overhaul code generation?
-                d["new_code"] = new_code
-                d["new_code_response"] = response
-                print("      execute new code (with new tests)")
+                if not "new_code" in d or self.regenerate:
+                    d["results"]["(new_code, new_tests)"] = [[], [], []]
+                    new_code, response = self.generator.generate_code(d, input_path, output_path)
+                    #TODO overhaul code generation?
+                    d["new_code"] = new_code
+                    d["new_code_response"] = response
 
+
+                print("      execute new code (with new tests)")
                 d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
                 d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
-
                 exec_results: ExecutionResults = self.executor.execute("new_code", "new_tests", d, input_path, output_path)
 
                 res2 = exec_results.results
                 comp_errors = exec_results.comp_errors
 
-                with open(os.path.join(output_path, "log.txt"), "a") as f:
-                    f.write("Results after step 2\n")
-                    f.write(str(exec_results))
+                log("Results after step 2\n", str(exec_results))
 
                 d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
                 d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
+
                 if comp_errors:
                     comp_errors = comp_errors.replace( test_class_unique_name , test_class_real_name )
 
@@ -213,7 +228,7 @@ class DatasetAnalysis(Analysis):
                         f.write(f"S2 Error in code?")
                         f.write(f"{str(res1)}")
                         f.write("------\nTests:\n")
-                        f.write(f"{d["new_tests"]}\n")
+                        f.write(f"{d['new_tests']}\n")
                         f.write("------\nCode:\n")
                         f.write(d["code"])
                         if comp_errors:
@@ -248,7 +263,7 @@ class DatasetAnalysis(Analysis):
                     d["metric"] = metric
                     metric_lengths = ", ".join(f"{k}: {len(v)}" for k, v in metric.items())
 
-                    if evaluated == 1:
+                    if evaluated2 == 1:
                         d["verdict"] = f"INCO; pass; step 2 (C'+T');"
 
                     else:
@@ -291,35 +306,33 @@ class DatasetAnalysis(Analysis):
         likely_incos = []
 
 
-        for d in data:
-            # TODO check if this is right???
-            if d["verdict"].startswith("INCO"):
-                stats["incos"] += 1
-                incos.append(d)
-            elif "f2p: 0" not in d["verdict"]:
-                stats["likely_incos"] += 1
-                likely_incos.append(d)
-
-            if "step 1" in d["verdict"]:
-                if "pass" in d["verdict"]:
-                    stats["Step1_passed"] += 1
-                elif "fail" in d["verdict"]:
-                    stats["Step1_failed"] += 1
-                else:
-                    stats["Step1_error"] += 1
-            elif "step 2" in d["verdict"]:
-                if "pass" in d["verdict"]:
-                    stats["Step2_passed"] += 1
-                elif "fail" in d["verdict"]:
-                    stats["step2_failed"] += 1
-                    if "f2p: 0" not in d["verdict"]:
-                        stats["step2_f2p>0"] += 1
-                else:
-                    stats["Step2_error"] += 1
 
 
-
-
+        # for d in data:
+        #     # TODO check if this is right???
+        #     if d["verdict"].startswith("INCO"):
+        #         stats["incos"] += 1
+        #         incos.append(d)
+        #     elif "f2p: 0" not in d["verdict"]:
+        #         stats["likely_incos"] += 1
+        #         likely_incos.append(d)
+        #
+        #     if "step 1" in d["verdict"]:
+        #         if "pass" in d["verdict"]:
+        #             stats["Step1_passed"] += 1
+        #         elif "fail" in d["verdict"]:
+        #             stats["Step1_failed"] += 1
+        #         else:
+        #             stats["Step1_error"] += 1
+        #     elif "step 2" in d["verdict"]:
+        #         if "pass" in d["verdict"]:
+        #             stats["Step2_passed"] += 1
+        #         elif "fail" in d["verdict"]:
+        #             stats["step2_failed"] += 1
+        #             if "f2p: 0" not in d["verdict"]:
+        #                 stats["step2_f2p>0"] += 1
+        #         else:
+        #             stats["Step2_error"] += 1
 
 
         full_Statistics = {
@@ -329,6 +342,12 @@ class DatasetAnalysis(Analysis):
             "average_time_per_element": str((datetime.now() - time_start) / len(data)).split('.')[0],
             "analyzed_elements": 0,
         }
+
+
+        log()
+
+
+
 
 
     def evaluate(self, res):
@@ -346,7 +365,7 @@ class DatasetAnalysis(Analysis):
 
 
 
-    def prepare_data(self, d, input_path, output_path):
+    def prepare_data(self, data, input_path, output_path):
         """
         This function prepares the data for the analysis.
         It will check if the data is complete based on the first element and if not it will try to extract the missing information,
@@ -404,42 +423,49 @@ class DatasetAnalysis(Analysis):
 
             except Exception as e:
                 return f"Error parsing pom.xml: {e}", None, None
-
         # Start of the actual function -----------------------------------
-        ana_path = os.path.join(output_path, "analyzed.json")
 
-        if "junit_version" not in d or "test_file_path" not in d:
+        # check junit version once:
+
+        junit_version, source_dir, test_source_dir = None, None, None
+        if  "junit_version" not in data[0] or "test_file_path" not in data[0]:
             print("extracting Junit version")
             junit_version, source_dir, test_source_dir = extract_maven_information()
-            d["junit_version"] = junit_version
+        else :
+            junit_version = data[0]["junit_version"]
 
-            if test_source_dir is not None and source_dir is not None:
-                d["test_file_path"] = d["code_file_path"].replace(source_dir.replace("/root/", ""), test_source_dir.replace("/root/", ""))
-                d["test_file_path"] = d["test_file_path"].replace(".java", "Test.java")
-            else:
-                d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
+        for d in data:
 
-        if "test_package" not in d:
-            d["test_package"] = d["package"]
+            if "junit_version" not in d or "test_file_path" not in d:
+                d["junit_version"] = junit_version
 
-        # search for junit specific imports   if they are not there add them?
-        d["test_imports"] = d.get("test_imports", [])
+                if test_source_dir is not None and source_dir is not None:
+                    d["test_file_path"] = d["code_file_path"].replace(source_dir.replace("/root/", ""), test_source_dir.replace("/root/", ""))
+                    d["test_file_path"] = d["test_file_path"].replace(".java", "Test.java")
+                else:
+                    d["test_file_path"] = d["code_file_path"].replace(".java", "Test.java")
 
-        junit_found = False
-        for imp in d["test_imports"]:
-            if "junit" in imp:
-                junit_found = True
-                break
+            if "test_package" not in d:
+                d["test_package"] = d["package"]
 
-        if not junit_found:
-            if d["junit_version"].startswith("3"):
-                d["test_imports"].append("import junit.framework.*;\n")
-            elif d["junit_version"].startswith("4."):
-                d["test_imports"].append("import org.junit.*;\n")
-                d["test_imports"].append("import static org.junit.Assert.*;\n")
-            else:
-                d["test_imports"].append("import org.junit.jupiter.api.*;\n")
+            # search for junit specific imports   if they are not there add them
+            d["test_imports"] = d.get("test_imports", [])
 
-        return d
+            junit_found = False
+            for imp in d["test_imports"]:
+                if "junit" in imp:
+                    junit_found = True
+                    break
+
+            if not junit_found:
+                if d["junit_version"].startswith("3"):
+                    d["test_imports"].append("import junit.framework.*;\n")
+                elif d["junit_version"].startswith("4."):
+                    d["test_imports"].append("import org.junit.*;\n")
+                    d["test_imports"].append("import static org.junit.Assert.*;\n")
+                else:
+                    d["test_imports"].append("import org.junit.jupiter.api.*;\n")
+
+        return data
 
 
