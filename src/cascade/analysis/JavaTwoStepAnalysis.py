@@ -76,6 +76,7 @@ class JavaTwoStepAnalysis(Analysis):
         else:
             # preparing/ finding out junit version etc.
             data = self.prepare_data(data, input_path, output_path)
+            save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
 
         print("setup executor mvn image")
         self.executor.set_up(data, input_path, output_path)
