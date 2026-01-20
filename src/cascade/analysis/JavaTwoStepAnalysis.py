@@ -49,7 +49,7 @@ class JavaTwoStepAnalysis(Analysis):
                 f.write(header + "\n")
                 f.write(message+ "\n")
 
-        # TODO refactor and use these acutally....
+        # TODO refactor and actually use these...
         def has_nonempty(dct, key: str) -> bool:
             return key in dct and isinstance(dct[key], str) and dct[key].strip() != ""
 
@@ -112,8 +112,8 @@ class JavaTwoStepAnalysis(Analysis):
                 d["new_tests_history"] = chat_history
 
                 if new_tests == "":
-                    log("GENERATION: no test could be generated.\n Chathistory:\n", str(chat_history))
-                    d["verdict"] = f"NoInco; error; step 1 (C +T'); {str(amount_res)}; ; "
+                    log("GENERATION: no test could be generated.\n ChatHistory:\n", str(chat_history))
+                    d["verdict"] = f"NoInco; error; step 1 (C +T'); ; ; "
                     continue
 
             else:
