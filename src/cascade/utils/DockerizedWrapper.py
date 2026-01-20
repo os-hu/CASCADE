@@ -47,7 +47,7 @@ class DockerizedWrapper:
 
         finally:
             if container:
-                self.kill(container)
+                self.kill(container, dock_context)
 
         return result
 
@@ -112,7 +112,7 @@ class DockerizedWrapper:
             container.commit(dock_context["new_image"])
         finally:
             if container:
-                self.kill(container)
+                self.kill(container, dock_context)
             return exit_code
 
 
