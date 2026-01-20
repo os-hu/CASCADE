@@ -301,10 +301,12 @@ class MultiStepJavaTestGenerator(Generator):
 
         if not json_blocks:
             log_json_error("Error extracting JSON block from response")
+            # TODO ask llm that markdown json block is mising
             return []
 
         try:
             extracted_test_list = json.loads(json_blocks[0].strip())
+
         except json.JSONDecodeError as e:
             # TODO maybe ask llm again? Or some better way to fix wrong json format
             log_json_error(str(e))

@@ -113,7 +113,8 @@ class JavaTwoStepAnalysis(Analysis):
 
                 if new_tests == "":
                     log("GENERATION: no test could be generated.\n Chathistory:\n", str(chat_history))
-                    return
+                    d["verdict"] = f"NoInco; error; step 1 (C +T'); {str(amount_res)}; ; "
+                    continue
 
             else:
                 print("      new tests already generated")
