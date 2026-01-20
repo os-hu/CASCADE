@@ -95,7 +95,7 @@ class DockerizedWrapper:
         container.kill()
         container.remove()
         image_to_kill = container.image
-        if container.image not in  [dock_context["new_image"], dock_context["image"]]:
+        if container.image not in  [dock_context.get("new_image"), dock_context.get("image"), None]:
             client.images.remove(image_to_kill)
 
 
