@@ -31,6 +31,7 @@ class MultiStepJavaTestGenerator(Generator):
                                             delay=delay, freq_penalty=freq_penalty, dummy=dummy,
                                             api_key=api_key, base_url=base_url)
 
+        kwargs
         self.model = model
         self.max_prompt_tokens = max_prompt_tokens
 
@@ -231,12 +232,12 @@ class MultiStepJavaTestGenerator(Generator):
 
     def repair(self, context, input_path, output_path, errors, key):
         response_history = []
-        #tools = get_repair_helper_functions()
-        tools = None
+        tools = get_repair_helper_functions()
+        #tools = None
 
         tree = subprocess.check_output(["tree", "-P", "*.java", "--charset=ascii", input_path]).decode("utf-8")
 
-        system_prompt = "You are an expert Java developer. You will fix compilation errors in a provided test class and return the entire repaired class." #Use tools to find out more about classes instead of making assumptions."
+        system_prompt = "You are an expert Java developer. You will fix compilation errors in a provided test class and return the entire repaired class. Use tools to find out more about classes instead of making assumptions."
 
         prompt = (f"During the compilation of my test class some errors occurred.\nErrors:\n```\n{errors}\n```\n\nTest Class:\n```java\n{context[key]}\n```\n"
                   "Dont change the content of the tests, but make sure that the class compiles without errors. " 
