@@ -54,7 +54,7 @@ class DockerizedWrapper:
 
     def set_up(self, dock_context: dict):
         client = docker.from_env(timeout=300)
-        container = client.containers.run(dock_context["image"], "tail -f /dev/null", detach=True, auto_remove=True, remove=True)
+        container = client.containers.run(dock_context["image"], "tail -f /dev/null", detach=True, auto_remove=True)
         if "directory" in dock_context:
             buffer = io.BytesIO()
             with tarfile.open(mode="w", fileobj=buffer) as tar:
