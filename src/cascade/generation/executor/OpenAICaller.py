@@ -51,7 +51,7 @@ class OpenAICaller(LLMCaller):
                     model=self.model,
                     messages=prompt,
                     max_completion_tokens=self.max_tokens,   #temporary fix for gpt5
-                    temperature=self.temperature,
+                    #temperature=self.temperature,
                     frequency_penalty=self.freq_penalty,
                     **kwargs,
                 )
