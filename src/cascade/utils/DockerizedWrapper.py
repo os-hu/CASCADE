@@ -90,9 +90,13 @@ class DockerizedWrapper:
         return dock_context["eval_function"](str(res.output, "utf-8"))
 
 
-    def kill(self, container: Container):
+    def kill(self, container: Container, dock_context: dict):
+        client = docker.from_env(timeout=300)
         container.kill()
         container.remove()
+        image_to_kill = container.image
+        if container.image not in  [dock_context["new_image"], dock_context["image"]]:
+            client.images.remove(image_to_kill)
 
 
     def setup_image(self, dock_context: dict, output_path: str):
