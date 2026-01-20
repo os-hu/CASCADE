@@ -47,14 +47,14 @@ class DockerizedWrapper:
 
         finally:
             if container:
-                self.kill(container, dock_context)
+                self.kill(container)
 
         return result
 
 
     def set_up(self, dock_context: dict):
         client = docker.from_env(timeout=300)
-        container = client.containers.run(dock_context["image"], "tail -f /dev/null", detach=True)
+        container = client.containers.run(dock_context["image"], "tail -f /dev/null", detach=True, auto_remove=True, remove=True)
         if "directory" in dock_context:
             buffer = io.BytesIO()
             with tarfile.open(mode="w", fileobj=buffer) as tar:
@@ -90,13 +90,9 @@ class DockerizedWrapper:
         return dock_context["eval_function"](str(res.output, "utf-8"))
 
 
-    def kill(self, container: Container, dock_context: dict):
-        client = docker.from_env(timeout=300)
+    def kill(self, container: Container):
         container.kill()
         container.remove()
-        image_to_kill = container.image
-        if container.image not in  [dock_context.get("new_image"), dock_context.get("image"), None]:
-            client.images.remove(image_to_kill)
 
 
     def setup_image(self, dock_context: dict, output_path: str):
@@ -112,7 +108,7 @@ class DockerizedWrapper:
             container.commit(dock_context["new_image"])
         finally:
             if container:
-                self.kill(container, dock_context)
+                self.kill(container)
             return exit_code
 
 
