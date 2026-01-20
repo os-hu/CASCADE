@@ -31,7 +31,6 @@ class MultiStepJavaTestGenerator(Generator):
                                             delay=delay, freq_penalty=freq_penalty, dummy=dummy,
                                             api_key=api_key, base_url=base_url)
 
-        kwargs
         self.model = model
         self.max_prompt_tokens = max_prompt_tokens
 
