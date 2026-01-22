@@ -8,7 +8,7 @@ class OpenAICaller(LLMCaller):
     def __init__(
         self,
         max_attempts=1,
-        max_tokens=1200,
+        max_tokens=16000,
         temperature=0,
         delay=5,
         dummy=False,
