@@ -11,6 +11,7 @@ from cascade.analysis.executor.ExecutionResults import ExecutionResults
 
 from cascade.generation.Generation import Generation
 from cascade.utils.Utils import save_dicts_list_to_json, load_json_from_path
+from cascade.utils.JavaUtils import build_signature
 
 from cascade.utils.DockerizedWrapper import DockerizedWrapper
 import xml.etree.ElementTree as ET
@@ -432,6 +433,18 @@ class JavaTwoStepAnalysis(Analysis):
             print(f"{key}: {value}")
         for key, value in repair_stats.items():
             print(f"{key}: {value}")
+
+
+        for d in incos:
+            print("--------------------------------------------------------")
+            print(d["signature"]["name"])
+            f2p_cases = ", ".join(d["metric"]["f2p"])
+            print("f2p testcases: " , f2p_cases)
+
+            print( build_signature(d, doc=True) )
+            print(d["code"])
+
+
 
 
     def evaluate(self, res):
