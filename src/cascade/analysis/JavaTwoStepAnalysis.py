@@ -417,8 +417,8 @@ class JavaTwoStepAnalysis(Analysis):
             if "metric" in d:
                 if len(d["metric"]["f2p"]) > 0:
                     general_stats["Step2_f2p>0"] += 1
-                    general_stats["Step2_f2p>0"] += 1
-                    if r["inco_status"] == "INCO":
+
+                    if len(d["metric"]["p2f"]) == 0:
                         general_stats["incos"] += 1
                         incos.append(d)
                     else:
