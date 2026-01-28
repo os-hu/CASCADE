@@ -275,7 +275,7 @@ class DatasetAnalysis(Analysis):
                     output_string = f"INCO; pass; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
 
                 else:
-                    if len(metric["f2p"]) > 0:
+                    if len(metric["f2p"]) > 0 and len(metric["p2f"]) == 0
                         output_string = f"INCO; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
                     else:
                         output_string = f"NoInco; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"

@@ -284,7 +284,7 @@ class JavaTwoStepAnalysis(Analysis):
                                 d["verdict"] = f"INCO; pass; step 2 (C'+T');"
 
                             else:
-                                if len(metric["f2p"]) > 0:
+                                if len(metric["f2p"]) > 0 and len(metric["p2f"]) == 0:
                                     d["verdict"] = f"INCO; fail; step 2 (C'+T');"
                                 else:
                                     d["verdict"] = f"NoInco; fail; step 2 (C'+T');"
