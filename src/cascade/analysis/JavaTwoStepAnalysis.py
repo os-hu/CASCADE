@@ -175,6 +175,7 @@ class JavaTwoStepAnalysis(Analysis):
                                 comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
 
                             log(f"Results after step 1-Repairstep Nr. {i+1}:" , str(exec_results))
+                            d["repairsteps"] = i+1
 
                             evaluated = self.evaluate(res1)
 
@@ -320,19 +321,19 @@ class JavaTwoStepAnalysis(Analysis):
             "Step2_error": 0,   #
             "Step2_failed": 0,  #
             "Step2_passed": 0,  #
-            "Step2_f2p>0": 0,
-            "incos" : 0,
-            "likely_incos": 0,
+            "Step2_f2p>0": 0,   #
+            "incos" : 0,        #
+            "likely_incos": 0,  #
         }
         incos = []
         likely_incos = []
 
         repair_stats = {
-            "total_repair_steps": 0,
-            "total_attempted_repairs": 0,
+            "total_repair_steps": 0,            #
+            "total_attempted_repairs": 0,       #
             "successful_repairs": 0,
-            "successful_after_first_try": 0,
-            "successful_after_second_try": 0,
+            "successful_after_first_try": 0,    #
+            "successful_after_second_try": 0,   #
             "successful_after_third_try": 0,
             "failed_repairs": 0,                #
             "code_errors": 0                    #
@@ -359,12 +360,38 @@ class JavaTwoStepAnalysis(Analysis):
                 continue
             print(d["signature"]["name"] , "\t", d["verdict"])
 
+            # help function.  delete later.
+            if "tests_pre_repairstep_1" in d:
+                print("found it")
+
+                #extract last number from it and set d["repairsteps"] to it
+
+
+            if "repairsteps" in d:
+                rep_steps = d["repairsteps"]
+                repair_stats["total_repair_steps"] += rep_steps
+                repair_stats["total_attempted_repairs"] += 1
+
+                if rep_steps == 1:
+                    repair_stats["successful_after_first_try"] += 1
+                    repair_stats["successful_repairs"] += 1
+                elif rep_steps == 2:
+                    repair_stats["successful_after_second_try"] += 1
+                    repair_stats["successful_repairs"] += 1
+                elif rep_steps == 3:
+                    if r["step_info"] == "step 2 (C +T')" or  (r["step_info"] == "step 1 (C +T')" and r["test_result"] == "pass"):
+                        repair_stats["successful_after_third_try"] += 1
+                        repair_stats["successful_repairs"] += 1
+                    else:
+                        repair_stats["failed_repairs"] += 1
+
+
             if r["step_info"] == "step 1 (C +T')":
                 if r["test_result"] == "pass":
                     general_stats["Step1_passed"] += 1
                 elif r["test_result"] == "error":
                     general_stats["Step1_error"] += 1
-                    repair_stats["failed_repairs"] += 1
+
 
             elif r["step_info"] == "step 2 (C'+T')":
                 general_stats["Step1_failed"] += 1
@@ -381,24 +408,33 @@ class JavaTwoStepAnalysis(Analysis):
                     general_stats["Step2_failed"] += 1
 
             if "metric" in d:
-                print("metric is there")
+                if len(d["metric"]["f2p"]) > 0:
+                    general_stats["Step2_f2p>0"] += 1
+                    general_stats["Step2_f2p>0"] += 1
+                    if r["inco_status"] == "INCO":
+                        general_stats["incos"] += 1
+                        incos.append(d)
+                    else:
+                        general_stats["likely_incos"] += 1
+                        likely_incos.append(d)
+
+        print("incos:" , general_stats["incos"] , len(incos))
+        print("likely incos:", general_stats["likely_incos"], len(likely_incos))
 
 
 
-
-
-    def evaluate(self, res):
-        if res[0] == [] and res[1] == [] and res[2] == []:
-            print("        Error")
-            # error
-            return 0
-        elif res[1] == [] and res[2] == []:
-            print("        Passed")
-            # if no errors or failures  then passed
-            return 1
-        else:
-            print("        Failed")
-            return -1
+        def evaluate(self, res):
+            if res[0] == [] and res[1] == [] and res[2] == []:
+                print("        Error")
+                # error
+                return 0
+            elif res[1] == [] and res[2] == []:
+                print("        Passed")
+                # if no errors or failures  then passed
+                return 1
+            else:
+                print("        Failed")
+                return -1
 
 
 
