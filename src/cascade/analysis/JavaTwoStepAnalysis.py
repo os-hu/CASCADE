@@ -318,9 +318,9 @@ class JavaTwoStepAnalysis(Analysis):
             "Step1_error": 0,   #
             "Step1_failed": 0,  #
             "Step2_error": 0,   #
-            "step2_failed": 0,  #
+            "Step2_failed": 0,  #
             "Step2_passed": 0,  #
-            "step2_f2p>0": 0,
+            "Step2_f2p>0": 0,
             "incos" : 0,
             "likely_incos": 0,
         }
