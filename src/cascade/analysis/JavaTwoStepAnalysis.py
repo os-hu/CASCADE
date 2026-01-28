@@ -315,6 +315,7 @@ class JavaTwoStepAnalysis(Analysis):
         # end: if not just analyze
 
         general_stats = {
+            "complete_errors": 0,  #
             "Step1_passed": 0,  #
             "Step1_error": 0,   #
             "Step1_failed": 0,  #
@@ -331,10 +332,10 @@ class JavaTwoStepAnalysis(Analysis):
         repair_stats = {
             "total_repair_steps": 0,            #
             "total_attempted_repairs": 0,       #
-            "successful_repairs": 0,
+            "successful_repairs": 0,            #
             "successful_after_first_try": 0,    #
             "successful_after_second_try": 0,   #
-            "successful_after_third_try": 0,
+            "successful_after_third_try": 0,    #
             "failed_repairs": 0,                #
             "code_errors": 0                    #
         }
@@ -354,17 +355,23 @@ class JavaTwoStepAnalysis(Analysis):
 
         for d in data:
             if "verdict" in d:
+                if not ";" in d["verdict"]:
+                    general_stats["complete_errors"] += 1
+                    continue
                 r = parse_verdict(d["verdict"])
             else :
                 print(d["signature"]["name"] , "\t", "No verdict")
                 continue
             print(d["signature"]["name"] , "\t", d["verdict"])
 
-            # help function.  delete later.
-            if "tests_pre_repairstep_1" in d:
-                print("found it")
-
-                #extract last number from it and set d["repairsteps"] to it
+            # help function.  TODO delete later.
+            if "repairsteps" not in d:
+                if "tests_pre_repairstep_3" in d:
+                    d["repairsteps"] = 3
+                elif "tests_pre_repairstep_2" in d:
+                    d["repairsteps"] = 2
+                elif "tests_pre_repairstep_1" in d:
+                    d["repairsteps"] = 1
 
 
             if "repairsteps" in d:
@@ -418,23 +425,27 @@ class JavaTwoStepAnalysis(Analysis):
                         general_stats["likely_incos"] += 1
                         likely_incos.append(d)
 
-        print("incos:" , general_stats["incos"] , len(incos))
-        print("likely incos:", general_stats["likely_incos"], len(likely_incos))
+        print("incos:" , len(incos))
+        print("likely incos:", len(likely_incos))
+
+        for key, value in general_stats.items():
+            print(f"{key}: {value}")
+        for key, value in repair_stats.items():
+            print(f"{key}: {value}")
 
 
-
-        def evaluate(self, res):
-            if res[0] == [] and res[1] == [] and res[2] == []:
-                print("        Error")
-                # error
-                return 0
-            elif res[1] == [] and res[2] == []:
-                print("        Passed")
-                # if no errors or failures  then passed
-                return 1
-            else:
-                print("        Failed")
-                return -1
+    def evaluate(self, res):
+        if res[0] == [] and res[1] == [] and res[2] == []:
+            print("        Error")
+            # error
+            return 0
+        elif res[1] == [] and res[2] == []:
+            print("        Passed")
+            # if no errors or failures  then passed
+            return 1
+        else:
+            print("        Failed")
+            return -1
 
 
 
