@@ -97,10 +97,8 @@ class MultiStepJavaTestGenerator(Generator):
 
         if not response_step1a["choices"]:
             print("      error during generation")
-            with open(results_path, "w") as f:
-                f.write("Negative, error during test generation")
-            with open(errors_path, "w") as f:
-                f.write("error during test generation")
+            with open(errors_path, "a") as f:
+                f.write(f"error during test generation of {context["signature"]["name"]}")
 
             return "", chat_history
 
@@ -130,9 +128,7 @@ class MultiStepJavaTestGenerator(Generator):
         chat_history.append(response_step1b)
 
         if not test_list:
-            with open(results_path, "w") as f:
-                f.write("Negative, error during test from json extraction")
-            with open(errors_path, "w") as f:
+            with open(errors_path, "a") as f:
                 f.write("error during test extraction from json")
             return "", chat_history
 

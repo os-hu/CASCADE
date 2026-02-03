@@ -72,7 +72,6 @@ class JavaTwoStepAnalysis(Analysis):
 
         print(f"analyzing {len(data)} elements")
 
-        #TODO check if the intermedatie reustls can / shoudl be used somewehre
         if os.path.exists(os.path.join(output_path, "analyzed.json")):
             data = load_json_from_path(os.path.join(output_path, "analyzed.json"))
             print(f"loaded existing analyzed data with {len(data)} elements")
@@ -299,9 +298,12 @@ class JavaTwoStepAnalysis(Analysis):
                 except Exception as e:
                     d["verdict"] = f"Error during analysis: {e}"
 
-                # quicksave last step.
-                with open(os.path.join(output_path, "intermediateResults.jsonl"), "a") as f:
-                    f.write(json.dumps(d) + "\n")
+                # save every few steps
+                if idx % 10 == 0:
+                    with open(os.path.join(output_path, "analyzed.json"), "w") as f:
+                        f.write(json.dumps(data))
+
+
 
             # end:  for d in data
 
