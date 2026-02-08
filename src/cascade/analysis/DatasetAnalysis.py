@@ -51,9 +51,11 @@ class DatasetAnalysis(Analysis):
             f.write("NoInco; error; ; ; ; ; ; ")
 
         # take the one element that is targeted here and make sure everything we need is there.
+        print("prepare Data")
         d = self.prepare_data(data[0], input_path, output_path)
-        if d is None:
+        return
 
+        if d is None:
             return
 
         # to avoid name clashes with existing tests we define a unique name for the test class
@@ -107,7 +109,7 @@ class DatasetAnalysis(Analysis):
         evaluated = self.evaluate(res1)
 
         # this is the compilation error loop.  so far hard coded number for tries. TODO could be a parameter
-        max_repair_tries = 3
+        max_repair_tries = 0
         current_repair_tries = 0
         d["repair_history"] = []
         for i in range(max_repair_tries):
@@ -363,6 +365,7 @@ class DatasetAnalysis(Analysis):
                     test_source_dir = test_source_directory.text if test_source_directory is not None else None
 
                 # Return a 3-tuple with JUnit version, source directory, and test source directory
+                print("::::::::::::::::::::::::::found junit version:", junit_version)
                 return junit_version, source_dir, test_source_dir
 
             except Exception as e:
