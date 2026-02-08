@@ -319,6 +319,7 @@ class DatasetAnalysis(Analysis):
         like the junit version and the test file path.
         """
         def extract_maven_information():
+            junit_version, source_dir, test_source_dir = None, None, None
             with tempfile.TemporaryDirectory() as temp_dir:
                 try:
                     shutil.copytree(input_path, temp_dir, dirs_exist_ok=True)
@@ -374,11 +375,21 @@ class DatasetAnalysis(Analysis):
                 return f"Error parsing pom.xml: {e}", None, None
 
         # Start of the actual function -----------------------------------
-        ana_path = os.path.join(output_path, "analyzed.json")
 
-        if "junit_version" not in d or "test_file_path" not in d:
+        junit_version, source_dir, test_source_dir = None, None, None
+        if  "junit_version" not in d or "test_file_path" not in d:
             print("extracting Junit version")
             junit_version, source_dir, test_source_dir = extract_maven_information()
+            if junit_version is None:
+                print("could not extract junit version from maven project. Probably is Junit 5\n")
+                junit_version = "5.0"
+            print(f"Used Junit Version: {junit_version}")
+
+        else :
+            junit_version = d["junit_version"]
+
+        print("prepare data")
+        if "junit_version" not in d or "test_file_path" not in d:
             d["junit_version"] = junit_version
 
             if test_source_dir is not None and source_dir is not None:
@@ -390,7 +401,7 @@ class DatasetAnalysis(Analysis):
         if "test_package" not in d:
             d["test_package"] = d["package"]
 
-        # search for junit specific imports   if they are not there add them?
+        # search for junit specific imports   if they are not there add them
         d["test_imports"] = d.get("test_imports", [])
 
         junit_found = False
@@ -408,7 +419,6 @@ class DatasetAnalysis(Analysis):
             else:
                 d["test_imports"].append("import org.junit.jupiter.api.*;\n")
 
-        save_dicts_list_to_json([d], ana_path)
         return d
 
 
