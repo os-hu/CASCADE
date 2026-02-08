@@ -22,7 +22,7 @@ class MavenJavaExecutor(JavaExecutor):
         image_name_id = str(uuid.uuid4())
 
         # these arguments should be working for all maven projects and some are necessary to avoid errors
-        standard_java_args = " -fae -Drat.skip=true -DforkMode=never -Dsurefire.failIfNoSpecifiedTests=false"
+        standard_java_args = " -fae -Drat.skip=true -DforkMode=never -Dsurefire.failIfNoSpecifiedTests=false -DforkCount=0, -Danimal.sniffer.skip=true"
         if maven_args == "":
             maven_args = standard_java_args
         if set_up_maven_args == "":
