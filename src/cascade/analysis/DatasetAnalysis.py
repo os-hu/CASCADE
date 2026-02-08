@@ -291,6 +291,7 @@ class DatasetAnalysis(Analysis):
             f.write(output_string)
             print("result:" , output_string)
 
+
         self.executor.tear_down(data)
     # TODO change all the 'with opens' to use os.path.join
 
