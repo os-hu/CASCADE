@@ -17,7 +17,7 @@ from cascade.utils.DockerizedWrapper import DockerizedWrapper
 import xml.etree.ElementTree as ET
 
 class DatasetAnalysis(Analysis):
-    def __init__(self, generator: Generation, executor: Execution, regenerate=False, reexecute=False, image="maven" , debug=0, step_size=1):
+    def __init__(self, generator: Generation, executor: Execution, regenerate=False, reexecute=False, image="maven" , debug=0, step_size=1, max_repair_tries=3):
         super().__init__(generator, executor)
         self.reexecute = reexecute or regenerate
         self.step_size = step_size
@@ -25,6 +25,7 @@ class DatasetAnalysis(Analysis):
         self.debug = debug
         self.image = image
         self.output_path = ""
+        self.max_repair_tries = max_repair_tries
 
 
     def analyze(self, data: list, input_path, output_path):
@@ -46,14 +47,16 @@ class DatasetAnalysis(Analysis):
 
         # load data for this specific run
         data = load_json_from_path(ana_path)
+        # take the one element
+        d = data[0]
 
         with open(output_path + "/result.txt", "w") as f:
             f.write("NoInco; error; ; ; ; ; ; ")
 
         # take the one element that is targeted here and make sure everything we need is there.
-        print("prepare Data")
-        d = self.prepare_data(data[0], input_path, output_path)
-        return
+        #print("prepare Data")
+        #d = self.prepare_data(data[0], input_path, output_path)
+        #return
 
         if d is None:
             return
@@ -108,11 +111,10 @@ class DatasetAnalysis(Analysis):
 
         evaluated = self.evaluate(res1)
 
-        # this is the compilation error loop.  so far hard coded number for tries. TODO could be a parameter
-        max_repair_tries = 0
+        # this is the compilation error loop.  so far hard coded number for tries.
         current_repair_tries = 0
         d["repair_history"] = []
-        for i in range(max_repair_tries):
+        for i in range(self.max_repair_tries):
             # repair step
             # if there were actually compiler errors with the tests:
             if evaluated == 0 and comp_errors:
