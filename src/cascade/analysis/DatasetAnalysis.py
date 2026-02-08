@@ -369,6 +369,8 @@ class DatasetAnalysis(Analysis):
                 return junit_version, source_dir, test_source_dir
 
             except Exception as e:
+                print("::::::::::::::::::::::::::found junit version:", "could not parse pom.xml")
+                print(e)
                 return f"Error parsing pom.xml: {e}", None, None
 
         # Start of the actual function -----------------------------------
