@@ -72,12 +72,12 @@ class DatasetAnalysis(Analysis):
         if d is None:
             return
 
+
+        try :
             # to avoid name clashes with existing tests we define a unique name for the test class
             test_class_real_name = d["test_file_path"].split("/")[-1].split(".")[0]
             test_class_unique_name = "THIS_IS_A_UNIQUE_NAME_Test"
 
-
-        try :
             current_time = datetime.now().strftime("%H:%M:%S")
             print(f"{current_time}  Starting analysis of function: {d['signature']['name']}")
             print("    Step 1 - New Tests")
