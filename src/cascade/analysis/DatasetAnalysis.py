@@ -39,7 +39,7 @@ class DatasetAnalysis(Analysis):
         :param output_path:
         """
         def log(header, message):
-            with open(output_path + "/log.txt", "a") as f:
+            with open(os.path.join(output_path , "log.txt"), "a") as f:
                 f.write(header + "/n")
                 f.write(message)
 
@@ -51,202 +51,130 @@ class DatasetAnalysis(Analysis):
         # take the one element
         d = data[0]
 
-        with open(output_path + "/result.txt", "w") as f:
+        with open(os.path.join(output_path , "result.txt"), "w") as f:
             f.write("NoInco; error; ; ; ; ; ; ")
 
         # take the one element that is targeted here and make sure everything we need is there.
-        print("prepare Data")
-        try:
-            #d = self.prepare_data(data[0], input_path, output_path)
-            #save_dicts_list_to_json([d], ana_path)
-            print(d["test_file_path"])
-            print(d["junit_version"])
-
-        except Exception as e:
-            with open(output_path + "/errors.txt", "a") as f:
-                f.write(str(e) + "\n\n")
-                traceback.print_exc(file=f)
-
-        return
+        # print("prepare Data")
+        # try:
+        #     d = self.prepare_data(data[0], input_path, output_path)
+        #     save_dicts_list_to_json([d], ana_path)
+        #     print(d["test_file_path"])
+        #     print(d["junit_version"])
+        #
+        # except Exception as e:
+        #     with open(output_path + "/errors.txt", "a") as f:
+        #         f.write(str(e) + "\n\n")
+        #         traceback.print_exc(file=f)
+        #
+        # return
 
         if d is None:
             return
 
-        # to avoid name clashes with existing tests we define a unique name for the test class
-        test_class_real_name = d["test_file_path"].split("/")[-1].split(".")[0]
-        test_class_unique_name = "THIS_IS_A_UNIQUE_NAME_Test"
+            # to avoid name clashes with existing tests we define a unique name for the test class
+            test_class_real_name = d["test_file_path"].split("/")[-1].split(".")[0]
+            test_class_unique_name = "THIS_IS_A_UNIQUE_NAME_Test"
 
 
+        try :
+            current_time = datetime.now().strftime("%H:%M:%S")
+            print(f"{current_time}  Starting analysis of function: {d['signature']['name']}")
+            print("    Step 1 - New Tests")
 
-        current_time = datetime.now().strftime("%H:%M:%S")
-        print(f"{current_time}  Starting analysis of function: {d['signature']['name']}")
-        print("    Step 1 - New Tests")
+            if not "new_tests" in d:
+                new_tests, chat_history = self.generator.generate_tests(d, input_path, output_path)
 
-        if not "new_tests" in d:
-            new_tests, chat_history = self.generator.generate_tests(d, input_path, output_path)
+                d["new_tests"] = new_tests
+                d["new_tests_history"] = chat_history
 
-            d["new_tests"] = new_tests
-            d["new_tests_history"] = chat_history
-
-            save_dicts_list_to_json([d], ana_path)
-
-            if new_tests == "":
-                log("GENERATION: no test could be generated:", str(chat_history))
-                return
-
-        else:
-            print("      new tests already generated")
-
-        self.executor.set_up(data, input_path, output_path)
-
-        print("      execute new tests")
-
-        d["results"] = {}
-        d["results"]["(code, new_tests)"] = [[],[],[]]
-
-        d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
-        d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
-        exec_results: ExecutionResults = self.executor.execute("code", "new_tests", d, input_path, output_path)
-
-        res1 = exec_results.results
-        comp_errors = exec_results.comp_errors
-
-        with open(output_path + "/log.txt", "a") as f:
-            f.write("Results after step 1\n")
-            f.write(str(exec_results))
-
-        d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
-        d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
-        if comp_errors:
-            comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
-
-        evaluated = self.evaluate(res1)
-
-        # this is the compilation error loop.  so far hard coded number for tries.
-        current_repair_tries = 0
-        d["repair_history"] = []
-        for i in range(self.max_repair_tries):
-            # repair step
-            # if there were actually compiler errors with the tests:
-            if evaluated == 0 and comp_errors:
-                current_repair_tries += 1
-                print("      Try to generate repaired tests")
-                with open(output_path + "/log.txt", "a") as f:
-                    f.write(f"start repair generation, trial {current_repair_tries}\n")
-
-                repaired_tests, response_history = self.generator.repair_tests(d, input_path, output_path, comp_errors, 'new_tests')
-                d["repair_history"].append(response_history)
-
-                old_tests_key = "tests_pre_repairstep_" + str(i + 1)
-                d[old_tests_key] = d["new_tests"]
-                d["new_tests"] = repaired_tests
-
-
-                print("      execute repaired tests")
-
-                d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
-                d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
-
-                with open(output_path + "/log.txt", "a") as f:
-                    f.write(f"execute repaired tests (trial {current_repair_tries})\n")
-
-                exec_results: ExecutionResults = self.executor.execute("code", "new_tests", d, input_path, output_path)
-                res1 = exec_results.results
-                comp_errors = exec_results.comp_errors
-
-                d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
-                d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
-                if comp_errors:
-                    comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
-
-                with open(output_path + "/log.txt", "a") as f:
-                    f.write(f"Results after step 1 Repairstep: {current_repair_tries}\n")
-                    f.write(str(exec_results))
-
-                evaluated = self.evaluate(res1)
                 save_dicts_list_to_json([d], ana_path)
 
+                if new_tests == "":
+                    log("GENERATION: no test could be generated:", str(chat_history))
+                    return
 
-        amount_res = exec_results.results_numbers
-        d["results"]["(code, new_tests)"] = res1
+            else:
+                print("      new tests already generated")
 
-        next_phase = False
-        if evaluated == 0:
-            # loggin ----------
-            with open(output_path + "/errors.txt", "a") as f:
-                f.write(f"S1 Error in tests")
-                f.write(f"{str(res1)}")
-                f.write("------\nTests:\n")
-                f.write(f"{d["new_tests"]}\n")
-                f.write("------\nCode:\n")
-                f.write(d["code"])
-                if comp_errors:
-                    f.write("\n------\nCompiler errors:\n")
-                    f.write(comp_errors)
-                else:
-                    f.write("\n-------\nNo Compiler errors.  check log\n")
-                f.write("-----------------------\n")
+            self.executor.set_up(data, input_path, output_path)
 
-            output_string = f"NoInco; error; step 1 (C +T'); {str(amount_res)}; ; "
-            print(output_string)
+            print("      execute new tests")
 
-        elif evaluated == 1:
-            output_string = f"NoInco; pass; step 1 (C +T'); {str(amount_res)}; ; "
-            print(output_string)
-
-        else:
-            next_phase = True
-        save_dicts_list_to_json([d], ana_path)
-
-        if next_phase:
-            # generate new code  -----------------------------------------------------------------------------------------------
-            print("    Step 2 - New Code")
-            d["results"]["(new_code, new_tests)"] = [[], [], []]
-            new_code, response = self.generator.generate_code(d, input_path, output_path)
-            #TODO overhaul code generation?
-            d["new_code"] = new_code
-            d["new_code_response"] = response
-            print("      execute new code (with new tests)")
+            d["results"] = {}
+            d["results"]["(code, new_tests)"] = [[],[],[]]
 
             d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
             d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
+            exec_results: ExecutionResults = self.executor.execute("code", "new_tests", d, input_path, output_path)
 
-            exec_results: ExecutionResults = self.executor.execute("new_code", "new_tests", d, input_path, output_path)
+            res1 = exec_results.results
+            comp_errors = exec_results.comp_errors
 
-            with open(output_path + "/log.txt", "a") as f:
-                f.write("Results after step 2\n")
+            with open(os.path.join(output_path , "log.txt"), "a") as f:
+                f.write("Results after step 1\n")
                 f.write(str(exec_results))
-
-            if exec_results is None:
-                res2 = [[], [], []]
-                comp_errors = None
-            else:
-                res2 = exec_results.results
-                comp_errors = exec_results.comp_errors
 
             d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
             d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
             if comp_errors:
-                comp_errors = comp_errors.replace( test_class_unique_name , test_class_real_name )
+                comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
 
-                with open(output_path + "/log.txt", "a") as f:
-                    f.write(f"Results after new Code execution:\n")
-                    f.write(str(exec_results))
+            evaluated = self.evaluate(res1)
 
-            evaluated2 = self.evaluate(res2)
+            # this is the compilation error loop.  so far hard coded number for tries.
+            current_repair_tries = 0
+            d["repair_history"] = []
+            for i in range(self.max_repair_tries):
+                # repair step
+                # if there were actually compiler errors with the tests:
+                if evaluated == 0 and comp_errors:
+                    current_repair_tries += 1
+                    print("      Try to generate repaired tests")
+                    with open(os.path.join(output_path , "log.txt"), "a") as f:
+                        f.write(f"start repair generation, trial {current_repair_tries}\n")
 
-            #TODO repair loop for code?
+                    repaired_tests, response_history = self.generator.repair_tests(d, input_path, output_path, comp_errors, 'new_tests')
+                    d["repair_history"].append(response_history)
 
-            #TODO  ask again if results are the same as before????
-            save_dicts_list_to_json([d], ana_path)
+                    old_tests_key = "tests_pre_repairstep_" + str(i + 1)
+                    d[old_tests_key] = d["new_tests"]
+                    d["new_tests"] = repaired_tests
 
-            amount_res2 = exec_results.results_numbers
-            d["results"]["(new_code, new_tests)"] = res2
 
-            if evaluated2 == 0:
+                    print("      execute repaired tests")
+
+                    d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
+                    d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
+
+                    with open(os.path.join(output_path , "log.txt"), "a") as f:
+                        f.write(f"execute repaired tests (trial {current_repair_tries})\n")
+
+                    exec_results: ExecutionResults = self.executor.execute("code", "new_tests", d, input_path, output_path)
+                    res1 = exec_results.results
+                    comp_errors = exec_results.comp_errors
+
+                    d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
+                    d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
+                    if comp_errors:
+                        comp_errors = comp_errors.replace(test_class_unique_name, test_class_real_name)
+
+                    with open(os.path.join(output_path, "log.txt"), "a") as f:
+                        f.write(f"Results after step 1 Repairstep: {current_repair_tries}\n")
+                        f.write(str(exec_results))
+
+                    evaluated = self.evaluate(res1)
+                    save_dicts_list_to_json([d], ana_path)
+
+
+            amount_res = exec_results.results_numbers
+            d["results"]["(code, new_tests)"] = res1
+
+            next_phase = False
+            if evaluated == 0:
                 # loggin ----------
-                with open(output_path + "/errors.txt", "a") as f:
-                    f.write(f"S2 Error in code?")
+                with open(os.path.join(output_path, "errors.txt"), "a") as f:
+                    f.write(f"S1 Error in tests")
                     f.write(f"{str(res1)}")
                     f.write("------\nTests:\n")
                     f.write(f"{d["new_tests"]}\n")
@@ -259,56 +187,132 @@ class DatasetAnalysis(Analysis):
                         f.write("\n-------\nNo Compiler errors.  check log\n")
                     f.write("-----------------------\n")
 
-                output_string = f"NoInco; error; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
-                metric_lengths = ""
+                output_string = f"NoInco; error; step 1 (C +T'); {str(amount_res)}; ; "
+                print(output_string)
+
+            elif evaluated == 1:
+                output_string = f"NoInco; pass; step 1 (C +T'); {str(amount_res)}; ; "
                 print(output_string)
 
             else:
-                # calculate the new improved metrix for checking out if something is a positive or not.
-                r1 = [d["results"]["(code, new_tests)"][0],
-                      d["results"]["(code, new_tests)"][1] + d["results"]["(code, new_tests)"][2]]
-                r2 = [d["results"]["(new_code, new_tests)"][0],
-                      d["results"]["(new_code, new_tests)"][1] + d["results"]["(new_code, new_tests)"][2]]
+                next_phase = True
+            save_dicts_list_to_json([d], ana_path)
 
-                metric = {"p2p": [], "f2f": [], "p2f": [], "f2p": []}
+            if next_phase:
+                # generate new code  -----------------------------------------------------------------------------------------------
+                print("    Step 2 - New Code")
+                d["results"]["(new_code, new_tests)"] = [[], [], []]
+                new_code, response = self.generator.generate_code(d, input_path, output_path)
+                #TODO overhaul code generation?
+                d["new_code"] = new_code
+                d["new_code_response"] = response
+                print("      execute new code (with new tests)")
 
-                for i in r1[0]:
-                    if i in r2[0]:
-                        metric["p2p"].append(i)
-                    elif i in r2[1]:
-                        metric["p2f"].append(i)
-                for i in r1[1]:
-                    if i in r2[0]:
-                        metric["f2p"].append(i)
-                    elif i in r2[1]:
-                        metric["f2f"].append(i)
-                d["metric"] = metric
+                d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
+                d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
 
+                exec_results: ExecutionResults = self.executor.execute("new_code", "new_tests", d, input_path, output_path)
+
+                with open(os.path.join(output_path, "log.txt"), "a") as f:
+                    f.write("Results after step 2\n")
+                    f.write(str(exec_results))
+
+                if exec_results is None:
+                    res2 = [[], [], []]
+                    comp_errors = None
+                else:
+                    res2 = exec_results.results
+                    comp_errors = exec_results.comp_errors
+
+                d["new_tests"] = d["new_tests"].replace(test_class_unique_name, test_class_real_name)
+                d["test_file_path"] = d["test_file_path"].replace(test_class_unique_name, test_class_real_name)
+                if comp_errors:
+                    comp_errors = comp_errors.replace( test_class_unique_name , test_class_real_name )
+
+                    with open(os.path.join(output_path, "log.txt"), "a") as f:
+                        f.write(f"Results after new Code execution:\n")
+                        f.write(str(exec_results))
+
+                evaluated2 = self.evaluate(res2)
+
+                #TODO repair loop for code?
+
+                #TODO  ask again if results are the same as before????
                 save_dicts_list_to_json([d], ana_path)
-                metric_lengths = ", ".join(f"{k}: {len(v)}" for k, v in metric.items())
 
-                if evaluated == 1:
-                    output_string = f"INCO; pass; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                amount_res2 = exec_results.results_numbers
+                d["results"]["(new_code, new_tests)"] = res2
+
+                if evaluated2 == 0:
+                    # loggin ----------
+                    with open(os.path.join(output_path, "errors.txt"), "a") as f:
+                        f.write(f"S2 Error in code?")
+                        f.write(f"{str(res1)}")
+                        f.write("------\nTests:\n")
+                        f.write(f"{d["new_tests"]}\n")
+                        f.write("------\nCode:\n")
+                        f.write(d["code"])
+                        if comp_errors:
+                            f.write("\n------\nCompiler errors:\n")
+                            f.write(comp_errors)
+                        else:
+                            f.write("\n-------\nNo Compiler errors.  check log\n")
+                        f.write("-----------------------\n")
+
+                    output_string = f"NoInco; error; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                    metric_lengths = ""
+                    print(output_string)
 
                 else:
-                    if len(metric["f2p"]) > 0 and len(metric["p2f"]) == 0:
-                        output_string = f"INCO; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                    # calculate the new improved metrix for checking out if something is a positive or not.
+                    r1 = [d["results"]["(code, new_tests)"][0],
+                          d["results"]["(code, new_tests)"][1] + d["results"]["(code, new_tests)"][2]]
+                    r2 = [d["results"]["(new_code, new_tests)"][0],
+                          d["results"]["(new_code, new_tests)"][1] + d["results"]["(new_code, new_tests)"][2]]
+
+                    metric = {"p2p": [], "f2f": [], "p2f": [], "f2p": []}
+
+                    for i in r1[0]:
+                        if i in r2[0]:
+                            metric["p2p"].append(i)
+                        elif i in r2[1]:
+                            metric["p2f"].append(i)
+                    for i in r1[1]:
+                        if i in r2[0]:
+                            metric["f2p"].append(i)
+                        elif i in r2[1]:
+                            metric["f2f"].append(i)
+                    d["metric"] = metric
+
+                    save_dicts_list_to_json([d], ana_path)
+                    metric_lengths = ", ".join(f"{k}: {len(v)}" for k, v in metric.items())
+
+                    if evaluated == 1:
+                        output_string = f"INCO; pass; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+
                     else:
-                        output_string = f"NoInco; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                        if len(metric["f2p"]) > 0 and len(metric["p2f"]) == 0:
+                            output_string = f"INCO; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
+                        else:
+                            output_string = f"NoInco; fail; step 2 (C'+T'); {str(amount_res)}; {str(amount_res2)}"
 
-            print(output_string)
-            output_string += f"; {metric_lengths}"
+                print(output_string)
+                output_string += f"; {metric_lengths}"
 
 
-        save_dicts_list_to_json([d], ana_path)
-        with open(output_path + "/result.txt", "w") as f:
-            output_string+= f"; {str("og tests exist" if "tests" in d else " no og tests")}; {current_repair_tries}"
-            f.write(output_string)
-            print("result:" , output_string)
+            save_dicts_list_to_json([d], ana_path)
+            with open(os.path.join(output_path, "result.txt"), "w") as f:
+                output_string+= f"; {str("og tests exist" if "tests" in d else " no og tests")}; {current_repair_tries}"
+                f.write(output_string)
+                print("result:" , output_string)
+
+        except Exception as e:
+            with open(os.path.join(output_path, "errors.txt"), "a") as f:
+                f.write(str(e) + "\n\n")
+                traceback.print_exc(file=f)
 
 
         self.executor.tear_down(data)
-    # TODO change all the 'with opens' to use os.path.join
 
     def evaluate(self, res):
         if res[0] == [] and res[1] == [] and res[2] == []:
