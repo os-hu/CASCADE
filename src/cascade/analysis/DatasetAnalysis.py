@@ -57,8 +57,8 @@ class DatasetAnalysis(Analysis):
         # take the one element that is targeted here and make sure everything we need is there.
         print("prepare Data")
         try:
-            d = self.prepare_data(data[0], input_path, output_path)
-            save_dicts_list_to_json([d], ana_path)
+            #d = self.prepare_data(data[0], input_path, output_path)
+            #save_dicts_list_to_json([d], ana_path)
             print(d["test_file_path"])
             print(d["junit_version"])
 
