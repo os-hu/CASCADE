@@ -63,7 +63,7 @@ class DatasetAnalysis(Analysis):
             print(d["junit_version"])
 
         except Exception as e:
-            with open(output_path + "/bigerror.txt", "w") as f:
+            with open(output_path + "/errors.txt", "a") as f:
                 f.write(str(e) + "\n\n")
                 traceback.print_exc(file=f)
 
