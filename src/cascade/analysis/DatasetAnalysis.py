@@ -59,6 +59,8 @@ class DatasetAnalysis(Analysis):
         try:
             d = self.prepare_data(data[0], input_path, output_path)
             save_dicts_list_to_json([d], ana_path)
+            print(d["test_file_path"])
+            print(d["junit_version"])
 
         except Exception as e:
             with open(output_path + "/bigerror.txt", "w") as f:
