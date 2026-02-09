@@ -3,6 +3,7 @@ import re
 import shutil
 import tempfile
 from datetime import datetime
+import traceback
 
 from cascade.analysis.Analysis import Analysis
 from cascade.analysis.executor.Execution import Execution
@@ -54,9 +55,17 @@ class DatasetAnalysis(Analysis):
             f.write("NoInco; error; ; ; ; ; ; ")
 
         # take the one element that is targeted here and make sure everything we need is there.
-        #print("prepare Data")
-        #d = self.prepare_data(data[0], input_path, output_path)
-        #return
+        print("prepare Data")
+        try:
+            d = self.prepare_data(data[0], input_path, output_path)
+            save_dicts_list_to_json([d], ana_path)
+
+        except Exception as e:
+            with open(output_path + "/bigerror.txt", "w") as f:
+                f.write(str(e) + "\n\n")
+                traceback.print_exc(file=f)
+
+        return
 
         if d is None:
             return
