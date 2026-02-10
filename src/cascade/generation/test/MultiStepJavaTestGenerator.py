@@ -144,7 +144,7 @@ class MultiStepJavaTestGenerator(Generator):
         prompt_step2.append(response_step2a["choices"][0]["message"])
 
         # TODO test if this step is actually improving things or not.
-        prompt_step2.append({"role": "user", "content": "Make sure that this class compiles without errors. Check if everything that is used is imported correctly and all exceptions are properly caught. Replay with the corrected class"})
+        prompt_step2.append({"role": "user", "content": "Make sure that this class compiles without errors. Check if everything that is used is imported correctly and all exceptions are properly caught. Reply with the corrected class"})
 
         # calls = re.findall(r"new (.*?)\(", new_tests, flags=re.DOTALL)
         # if calls:
@@ -218,7 +218,7 @@ class MultiStepJavaTestGenerator(Generator):
         else:
             print("      no code block could be extracted for generated Tests")
             errors_path = os.path.join(output_path, "errors.txt")
-            with open(errors_path, "w") as f:
+            with open(errors_path, "a") as f:
                 f.write(f"Could not get tests from response:\n{response}")
 
 
