@@ -55,19 +55,19 @@ class DatasetAnalysis(Analysis):
             f.write("NoInco; error; ; ; ; ; ; ")
 
         # take the one element that is targeted here and make sure everything we need is there.
-        # print("prepare Data")
-        # try:
-        #     d = self.prepare_data(data[0], input_path, output_path)
-        #     save_dicts_list_to_json([d], ana_path)
-        #     print(d["test_file_path"])
-        #     print(d["junit_version"])
-        #
-        # except Exception as e:
-        #     with open(output_path + "/errors.txt", "a") as f:
-        #         f.write(str(e) + "\n\n")
-        #         traceback.print_exc(file=f)
-        #
-        # return
+        print("prepare Data")
+        try:
+            d = self.prepare_data(data[0], input_path, output_path)
+            save_dicts_list_to_json([d], ana_path)
+            print(d["test_file_path"])
+            print(d["junit_version"])
+
+        except Exception as e:
+            with open(output_path + "/errors.txt", "a") as f:
+                f.write(str(e) + "\n\n")
+                traceback.print_exc(file=f)
+
+        return
 
         if d is None:
             return
