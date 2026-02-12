@@ -103,12 +103,10 @@ class DockerizedWrapper:
         try:
             if images:
                 self.remove_image(dock_context)
-        except Exception as e:
-            print(f"Couldn't remove image because of Exception: {e}")
-        finally:
             container = self.set_up(dock_context)
             exit_code = self.run(container, dock_context, output_path)
             container.commit(dock_context["new_image"])
+            finally:
             if container:
                 self.kill(container)
             return exit_code
