@@ -97,7 +97,9 @@ class DatasetAnalysis(Analysis):
             else:
                 print("      new tests already generated")
 
+            print("DatasetAnalysis: set up executor")
             self.executor.set_up(data, input_path, output_path)
+
 
             print("      execute new tests")
 

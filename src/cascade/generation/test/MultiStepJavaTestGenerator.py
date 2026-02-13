@@ -144,7 +144,7 @@ class MultiStepJavaTestGenerator(Generator):
         prompt_step2.append(response_step2a["choices"][0]["message"])
 
         # TODO test if this step is actually improving things or not.
-        prompt_step2.append({"role": "user", "content": "Make sure that this class compiles without errors. Check if everything that is used is imported correctly and all exceptions are properly caught. Reply with the corrected class"})
+        prompt_step2.append({"role": "user", "content": "Make sure that this class compiles without errors. Check if everything that is used is imported correctly and all exceptions are properly caught. Reply with the correct class only"})
 
         # calls = re.findall(r"new (.*?)\(", new_tests, flags=re.DOTALL)
         # if calls:
@@ -169,7 +169,7 @@ class MultiStepJavaTestGenerator(Generator):
                 f.write("Negative, No syntactically correct test class generated")
             with open(errors_path, "w") as f:
                 f.write(f"No syntactically correct test class generated \nResponse text:\n{response_text}")
-
+        print("      Test generation finished")
         return new_tests, chat_history
 
 

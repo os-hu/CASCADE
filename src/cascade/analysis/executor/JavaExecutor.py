@@ -47,7 +47,6 @@ class JavaExecutor(AnalysisExecutor):
                 json.dump(context, json_entry)
 
             my_path = os.path.dirname(__file__)
-            print("JavaExecutor: execute") #deletelater
             p = subprocess.run(
                 ["java", "-jar", os.path.join(my_path, "..", "..", "resources", "tools", "JavaExtractor.jar"),
                  "mod",  #modification mode
@@ -75,12 +74,9 @@ class JavaExecutor(AnalysisExecutor):
             if self.debug:
                 print(p.stdout)
 
-            print("JavaExecutor: execute finished, start dockerizedwrapper") #deletelater
             dock_ex = DockerizedWrapper(debug=self.debug)
 
             test_command = (self.builder.test_pattern.replace('%t', "THIS_IS_A_UNIQUE_NAME_Test"))
-            print("java executor: test command: ", test_command) #deletelater
-            print("javaExecutor: builder image: ", self.builder.image) #deletelater
             dock_context = {
                 "image" : self.builder.image,
                 "directory" : temp_dir,
@@ -100,8 +96,6 @@ class JavaExecutor(AnalysisExecutor):
         Set up the environment for the execution of the Java tests.
         This is useful to use if several tests from the same project will be executed, to save time.
         """
-        context = data[0]
-        print("JavaExecutor: set_up") #deletelater
         with tempfile.TemporaryDirectory() as temp_dir:
             try:
                 shutil.copytree(input_path, temp_dir, dirs_exist_ok=True)
@@ -114,8 +108,8 @@ class JavaExecutor(AnalysisExecutor):
                 return self.builder.set_up(temp_dir, input_path, input_path)
         return False
 
+
     def tear_down(self, data):
-        print("java executor: tear_down") #deletelater
         context = data[0]
 
         if self.builder:

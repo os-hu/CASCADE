@@ -53,23 +53,19 @@ class DockerizedWrapper:
 
 
     def set_up(self, dock_context: dict):
-        print("DockerizedWrapper: setup with image", dock_context.get("image", "---")) #deletelater
         client = docker.from_env(timeout=300)
         container = client.containers.run(dock_context["image"], "tail -f /dev/null", detach=True)
         if "directory" in dock_context:
-            print("DockerizedWrapper: directory in context: ", dock_context.get("directory", "---")) #deletelater
             buffer = io.BytesIO()
             with tarfile.open(mode="w", fileobj=buffer) as tar:
                 tar.add(dock_context["directory"], arcname="")
 
             buffer.seek(0)
             container.put_archive("/root/", buffer)
-        print("DockerizedWrapper: setup finished") #deletelater
         return container
 
 
     def run(self, container: Container, dock_context: dict, path):
-        print("DockerizedWrapper: run with image", dock_context.get("image", "---"))
         res = container.exec_run('bash -c - "cd ~; ' + dock_context["command"].replace('"', "\\\"") + '"')
         with open(os.path.join(path, "log.txt"), "a") as file:
             file.write("Command: " + dock_context["command"] + "\n")
@@ -79,12 +75,10 @@ class DockerizedWrapper:
             print("Command:", dock_context["command"])
             print(res.exit_code)
             print(str(res.output, "utf-8"))
-            print("DockerizedWrapper: finished run with image", dock_context.get("image", "---"))
         return res.exit_code == 0
 
 
     def eval(self, container: Container, dock_context: dict, path):
-        print("DockerizedWrapper: eval with image", dock_context.get("image", "---"))
         res = container.exec_run('bash -c - "cd ~; ' + dock_context["eval_command"].replace('"', "\\\"") + '"')
         with open(os.path.join(path, "log.txt"), "a") as file:
             file.write("Eval Command: " + dock_context["eval_command"] + "\n")
@@ -93,7 +87,6 @@ class DockerizedWrapper:
         if self.debug:
             print(res.exit_code)
             print(str(res.output, "utf-8"))
-        print("DockerizedWrapper: finished eval with image", dock_context.get("image", "---"))
         return dock_context["eval_function"](str(res.output, "utf-8"))
 
 
@@ -103,7 +96,6 @@ class DockerizedWrapper:
 
 
     def setup_image(self, dock_context: dict, output_path: str):
-        print("DockerizedWrapper: setup_image with image", dock_context.get("image", "---"), "and new_image", dock_context.get("new_image", "---"))
         container = None
         client = docker.from_env(timeout=300)
         images = client.images.list(dock_context["new_image"])
@@ -117,12 +109,10 @@ class DockerizedWrapper:
         finally:
             if container:
                 self.kill(container)
-        print("DockerizedWrapper: finished setup_image with image", dock_context.get("image", "---") , "and new_image", dock_context.get("new_image", "---"))
         return exit_code
 
 
     def remove_image(self, dock_context: dict):
-        print("DockerizedWrapper: remove_image with image", dock_context.get("image", "---"), "and new_image", dock_context.get("new_image", "---"))
         client = docker.from_env(timeout=300)
         try:
             image_name = dock_context["new_image"]
@@ -134,7 +124,6 @@ class DockerizedWrapper:
             client.images.remove(image_name, force=True)  # Now remove the image
         except Exception as e:
             print(f"Could not remove image because of Exception: {e}")
-        print("DockerizedWrapper: finsih remove_iamge with image", dock_context.get("image", "---"), "and new_image", dock_context.get("new_image", "---"))
 
     def copy(self, container: Container, dock_context: dict, path):
         bits, stat = container.get_archive(dock_context['path'])
