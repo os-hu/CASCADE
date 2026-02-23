@@ -533,8 +533,8 @@ class JavaTwoStepAnalysis(Analysis):
             print("extracting Junit version")
             junit_version, source_dir, test_source_dir = extract_maven_information()
             if junit_version is None:
-                print("could not extract junit version from maven project. Probably is Junit 5\n")
-                junit_version = "5.0"
+                print("could not extract junit version from maven project. Probably is Junit 4.13.2\n")  #5
+                junit_version = "4.13.2" #"5.0"
             print(f"Used Junit Version: {junit_version}")
 
         else :

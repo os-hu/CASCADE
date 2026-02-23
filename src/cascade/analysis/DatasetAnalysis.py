@@ -97,7 +97,7 @@ class DatasetAnalysis(Analysis):
             else:
                 print("      new tests already generated")
 
-            print("DatasetAnalysis: set up executor")
+            print("      Set Up Test-Executor-Docker")
             self.executor.set_up(data, input_path, output_path)
 
 
