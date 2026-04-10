@@ -12,10 +12,4 @@ class Analysis(ABC):
 
     @abstractmethod
     def analyze(self, data, input_path, output_path):
-        """
-        TODO
-        :param data:
-        :param input_path:
-        :param output_path:
-        """
         pass

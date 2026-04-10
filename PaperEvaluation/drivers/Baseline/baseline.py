@@ -9,7 +9,6 @@ def makeModelRequest(promptList, max_tokens=1200, temperature=0, freq_penalty=0.
     if "OPENAI_API_KEY" in os.environ:
         api_key = os.environ["OPENAI_API_KEY"]
     else:
-        # TODO
         raise Exception("No api key in environment")
 
     client = OpenAI(api_key=api_key)

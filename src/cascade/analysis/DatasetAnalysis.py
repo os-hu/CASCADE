@@ -190,7 +190,7 @@ class DatasetAnalysis(Analysis):
                 print("    Step 2 - New Code")
                 d["results"]["(new_code, new_tests)"] = [[], [], []]
                 new_code, response = self.generator.generate_code(d, input_path, output_path)
-                #TODO overhaul code generation?
+
                 d["new_code"] = new_code
                 d["new_code_response"] = response
                 print("      execute new code (with new tests)")

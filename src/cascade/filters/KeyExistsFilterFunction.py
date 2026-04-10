@@ -4,10 +4,6 @@ from cascade.utils.Utils import get_value_from_context
 
 class KeyExistsFilterFunction(FilterFunction):
     def __init__(self, key):
-        """
-        TODO
-        """
-
         super().__init__()
         self.key = key
         self.found = False

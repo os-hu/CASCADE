@@ -196,7 +196,7 @@ class GPT4JavaTestGenerator(Generator):
         if braces == 2:
             check = chunk
             if check_syntax(check, "class", output_path):
-                return check   # TODO This seems to be the grand majority now.
+                return check
             check = self.build_tests(context) + chunk[chunk.find("{") + 1:] + "}"
             if check_syntax(check, "class", output_path):
                 return check
@@ -223,7 +223,6 @@ class GPT4JavaTestGenerator(Generator):
     def repair(self, context, input_path, output_path, errors, key):
         tools = get_repair_helper_functions()
 
-        # TODO could be excluded into a tool call as well?
         tree = subprocess.check_output(["tree", "-P", "*.java", "--charset=ascii", input_path]).decode("utf-8")
 
         system_prompt = "You are an expert Java developer. Fix compilation errors in the provided test class. Use tools to find out more about classes instead of making assumptions."

@@ -10,7 +10,6 @@ class EmptyGenerator(Generator):
 
     def generate(self, context, input_path, output_path):
         """
-        TODO
         :param input_path:
         """
         return None

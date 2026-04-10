@@ -51,8 +51,6 @@ class JavaExtraction(Extraction):
         for e in extracted:
             e["id"] = count
             count += 1
-
-            # TODO remove this later when it is fixed in the jar
             del e["root_path"]
 
 

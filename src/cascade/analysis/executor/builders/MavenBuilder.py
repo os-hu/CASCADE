@@ -5,6 +5,22 @@ from cascade.utils.DockerizedWrapper import DockerizedWrapper
 import xml.etree.ElementTree as ET
 
 class MavenBuilder(Builder):
+    """Build/test executor for Maven projects running inside Docker.
+
+    `MavenBuilder` wires three concerns together:
+
+    - It defines the shell command template used by `Builder` to run selected
+      tests (`-Dtest="%t"`) with a timeout.
+    - It captures both Maven console output and Surefire XML report content into
+      one stream so `eval_function` can parse summary and per-test outcomes.
+    - It manages a temporary derived Docker image used during analysis
+      (`set_up`) and cleans it up afterwards (`tear_down`).
+
+    Parsing is intentionally tolerant: compilation errors and test summaries are
+    extracted with regexes, and XML parsing errors are treated as non-fatal so
+    callers still receive partial `ExecutionResults`.
+    """
+
     def __init__(self, new_image_name, maven_args, set_up_maven_command, set_up_maven_args, image, timeout=300):
         super().__init__(
             #test_pattern = f"echo \"[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0\" > out; timeout {timeout} mvn test {maven_args} -Dtest=\"%t\" -DfailIfNoTests=false -Dsurefire.reportsDirectory=target/surefire-reports > output 2>&1; cat output > out; cat target/surefire-reports/TEST-*.xml >> out; cat output",
@@ -27,15 +43,23 @@ class MavenBuilder(Builder):
 
     def eval_function(self, x):
         """
-        An implementation of the function that has to be given to a builder to evaluate the output of the tests.
-        :param x: a string containing the output produced in the docker,
-                    which should contain the output of the tests which are then parsed here.
-        :return: result, a class of TODO ...
-            first a three-tuple of lists of strings,
-                the first list contains the names of the tests that passed,
-                the second list contains the names of the tests that failed,
-                the third list contains the names of the tests that errored
-            second a string containing any (compilation) errors that happened during execution or 'None' if none occurred
+        Parse combined Maven/Surefire output into an `ExecutionResults` object.
+
+        The expected input is the exact command output produced by this builder's
+        `test_pattern`: Maven logs plus concatenated `TEST-*.xml` files.
+
+        Parsing is performed in stages:
+
+        1. Detect compilation errors in Maven logs.
+        2. Extract the aggregate test summary line (`Tests run: ...`).
+        3. Parse Surefire XML blocks to identify passed/failed/errored test names.
+
+        If no summary line is found, the method returns early with only the
+        fields gathered so far. XML parsing failures are logged and ignored, so
+        callers can still inspect partial data from `ExecutionResults`.
+
+        :param x: Full stdout/stderr text captured from container execution.
+        :return: Populated `ExecutionResults` instance.
         """
         results = ExecutionResults()
         results.parsed_file = x
@@ -108,10 +132,17 @@ class MavenBuilder(Builder):
 
     def set_up(self, temp_dir, _, output_path):
         """
-        Sets up the environment for execution. Should be called once in the beginning of the Analysis
-        :param temp_dir:
-        :param output_path:
-        :return: The
+        Create the temporary Docker image used for Maven test execution.
+
+        The setup command runs inside the base image (`self.old_image_name`) and
+        can be used for actions such as dependency pre-fetching or project
+        preparation. The resulting image is stored as `self.image` for subsequent
+        test runs.
+
+        :param temp_dir: Directory mounted into Docker as execution context.
+        :param _: Unused placeholder to satisfy the builder interface.
+        :param output_path: Path where setup logs/artifacts are written.
+        :return: Wrapper-specific setup result from `DockerizedWrapper.setup_image`.
         """
         wrapper = DockerizedWrapper()
         dock_context = {
@@ -124,6 +155,7 @@ class MavenBuilder(Builder):
 
 
     def tear_down(self, _):
+        """Remove the temporary Docker image created during `set_up`."""
         wrapper = DockerizedWrapper()
         dock_context = {
             "new_image": self.image,

@@ -13,7 +13,7 @@ class AnalysisExecutor(ABC):
         :param tests:
         :param context:
 
-        :return: TODO
+        :return:
         """
         pass
 
