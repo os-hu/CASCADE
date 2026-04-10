@@ -1,8 +1,11 @@
 
 ## 1  Overview
+This folder cotnains everythign needed to reproduce the reustls, tables and graphs for our 2026 FSE Paper: 
+"Cascade: Detecting Inconsistencies between Code and Documentation with Automatic Test Generation"
 
 The code is organized so that you can either **re-run the complete benchmark end-to-end** (Section 3) or 
 **inspect the pre-computed results** shown in the paper (for that skip to Section 4).
+
 The main tool of our work is CASCADE, but for the benchmark we also compare it to several baselines. 
 Some basic LLM baselines and the existing tools DocChecker [1] and C4RLLaMA [2].
 
@@ -190,14 +193,14 @@ This prints the results for RQ1 and RQ2. RQ3 has no disclosable results other th
 ---
 
 
-## 6  Troubleshooting & FAQ
+## 5  Troubleshooting & FAQ
 
 * **Tree-sitter fails to compile** – ensure you have a C toolchain (`gcc` / `clang`) installed.
 * **CUDA not found** – use the CPU fallback shown in Section 4.2.
-* **OPENAI\_API\_KEY not picked up** – confirm the openai key is exported *in the same shell session* that runs `run.sh`.
+* **OPENAI_API_KEY not picked up** – confirm the openai key is exported *in the same shell session* that runs `run.sh`.
 
 ---
 
 
-[1] 
-[2]
+[1] Dau, Anh, et al. "Docchecker: Bootstrapping code large language model for detecting and resolving code-comment inconsistencies." Proceedings of the 18th Conference of the European Chapter of the Association for Computational Linguistics: System Demonstrations. 2024.
+[2] Rong, Guoping, et al. "Code comment inconsistency detection and rectification using a large language model." Proceedings of the IEEE/ACM 47th International Conference on Software Engineering. 2025.

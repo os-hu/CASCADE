@@ -32,11 +32,11 @@ class Pipeline():
         if not os.path.exists(os.path.join(output_path, "analyzed.json")):
             print("Extraction started")
             data = self.extraction.extract(input_path, output_path)
-            print("Extraction finished", len(data))
+            print("Extraction finished. Extracted: ", len(data))
 
             print("Filtering started")
             filtered_data = self._filter.filter_all(data)
-            print("Filtering finished", len(filtered_data))
+            print("Filtering finished. Remaining: ", len(filtered_data))
 
         else:
             print("Found analyzed results, will skip extraction and filtering")

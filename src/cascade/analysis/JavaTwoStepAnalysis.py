@@ -52,22 +52,8 @@ class JavaTwoStepAnalysis(Analysis):
                 f.write(header + "\n")
                 f.write(message+ "\n")
 
-        # TODO refactor and actually use these...
-        def has_nonempty(dct, key: str) -> bool:
-            return key in dct and isinstance(dct[key], str) and dct[key].strip() != ""
-
         def has_results(dct, results_key: str) -> bool:
             return "results" in dct and results_key in dct["results"] and dct["results"][results_key] not in (None, [], [[], [], []])
-
-        def should_generate(dct, key: str) -> bool:
-            # regenerate forces regeneration
-            return self.regenerate or (key not in dct)
-
-        def should_execute(dct, results_key: str) -> bool:
-            # reexecute forces execution
-            return self.reexecute or (not has_results(dct, results_key))
-
-
 
 
         print(f"analyzing {len(data)} elements")
@@ -145,7 +131,7 @@ class JavaTwoStepAnalysis(Analysis):
                     evaluated = self.evaluate(res1)
 
                     # this is the compilation error loop.  so far hard coded number for tries.
-                    # TODO  currently it is allways regenerating tests if they have compiler errors even if regenerate == False
+                    # currently it is allways regenerating tests if they have compiler errors even if regenerate == False
                     d["repair_history"] = []
                     for i in range(self.max_repair_tries):
                         # repair step
@@ -212,7 +198,7 @@ class JavaTwoStepAnalysis(Analysis):
                             d["results"]["(new_code, new_tests)"] = [[], [], []]
                             print("      generate new code")
                             new_code, response = self.generator.generate_code(d, input_path, output_path)
-                            #TODO overhaul code generation?
+
                             d["new_code"] = new_code
                             d["new_code_response"] = response
 
@@ -302,6 +288,24 @@ class JavaTwoStepAnalysis(Analysis):
                 if idx % 10 == 0:
                     with open(os.path.join(output_path, "analyzed.json"), "w") as f:
                         f.write(json.dumps(data))
+                    save_dicts_list_to_json(
+                        [
+                            {
+                                "id": item.get("id"),
+                                "file_name": os.path.basename(item.get("code_file_path", "")),
+                                "file_path": item.get("code_file_path"),
+                                "class_name": item.get("parent", {}).get("name"),
+                                "function_name": item.get("signature", {}).get("name"),
+                                "full_function_signature": build_signature(item, doc=False),
+                                "verdict": item.get("verdict"),
+                                "failed_testcases": list((item.get("results", {}).get("(new_code, new_tests)") or item.get("results", {}).get("(code, new_tests)") or [[], [], []])[1]),
+                                "errored_testcases": list((item.get("results", {}).get("(new_code, new_tests)") or item.get("results", {}).get("(code, new_tests)") or [[], [], []])[2]),
+                                "failing_testcases": list((item.get("results", {}).get("(new_code, new_tests)") or item.get("results", {}).get("(code, new_tests)") or [[], [], []])[1]) + list((item.get("results", {}).get("(new_code, new_tests)") or item.get("results", {}).get("(code, new_tests)") or [[], [], []])[2]),
+                            }
+                            for item in data if item.get("verdict", "").startswith("INCO")
+                        ],
+                        os.path.join(output_path, "inconsistent_functions.json")
+                    )
 
 
 
@@ -314,6 +318,24 @@ class JavaTwoStepAnalysis(Analysis):
             self.executor.tear_down(data)
             #save final results
             save_dicts_list_to_json(data, os.path.join(output_path, "analyzed.json"))
+            save_dicts_list_to_json(
+                [
+                    {
+                        "id": item.get("id"),
+                        "file_name": os.path.basename(item.get("code_file_path", "")),
+                        "file_path": item.get("code_file_path"),
+                        "class_name": item.get("parent", {}).get("name"),
+                        "function_name": item.get("signature", {}).get("name"),
+                        "full_function_signature": build_signature(item, doc=False),
+                        "verdict": item.get("verdict"),
+                        "failed_testcases": list((item.get("results", {}).get("(new_code, new_tests)") or item.get("results", {}).get("(code, new_tests)") or [[], [], []])[1]),
+                        "errored_testcases": list((item.get("results", {}).get("(new_code, new_tests)") or item.get("results", {}).get("(code, new_tests)") or [[], [], []])[2]),
+                        "failing_testcases": list((item.get("results", {}).get("(new_code, new_tests)") or item.get("results", {}).get("(code, new_tests)") or [[], [], []])[1]) + list((item.get("results", {}).get("(new_code, new_tests)") or item.get("results", {}).get("(code, new_tests)") or [[], [], []])[2]),
+                    }
+                    for item in data if item.get("verdict", "").startswith("INCO")
+                ],
+                os.path.join(output_path, "inconsistent_functions.json")
+            )
 
         # end: if not just analyze
 
@@ -367,7 +389,7 @@ class JavaTwoStepAnalysis(Analysis):
                 continue
             print(d["signature"]["name"] , "\t", d["verdict"])
 
-            # help function.  TODO delete later.
+            # help function.
             if "repairsteps" not in d:
                 if "tests_pre_repairstep_3" in d:
                     d["repairsteps"] = 3
@@ -436,7 +458,7 @@ class JavaTwoStepAnalysis(Analysis):
         for key, value in repair_stats.items():
             print(f"{key}: {value}")
 
-
+        print("Incos:")
         for d in incos:
             print("--------------------------------------------------------")
             print(d["signature"]["name"])
@@ -445,8 +467,6 @@ class JavaTwoStepAnalysis(Analysis):
 
             print( build_signature(d, doc=True) )
             print(d["code"])
-
-
 
 
     def evaluate(self, res):
@@ -469,7 +489,7 @@ class JavaTwoStepAnalysis(Analysis):
         This function prepares the data for the analysis.
         It will check if the data is complete based on the first element and if not it will try to extract the missing information,
         like the junit version and the test file path.
-        TODO should be improved to better find different version. Defaulting to Junit5 instead of finding it directly might lead to wrong cases.
+        Note: Defaulting to Junit5 instead of finding it directly might lead to wrong cases.
         """
         # Helper function ----------------------------------------
         def extract_maven_information():
@@ -499,16 +519,37 @@ class JavaTwoStepAnalysis(Analysis):
                 # Search for JUnit dependency
                 # Define namespaces, if they exist in the pom.xml
                 namespaces = {'m': 'http://maven.apache.org/POM/4.0.0'}  # Default Maven namespace
+                detected_major = 0
+
+                def maybe_set_version(version_node, major, default_if_missing=None):
+                    nonlocal junit_version, detected_major
+                    if major < detected_major:
+                        return
+                    if version_node is not None and version_node.text:
+                        junit_version = version_node.text
+                    elif default_if_missing is not None:
+                        junit_version = default_if_missing
+                    else:
+                        junit_version = "JUnit Version not specified"
+                    detected_major = major
+
                 for dependency in root.findall(".//m:dependency", namespaces):
                     group_id = dependency.find("m:groupId", namespaces)
                     artifact_id = dependency.find("m:artifactId", namespaces)
                     if group_id is not None and artifact_id is not None:
-                        if group_id.text == "junit" and artifact_id.text == "junit":
-                            version = dependency.find("m:version", namespaces)
-                            if version is not None:
-                                junit_version = version.text
-                            else:
-                                junit_version = "JUnit Version not specified"
+                        version = dependency.find("m:version", namespaces)
+                        gid = (group_id.text or "").strip()
+                        aid = (artifact_id.text or "").strip()
+
+                        # JUnit 5 (Jupiter)
+                        if gid == "org.junit.jupiter" and aid.startswith("junit-jupiter"):
+                            maybe_set_version(version, major=5, default_if_missing="5.0")
+                        # JUnit 5 via platform artifacts
+                        elif gid == "org.junit.platform":
+                            maybe_set_version(version, major=5, default_if_missing="5.0")
+                        # Legacy JUnit 4
+                        elif gid == "junit" and aid == "junit":
+                            maybe_set_version(version, major=4)
 
                 # Extract source and test source directories
                 build = root.find(".//m:build", namespaces)
@@ -533,8 +574,8 @@ class JavaTwoStepAnalysis(Analysis):
             print("extracting Junit version")
             junit_version, source_dir, test_source_dir = extract_maven_information()
             if junit_version is None:
-                print("could not extract junit version from maven project. Probably is Junit 4.13.2\n")  #5
-                junit_version = "4.13.2" #"5.0"
+                print("could not extract junit version from maven project. Falling back to Junit 5.0\n")
+                junit_version = "5.0"
             print(f"Used Junit Version: {junit_version}")
 
         else :

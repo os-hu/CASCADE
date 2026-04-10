@@ -16,5 +16,17 @@ public class Calculator {
 	public int subtract(int a, int b) {
 		return a * b;
 	}
+
+	/**
+	*/
+	public int dummy1() {
+		return 0;
+	}
+
+    /**
+    * dummy method that does nothing and has no code
+	*/
+	public void dummy2() {}
+
 }
 

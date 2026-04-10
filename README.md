@@ -63,15 +63,15 @@ Create a virtual environment:
 python3 -m venv cascade.venv
 ```
 
-If you are inside the main CASCADE folder (on one level with src and setup.py) install it with:
+If you are inside the main CASCADE folder (on one level with src and setup.py) install it directly into the venv with:
 
 ```bash
 ./cascade.venv/bin/pip install .
 ```
 
-CASCADE requires an OpenAI key in the environment. 
-Even if you do not plan to use LLM-based analysis, the key is still required for some of the generators, 
-which are used in some of the analyses use "dummy" as a key then
+CASCADE requires an OpenAI key in the environment.
+Even if you do not plan to use an LLM-based analysis, the key is still needed for some generator-based workflows.
+If you only want to do a local smoke test, you can set a dummy value.
 
 ```bash
 export OPENAI_API_KEY=<your key>
@@ -85,16 +85,71 @@ General command:
 ./cascade.venv/bin/CASCADE run -i "<input-project-root>" -o "<output-folder>" -s "<config.json>"
 ```
 
-you can use CLI overrides replace values in the config file kwargs at runtime.
+You can use CLI overrides to replace values in the config file at runtime.
 
-ie to change the temperature of the llm for the code geneartor use:
+For example, to change the LLM temperature for the code generator, use:
 
 ```bash
 ./cascade.venv/bin/CASCADE run -i "<input-project-root>" -o "<output-folder>" -s "<config.json>" --code-generator temperature:0.7
 ```
 
+To run CASCADE on a project, you provide:
+- The root of the Java project that should be analyzed.
+- an output directory and
+- a config file that references the components you want to use (`configs/` contains examples),
 
-## 5 Expanding CASCADE
+
+CASCADE then:
+1. extracts method-level context from the project,
+2. applies filters, for example to remove methods without documentation or code,
+3. runs the analysis step, which may include generation and execution of tests or code snippets.
+
+
+See Section 5 for a runnable example project and config file you can try out.
+
+
+## 5  Example project
+
+A tiny runnable example is included in `exampleTargetproject/`.
+
+It contains one Java class with 4 functions:
+
+- `add(int a, int b)`: doc and implementation are consistent.
+- `subtract(int a, int b)`: doc says subtraction, implementation multiplies (intentional inconsistency).
+- `dummy1()`: has no documentation
+- `dummy2()`: has no code
+
+Files:
+
+- `exampleTargetproject/repository/src/main/java/example/Calculator.java`
+- `exampleTargetproject/repository/src/test/java/example/CalculatorTest.java`
+- `exampleTargetproject/repository/pom.xml`
+
+### 5.1 Run the example workflow
+
+Run from inside the example folder:
+
+```bash
+./cascade.venv/bin/CASCADE run -i "./repository" -o "." -s "../configs/exampleConfig.json" 
+```
+
+### 5.2 What happens in this example
+
+1. **Extraction**: CASCADE reads the Java project and extracts method-level context for `Calculator`.
+2. **Filtering**: functions that do not match the configured filters are removed (the two dummy methods).
+3. **Analysis**: the configured analysis step runs on the remaining methods. this one generates tests and code as described in our Paper.
+4. **Execution**: if you use the LLM-backed config, CASCADE generates tests/code and executes them through the Maven/Docker executor.
+
+### 5.3 Output files
+
+Depending on the selected config, the example folder will contain files such as:
+
+- `extracted.json`: extracted method-level context.
+- `analyzed.json`: analysis output and generated artifacts.
+- `inconsistent_functions.json`: functions labeled as inconsistent, together with file and test-case details.
+
+
+## 6 Expanding CASCADE
 
 CASCADE is designed to be extended. You can add custom extraction logic, filters, generators, analyses, and executors
 without changing the core pipeline orchestration.
@@ -114,58 +169,9 @@ Common extension points and examples:
 - **Executor**: inherit from `src/cascade/analysis/executor/AnalysisExecutor.py`
   (example: `MavenJavaExecutor.py`, `JavaExecutor.py`)
 
-Minimal config example:
-
-```json
-{
-  "Extraction": { "name": "JavaExtraction", "kwargs": {} },
-  "Analysis": { "name": "EmptyAnalysis", "kwargs": {} },
-  "Executor": { "name": "MavenJavaExecutor", "kwargs": {} }
-}
-```
 
 If your custom classes are outside `src/cascade`, pass their location with CLI `--module-path`.
 `PipelineFactory` loads classes dynamically from the names in your config file.
 
 If you build a cool or useful extension, feel free to open a pull request.
-
-
-## 6  Example project
-
-A tiny runnable example is included in `exampleTargetproject/`.
-
-It contains one Java class with two functions:
-
-- `add(int a, int b)`: doc and implementation are consistent.
-- `subtract(int a, int b)`: doc says subtraction, implementation multiplies (intentional inconsistency).
-
-Files:
-
-- `exampleTargetproject/repository/src/main/java/example/Calculator.java`
-- `exampleTargetproject/repository/src/test/java/example/CalculatorTest.java`
-- `exampleTargetproject/repository/pom.xml`
-- `exampleTargetproject/dataset.json`
-
-### 6.1 Run the tiny workflow
-
-From repository root:
-
-```bash
-cd ./exampleTargetproject
-../cascade.venv/bin/CASCADE run -i "./repository" -o "." -s "./dataset.json"
-```
-
-Equivalent single command from root:
-
-```bash
-./cascade.venv/bin/CASCADE run -i "./exampleTargetproject/repository" -o "./exampleTargetproject" -s "./exampleTargetproject/dataset.json"
-```
-
-### 6.2 What to inspect after running
-
-- `exampleTargetproject/extracted.json`: extracted method-level context from the Java project.
-- `exampleTargetproject/analyzed.json`: output from the configured analysis step.
-
-The example config uses `EmptyAnalysis` so it is a lightweight end-to-end smoke test of extraction/filtering/pipeline wiring.
-For full inconsistency detection with generation and execution, switch to a config that uses LLM generators and a non-empty analysis strategy.
 
