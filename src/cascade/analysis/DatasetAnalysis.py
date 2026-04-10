@@ -54,21 +54,6 @@ class DatasetAnalysis(Analysis):
         with open(os.path.join(output_path , "result.txt"), "w") as f:
             f.write("NoInco; error; ; ; ; ; ; ")
 
-        # take the one element that is targeted here and make sure everything we need is there.
-        # print("prepare Data")
-        # try:
-        #     d = self.prepare_data(data[0], input_path, output_path)
-        #     save_dicts_list_to_json([d], ana_path)
-        #     print(d["test_file_path"])
-        #     print(d["junit_version"])
-        #
-        # except Exception as e:
-        #     with open(output_path + "/errors.txt", "a") as f:
-        #         f.write(str(e) + "\n\n")
-        #         traceback.print_exc(file=f)
-        #
-        # return
-
         if d is None:
             return
 
@@ -237,9 +222,6 @@ class DatasetAnalysis(Analysis):
 
                 evaluated2 = self.evaluate(res2)
 
-                #TODO repair loop for code?
-
-                #TODO  ask again if results are the same as before????
                 save_dicts_list_to_json([d], ana_path)
 
                 amount_res2 = exec_results.results_numbers

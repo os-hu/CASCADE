@@ -23,8 +23,8 @@ def main():
                             help="The input path which will be used for extraction")
     run_.add_argument('-o', '--output-path', required=True,
                             help="The output path in which results and temporary files will be stored")
-    run_.add_argument('-s', '--setup-file', required=True,
-                            help="The path to the setup file defining the pipeline")
+    run_.add_argument('-s', '--config-file', required=True,
+                            help="The path to the config file defining the pipeline")
     run_.add_argument('-m', '--module-path', help="The path to the user defined modules.")
     run_.add_argument('-extr', '--extraction', action="append",
                             help="A way to overwrite the key word arguments for the extraction.")
@@ -105,7 +105,7 @@ def run(args):
         print("kwargs", kwargs_)
 
     factory = PipelineFactory()
-    pipeline = factory.build(args.setup_file, kwargs_)
+    pipeline = factory.build(args.config_file, kwargs_)
     pipeline.execute(args.input_path, args.output_path)
 
 

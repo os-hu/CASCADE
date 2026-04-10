@@ -9,8 +9,11 @@ from docker.models.containers import Container
 
 class DockerizedWrapper:
     """
-    This class is used to create a docker container for the prepared tests directory, copy the directory into the docker,
-    execute a (test) command and/or an evaluation command, and lastly kill and remove the container.
+    This class is used to:
+        create a docker container for the prepared tests directory,
+        copy the directory into the docker,
+        execute a (test) command and/or an evaluation command, and lastly
+        kill and remove the container.
     """
 
     def __init__(self, debug=False):

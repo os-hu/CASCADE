@@ -42,10 +42,13 @@ def build_signature(method_context, doc=False):
 
 def check_syntax(code, type, output_path):
     """
+    checks if a piece of java code (either a block or a full class) is syntactically correct
+    by writing it to a temporary file and running the JavaExtractor.jar (in its verify mode) on it.
+    The output is logged to log.txt in the output_path.
 
-    :param code:
+    :param code: the string containing the code to be checked
     :param type:   should be "block" or "class"
-    :return:
+    :return:  True if the given code is syntactically correct, False if not.
     """
     with open("temp.java", "w") as file:
         file.write(code)
@@ -76,7 +79,7 @@ def check_syntax(code, type, output_path):
 
 def get_repair_helper_functions():
     """
-    Returns the available functions that can be used for 'tool' usage of common LLM APIs (e.g. OpenAI)
+    Returns the available functions that can be used for 'tool' usage of common LLM APIs (e.g. OpenAI).
     """
     def build_tool_description(name, description, parameters):
         return {"type": "function",

@@ -56,37 +56,37 @@ class PipelineFactory:
 
     def build(self, pipeline_path, kwargs=None):
         """
-        Builds a pipeline from a setup file and optional keyword arguments.
-        The setup file is a JSON file containing the specific modules that should be used for each pipeline component.
+        Builds a pipeline from a config file and optional keyword arguments.
+        The config file is a JSON file containing the specific modules that should be used for each pipeline component.
         It should include Extraction, any of (CodeGenerator, TestGenerator, DocGenerator), Analysis and its Executor
 
-        :param pipeline_path: The path to the setup file.
+        :param pipeline_path: The path to the config file.
         """
         if not kwargs:
             kwargs = {"module_path": None, "Extraction": {}, "CodeGenerator": {}, "TestGenerator": {},
                       "DocGenerator": {}, "Analysis": {}, "Executor": {}, "FilterFunctions": []}
 
-        setup = Utils.load_json_from_path(pipeline_path)
-        if not setup:
-            raise Exception("No setup file found")
+        config = Utils.load_json_from_path(pipeline_path)
+        if not config:
+            raise Exception("No config file found at:" , pipeline_path)
 
         if kwargs["module_path"]:
             sys.path.append(os.path.abspath(str(kwargs["module_path"])))
         sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "cascade")))
 
-        name = setup["Extraction"]["name"]
+        name = config["Extraction"]["name"]
         path = "cascade.extraction." + name
-        kwargs_ = setup["Extraction"]["kwargs"]
+        kwargs_ = config["Extraction"]["kwargs"]
         kwargs_.update(kwargs["Extraction"])
         extraction = self.load_class(name, path, [], kwargs_)
 
         filter_functions = []
-        if "FilterFunctions" in setup:
-            for f in setup["FilterFunctions"]:
+        if "FilterFunctions" in config:
+            for f in config["FilterFunctions"]:
                 name = f["name"]
                 path = "cascade.filters." + name
                 kwargs_ = f["kwargs"]
-                index = setup["FilterFunctions"].index(f)
+                index = config["FilterFunctions"].index(f)
                 if len(kwargs["FilterFunctions"]) > index:
                     kwargs_.update(kwargs["FilterFunctions"][index])
                 filter_functions.append(self.load_class(name, path, [], kwargs_))
@@ -99,8 +99,8 @@ class PipelineFactory:
 
         generators = {gen[1]: EmptyGenerator() for gen in generator_strings}
         for gen in generator_strings:
-            if gen[0] in setup and "name" in setup[gen[0]]:
-                current = setup[gen[0]]
+            if gen[0] in config and "name" in config[gen[0]]:
+                current = config[gen[0]]
                 name = current["name"]
                 path = f"cascade.generation.{gen[1]}." + name
                 kwargs_ = current["kwargs"]
@@ -109,19 +109,19 @@ class PipelineFactory:
 
         generation = Generation(generators["code"], generators["test"], generators["doc"])
 
-        name = setup["Executor"]["name"]
+        name = config["Executor"]["name"]
         path = "cascade.analysis.executor." + name
-        kwargs_ = setup["Executor"]["kwargs"]
+        kwargs_ = config["Executor"]["kwargs"]
         kwargs_.update(kwargs["Executor"])
         analysis_executor = self.load_class(name, path, [], kwargs_)
 
-        name = setup["Analysis"]["name"]
+        name = config["Analysis"]["name"]
         path = "cascade.analysis." + name
-        kwargs_ = setup["Analysis"]["kwargs"]
+        kwargs_ = config["Analysis"]["kwargs"]
         kwargs_.update(kwargs["Analysis"])
         analysis = self.load_class(name, path, [generation, Execution(analysis_executor)], kwargs_)
 
-        pipeline = Pipeline(extraction, filter_, analysis, setup)
+        pipeline = Pipeline(extraction, filter_, analysis, config)
 
         return pipeline
 

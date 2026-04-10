@@ -13,6 +13,7 @@ from cascade.utils.JavaUtils import build_context, check_syntax, repair_helper_f
 
 
 class GPT4JavaTestGenerator(Generator):
+    """deprecated"""
     def __init__(self, max_attempts=1, max_tokens=16000, temperature=0, delay=3, max_prompt_tokens=5000, model="gpt-4o-mini-2024-07-18", freq_penalty=0.0, dummy=False, ask_for_imports=False, import_prompt_finisher="Reply with the missing imports, leave out those you don't know the correct package of."):
         super().__init__()
         self.ask_for_imports = ask_for_imports

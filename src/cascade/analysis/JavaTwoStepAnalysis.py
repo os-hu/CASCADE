@@ -41,11 +41,11 @@ class JavaTwoStepAnalysis(Analysis):
 
     def analyze(self, data: list, input_path, output_path):
         """
-        This is the main analysis tool
+        This is the main analysis. It can will run on the extracted data of a whole java project and will save
 
         :param data: a list with the methods from the program under test. Contains a context dictionary for each method under test.
-        :param input_path:
-        :param output_path:
+        :param input_path: a path where
+        :param output_path: a path where the output should be written to.
         """
         def log(header, message):
             with open(os.path.join(output_path, "log.txt"), "a") as f:

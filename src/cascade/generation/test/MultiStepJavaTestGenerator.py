@@ -1,12 +1,9 @@
-import ast
 import copy
 import json
 import os
 import re
 import subprocess
-from platform import system
-
-import tiktoken
+#import tiktoken
 
 from cascade.generation.Generator import Generator
 from cascade.generation.executor.OpenAICaller import OpenAICaller
@@ -18,11 +15,11 @@ class MultiStepJavaTestGenerator(Generator):
     def __init__(self,
                  model="gpt-4o-mini-2024-07-18",
                  max_attempts=1, delay=3,
-                 max_tokens=16000, #TODO start server with larger model?
+                 max_tokens=16000,
                  temperature=0,
                  max_prompt_tokens=8000,
                  freq_penalty=0.0, dummy=False,
-                 base_url=None, api_key=None #Base url for vllm should be "http://127.0.0.1:8000/v1"
+                 base_url=None, api_key=None #Base url if used with vllm,  for example: "http://127.0.0.1:8000/v1"
                  ):
 
         super().__init__()
@@ -37,7 +34,7 @@ class MultiStepJavaTestGenerator(Generator):
         self.is_junit3 = False
 
     def build_prompt(self, context):
-        # enc = tiktoken.encoding_for_model(self.model) TODO this could be used to ensure the prompt is not to long.
+        # enc = tiktoken.encoding_for_model(self.model)   # this could be used to ensure the prompt is not too long.
 
         test_framework_instruction = ""
         if "junit_version" in context:
@@ -143,15 +140,7 @@ class MultiStepJavaTestGenerator(Generator):
 
         prompt_step2.append(response_step2a["choices"][0]["message"])
 
-        # TODO test if this step is actually improving things or not.
         prompt_step2.append({"role": "user", "content": "Make sure that this class compiles without errors. Check if everything that is used is imported correctly and all exceptions are properly caught. Reply with the correct class only"})
-
-        # calls = re.findall(r"new (.*?)\(", new_tests, flags=re.DOTALL)
-        # if calls:
-        #     tree = subprocess.check_output(["tree", "-P", "*.java", "--charset=ascii", input_path]).decode("utf-8")
-        #     repair_question = f"{', '.join(calls)} {'are' if len(calls) > 1 else 'is'} 'new', check if there are missing imports and fix them using this directory structure:\n```\n{tree}\n```"
-        #     prompt_step2.append({"role": "user", "content": repair_question})
-
 
         response_step2b = self.prompt_executor.execute(prompt_step2).model_dump()
         chat_history.append(copy.deepcopy(prompt_step2))
@@ -297,14 +286,12 @@ class MultiStepJavaTestGenerator(Generator):
 
         if not json_blocks:
             log_json_error("Error extracting JSON block from response")
-            # TODO ask llm that markdown json block is mising
             return []
 
         try:
             extracted_test_list = json.loads(json_blocks[0].strip())
 
         except json.JSONDecodeError as e:
-            # TODO maybe ask llm again? Or some better way to fix wrong json format
             log_json_error(str(e))
             return []
 

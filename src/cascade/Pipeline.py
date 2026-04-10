@@ -7,7 +7,7 @@ from cascade.utils.Utils import load_json_from_path
 
 
 class Pipeline():
-    def __init__(self, extraction: Extraction, _filter: Filter, analysis: Analysis, setup: dict):
+    def __init__(self, extraction: Extraction, _filter: Filter, analysis: Analysis, setup_config: dict):
         """
         The main pipeline object. Calls "extract" and "analyse" in an appropriate manner.
         is usually build through Pipeline_Factory
@@ -19,7 +19,7 @@ class Pipeline():
         self.extraction = extraction
         self._filter = _filter
         self.analysis = analysis
-        self.setup = setup
+        self.setup_config = setup_config
 
     def execute(self, input_path, output_path) -> None:
         """
