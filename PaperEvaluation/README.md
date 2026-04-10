@@ -70,7 +70,7 @@ alternatively CASCADE can be build as a standalone tool by creating its venv:
   and then installing it:
   
   ```bash
-   ./cascade.venv/bin/pip install ./CASCADE
+   ./cascade.venv/bin/pip install ..
   ```
 
 **WARNING**
@@ -180,7 +180,9 @@ python3 eval.py --plot \
 
 If you only want to inspect the results reported in the paper:
 
-1. Unzip **`results.zip`** (contains one folder called `java`) next to to `eval.py` script. 
+The results zip file is to large For Git and can only be obtained from Zenodo: ()
+
+1. Unzip **`results.zip`** (contains one folder called `java`) next to to `eval.py` script. (Unpacked size is 1GB)
 2. Run the same commands as shown in 3.4 (`python3 eval.py c d b c4`).
 
 More information is also available e.g.:

@@ -71,10 +71,8 @@ if __name__ == '__main__':
     Then we ask (3) are code and doc consistent.
     and (4) is there an inconsistency between them
  """
-    model = "gpt-4o-mini-2024-07-18"
-    # with open("./model.txt") as f:
-    #     model = f.read()
-    #model = "gpt-4.1-mini-2025-04-14"
+
+    model = "gpt-4.1-mini" # "gpt-4o-mini-2024-07-18"
 
     # read in analyze file
     print("start baseline")

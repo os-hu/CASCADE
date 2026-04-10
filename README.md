@@ -1,7 +1,7 @@
 ## 1 Overview
 
 This repository contains **CASCADE** (our code-comment inconsistency detection and test-generation tool) 
-together with the full benchmark we used to evaluate it in our Paper. (folder: `PaperEvaluation`)
+together with the full benchmark we used to evaluate it in our FSE 2026 Paper. (folder: `PaperEvaluation`)
 
 The tool itself is build around expandability, so that you can easily add new validation approaches to the benchmark
 Or adapt it for new languages and for different analyses.
@@ -21,7 +21,7 @@ An example Java project you can try it on is described in Section 6.
 
 ```
 .
-├─ paperEvaluation/
+├─ PaperEvaluation/
 │  ├─ dataset.zip           # Evaluation dataset (see Section 3 for details)
 │  ├─ drivers/              # One sub‑folder per validation approach (see Section 4 for details)
 │  │   ├─ DocChecker/
@@ -29,7 +29,7 @@ An example Java project you can try it on is described in Section 6.
 │  │   └─ CASCADE/
 │  ├─ run.sh                # dataset execution file (runs all drivers on the dataset)
 │  ├─ eval.py               # Computes & prints all benchmark metrics
-│  └─ results_RQ1.zip       # Pre‑computed experiment results
+│  └─ results.zip       # Pre‑computed experiment results
 ├─ datasetExtraction/       # scripts we used to extract the original dataset
 ├─ configs/                 # Configuration files for different CASCADE pipelines
 └─ src/                     # Source code of the CASCADE tool
