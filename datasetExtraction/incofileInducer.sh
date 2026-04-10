@@ -1,6 +1,6 @@
 #!/bin/bash
 
-WORKDIR="/home/kiecketo/cacsade_dataset_extraction/extraction"
+WORKDIR="~/cacsade_dataset_extraction/extraction"
 
 CSV_FILE="$WORKDIR/index.csv"
 FAILED="$WORKDIR/failed.csv"

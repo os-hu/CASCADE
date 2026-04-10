@@ -1,5 +1,5 @@
 from cascade.analysis.executor.Execution import Execution
-from cascade.generation.EmptyGenerator import EmptyGenerator
+from cascade.generation.code.EmptyGenerator import EmptyGenerator
 from cascade.Pipeline import Pipeline
 from cascade.generation.Generation import Generation
 from cascade.filters.Filter import Filter

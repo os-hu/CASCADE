@@ -1,0 +1,11 @@
+{
+  "Extraction": { "name": "JavaExtraction", "kwargs": {} },
+  "CodeGenerator": { "name": "JavaCodeGenerator", "kwargs": { "model": "gpt-4o-mini-2024-07-18" } },
+  "TestGenerator": { "name": "GPT4JavaTestGenerator", "kwargs": { "model": "gpt-4o-mini-2024-07-18", "temperature": 0.2 } },
+  "Analysis": { "name": "JavaTwoStepAnalysis", "kwargs": { "debug": 1, "max_repair_tries": 2 } },
+  "Executor": { "name": "MavenJavaExecutor", "kwargs": {} },
+  "FilterFunctions": [
+    { "name": "NoTestsFilterFunction", "kwargs": {} }
+  ]
+}
+
