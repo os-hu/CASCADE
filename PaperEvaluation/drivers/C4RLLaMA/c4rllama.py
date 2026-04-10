@@ -85,12 +85,10 @@ def main(
         max_new_tokens=512,
         **kwargs,
     ):
-        print("6")
         prompt = prompter.generate_prompt(instruction, input)
         inputs = tokenizer(prompt, return_tensors="pt")
         input_ids = inputs["input_ids"].to(device)
 
-        print("7")
         with torch.no_grad():
             generation_output = model.generate(
                 input_ids=input_ids,
@@ -102,11 +100,10 @@ def main(
                 output_scores=True,
                 max_new_tokens=max_new_tokens,
             )
-        print("8")
         s = generation_output.sequences[0]
         output = tokenizer.decode(s)
         res = prompter.get_response(output)
-        print("9")
+
         return res
 
     try:

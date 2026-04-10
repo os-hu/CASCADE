@@ -253,36 +253,6 @@ def aggregate_metrics_numeric(per_run_results):
 
     return out
 
-
-def aggregate_metrics_numeric(per_run_results):
-    float_fields = ["Prec", "Rec", "F1", "Spec", "acc",
-                    "doc_invariant", "PFP"]
-    int_fields = ["TP", "FP", "TN", "FN",
-                  "always_pos", "always_neg", "self_cons_correct"]
-
-    runs = len(per_run_results)
-    out = {"runs": runs}
-
-    def summarize(vals):
-        if not vals:
-            return {"mean": float("nan"), "std": float("nan"),
-                    "median": float("nan"), "min": float("nan"), "max": float("nan")}
-        mean = statistics.mean(vals)
-        std = statistics.pstdev(vals) if len(vals) > 1 else 0.0
-        med = statistics.median(vals)
-        return {"mean": mean, "std": std, "median": med, "min": min(vals), "max": max(vals)}
-
-    for f in float_fields:
-        vals = [float(r[f]) for r in per_run_results]
-        out[f] = summarize(vals)
-
-    for f in int_fields:
-        vals = [int(r[f]) for r in per_run_results]
-        out[f] = summarize(vals)
-
-    return out
-
-
 def plot_compare_drivers(
         driver_abbrev_map,
         series_specs,

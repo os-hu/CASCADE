@@ -107,7 +107,7 @@ and put content in `/drivers/C4RLLaMA/weights`
    bash ./run.sh
    ```
    
-   in this script you can change which drivers to run; in the 9th line:  e.g.   `DRIVERS_LIST=(("CASCADE" "Baseline"))` for cascade and the baseline or   `DRIVERS_LIST=()`runs everything (names have to match the folder names in the driver folder)
+   in this script you can change which drivers to run; in the 9th line:  e.g.   `DRIVERS_LIST=("CASCADE" "Baseline")` for cascade and the baseline or   `DRIVERS_LIST=()`runs everything (names have to match the folder names in the driver folder)
 
    The script will:
 
