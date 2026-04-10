@@ -7,7 +7,7 @@ from cascade.utils.Utils import load_json_from_path
 
 
 class Pipeline():
-    def __init__(self, extraction: Extraction, filter: Filter, analysis: Analysis, setup: dict):
+    def __init__(self, extraction: Extraction, _filter: Filter, analysis: Analysis, setup: dict):
         """
         The main pipeline object. Calls "extract" and "analyse" in an appropriate manner.
         is usually build through Pipeline_Factory
@@ -17,14 +17,14 @@ class Pipeline():
          for extraction, analysis and the objects inside of them,
         """
         self.extraction = extraction
-        self.filter = filter
+        self._filter = _filter
         self.analysis = analysis
         self.setup = setup
 
     def execute(self, input_path, output_path) -> None:
         """
         This executes the entire pipline. First extract() from the extraction object is called.
-        he output of that is passed to the analysis object. and analyse is executed.
+        he output of that is passed to the analysis object. and analyze is executed.
 
         These specific objects handle what the specific operations do and any things like temporary or
         intermediate saving, which type of analyses should be done and the generator that the analysis uses.
@@ -35,15 +35,9 @@ class Pipeline():
             print("Extraction finished", len(data))
 
             print("Filtering started")
-            filtered_data = self.filter.filter_all(data)
+            filtered_data = self._filter.filter_all(data)
             print("Filtering finished", len(filtered_data))
 
-            can_work = True
-            can_work &= self.analysis.extraction_requirements.verify(filtered_data)
-            can_work &= self.analysis.generator.test_generator.extraction_requirements.verify(filtered_data)
-            can_work &= self.analysis.generator.code_generator.extraction_requirements.verify(filtered_data)
-            can_work &= self.analysis.generator.doc_generator.extraction_requirements.verify(filtered_data)
-            can_work &= self.analysis.executor.executor.extraction_requirements.verify(filtered_data)
         else:
             print("Found analyzed results, will skip extraction and filtering")
             # generated artifacts for the same dataset can be saved to avoid repeated generation of code and tests.

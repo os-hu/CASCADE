@@ -1,13 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from cascade.Requirements import Requirements
-
-
 class Extraction(ABC):
-    def __init__(self):
-        self.provided: Requirements = Requirements(Requirements.Kind.PROVIDED, name="Extraction-Provided")
-        self.provided.add_requirement("all", Requirements.Level.MANDATORY)
     @abstractmethod
     def extract(self, input_path, output_path) -> List[dict]:
         """
@@ -46,16 +40,12 @@ class Extraction(ABC):
             "tests" :  str - The complete content of a test file,
             "test_imports" : list of str - imports of the test file,
             "test_file_path" : str - path to the test file (relative to root),
-            "testrunner": str - e.g. unnittest, junit3,
         }
-        TODO add other missing ones.  for java we have extends
 
         Note that depending on the 'Analysis' and 'Generate' implementations not all of these fields need to be filled.
+        And that some languages might have additional fields
 
         You can use the implementation 'json_Extraction' and its extract() method to check whether
         the file already exists in the output path and just load this one instead.
-
-        The output
-
         """
         pass

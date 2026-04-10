@@ -1,18 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import NewType
-
-from cascade.Requirements import Requirements
 
 class AnalysisExecutor(ABC):
-    def __init__(self):
-        self.extraction_requirements = Requirements(Requirements.Kind.EXPECTED, name="Executor-Extraction-Expected")
-        self.analysis_requirements = Requirements(Requirements.Kind.EXPECTED, name="Executor-Analysis-Expected")
-
     @abstractmethod
     def execute(self, code: str, tests: str, context: dict, input_path, output_path: str):
         """
         This executes the specified tests against the code.
-        This should be executed in some kind of sandbox as the passed code and tests can not be guaranteed to be safe.
+        This should be executed in some kind of sandbox (e.g., Docker) as the passed code and tests can not be guaranteed to be safe.
 
         :param input_path: 
         :param output_path:

@@ -13,13 +13,12 @@ import importlib
 
 class PipelineFactory:
     """
-    TODO
-    """
+    Factory class for constructing Pipeline instances dynamically from config files.
 
-    def __init__ (self):
-        """
-        TODO Write Doc
-        """
+    The PipelineFactory implements the Factory design pattern to create Pipeline objects
+    with all necessary components (Extraction, Generation, Analysis, Execution, and Filters)
+    configured from a JSON setup file.
+    """
 
     @staticmethod
     def load_class(class_name, module_path, args, kwargs):
@@ -121,20 +120,6 @@ class PipelineFactory:
         kwargs_ = setup["Analysis"]["kwargs"]
         kwargs_.update(kwargs["Analysis"])
         analysis = self.load_class(name, path, [generation, Execution(analysis_executor)], kwargs_)
-
-        can_work = True
-        extraction_prov = extraction.provided
-        for ff in filter_functions:
-            can_work &= extraction_prov.fulfills(ff.extraction_requirements)
-            extraction_prov.merge(ff.provided)
-        can_work &= extraction_prov.fulfills(analysis.extraction_requirements)
-        for gen in generators.values():
-            can_work &= extraction_prov.fulfills(gen.extraction_requirements)
-        can_work &= extraction_prov.fulfills(analysis_executor.extraction_requirements)
-        analysis_prov = analysis.provided
-        for gen in generators.values():
-            can_work &= analysis_prov.fulfills(gen.analysis_requirements)
-        can_work &= analysis_prov.fulfills(analysis_executor.analysis_requirements)
 
         pipeline = Pipeline(extraction, filter_, analysis, setup)
 
