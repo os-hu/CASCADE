@@ -6,10 +6,11 @@ unzip dataset.zip
 
 WORKING_DIR=$(pwd)
 
-DRIVERS_LIST=()
+#DRIVERS_LIST=()
 #DRIVERS_LIST=("DocChecker" "Baseline" "C4RLLaMA")
-#DRIVERS_LIST=("CASCADE")
+DRIVERS_LIST=("CASCADE")
 
+#  alter the drivers list to run the specific drivers you want, if the list is empty, it will run all the drivers in the drivers folder
 
 (
 cd java

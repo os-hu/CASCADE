@@ -1,0 +1,7 @@
+{
+	"Extraction"    : { "name": "JavaExtraction",  "kwargs" : {}},
+	"CodeGenerator": { "name": "GPT4JavaCodeGenerator", "kwargs" : {"model": "gpt-4o-mini-2024-07-18"}, "temperature":0.2},
+	"TestGenerator": { "name": "MultiStepJavaTestGenerator", "kwargs" : {"model": "gpt-4o-mini-2024-07-18", "temperature": 0.7}},
+	"Analysis"      : { "name": "DatasetAnalysis",  "kwargs" : {}},
+	"Executor"      : { "name": "MavenJavaExecutor",   "kwargs" : {}}
+}
