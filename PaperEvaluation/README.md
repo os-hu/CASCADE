@@ -10,7 +10,7 @@ The main tool of our work is CASCADE, but for the benchmark we also compare it t
 Some basic LLM baselines and the existing tools DocChecker [1] and C4RLLaMA [2].
 
 DocChecker code was adjusted from here: <https://github.com/FSoft-AI4Code/DocChecker>
-C4RLLaMA from here: <https://github.com/aiopsplus/C4RLLaMA?tab=Apache-2.0-1-ov-file>
+C4RLLaMA code from here: <https://github.com/aiopsplus/C4RLLaMA>
 
 
 ## 2  Dataset format (`dataset.zip`)

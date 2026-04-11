@@ -1,7 +1,7 @@
 
 echo "build CASCADE venv"
 
-python3 -m venv cascade.venv
+python3 -m venv venv-cascade
 
 # install it:
 
@@ -11,13 +11,13 @@ python3 -m venv cascade.venv
 
 echo "build DocChecker venv"
 
-python3 -m venv envDocChecker
+python3 -m venv venv-DocChecker
 ./envDocChecker/bin/pip install torch transformers gdown codetext tree_sitter_languages tree_sitter==0.20.4
 
    
 echo "build C4RLLaMA venv"
 
-python3 -m venv envC4RLLaMA
+python3 -m venv venv-C4RLLaMA
 ./envC4RLLaMA/bin/pip install -r ./drivers/C4RLLaMA/requirements.txt
 
 echo "you have to download the retrained DocChecker model https://figshare.com/s/981c2fbe830b905b01a9 and put it in /drivers/DocChecker/pretrained_model"

@@ -1,1 +1,1 @@
-../../../../../../venv-cascadebin/CASCADE run -i "./repository" -o "." -c "./dataset.json" -ana debug:3
+../../../../../../venv-cascadebin/CASCADE run -i "./repository" -o "." -c "./dataset_config.json" -ana debug:3
