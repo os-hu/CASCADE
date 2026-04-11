@@ -164,7 +164,7 @@ class DatasetAnalysis(Analysis):
                     f.write(f"S1 Error in tests")
                     f.write(f"{str(res1)}")
                     f.write("------\nTests:\n")
-                    f.write(f"{d["new_tests"]}\n")
+                    f.write(f"{d['new_tests']}\n")
                     f.write("------\nCode:\n")
                     f.write(d["code"])
                     if comp_errors:
@@ -233,7 +233,7 @@ class DatasetAnalysis(Analysis):
                         f.write(f"S2 Error in code?")
                         f.write(f"{str(res1)}")
                         f.write("------\nTests:\n")
-                        f.write(f"{d["new_tests"]}\n")
+                        f.write(f"{d['new_tests']}\n")
                         f.write("------\nCode:\n")
                         f.write(d["code"])
                         if comp_errors:
@@ -286,7 +286,7 @@ class DatasetAnalysis(Analysis):
 
             save_dicts_list_to_json([d], ana_path)
             with open(os.path.join(output_path, "result.txt"), "w") as f:
-                output_string+= f"; {str("og tests exist" if "tests" in d else " no og tests")}; {current_repair_tries}"
+                output_string+= f"; {str('og tests exist' if 'tests' in d else ' no og tests')}; {current_repair_tries}"
                 f.write(output_string)
                 print("result:" , output_string)
 

@@ -82,7 +82,7 @@ export OPENAI_API_KEY=<your key>
 General command:
 
 ```bash
-./cascade.venv/bin/CASCADE run -i "<input-project-root>" -o "<output-folder>" -s "<config.json>"
+./cascade.venv/bin/CASCADE run -i "<input-project-root>" -o "<output-folder>" -c "<config.json>"
 ```
 
 You can use CLI overrides to replace values in the config file at runtime.
@@ -90,7 +90,7 @@ You can use CLI overrides to replace values in the config file at runtime.
 For example, to change the LLM temperature for the code generator, use:
 
 ```bash
-./cascade.venv/bin/CASCADE run -i "<input-project-root>" -o "<output-folder>" -s "<config.json>" --code-generator temperature:0.7
+./cascade.venv/bin/CASCADE run -i "<input-project-root>" -o "<output-folder>" -c "<config.json>" --code-generator temperature:0.7
 ```
 
 To run CASCADE on a project, you provide:
@@ -127,19 +127,21 @@ Files:
 
 ### 5.1 Run the example workflow
 
-Run from inside the example folder:
+Run from inside the  folder:
 
 ```bash
-./cascade.venv/bin/CASCADE run -i "./repository" -o "." -s "../configs/exampleConfig.json" 
+./cascade.venv/bin/CASCADE run -i "./exampleTargetproject/repository" -o "./exampleTargetproject/output" -c "./configs/exampleConfig.json" 
 ```
 
 ### 5.2 What happens in this example
 
 1. **Extraction**: CASCADE reads the Java project and extracts method-level context for `Calculator`.
 2. **Filtering**: functions that do not match the configured filters are removed (the two dummy methods).
-3. **Analysis**: the configured analysis step runs on the remaining methods. this one generates tests and code as described in our Paper.
-4. **Execution**: if you use the LLM-backed config, CASCADE generates tests/code and executes them through the Maven/Docker executor.
-
+3. **mvn Setup**: a mvn image is setup that will be used in all dockers that are dynamically setup to execute tests.
+4. **Analysis**: the configured analysis step runs on the remaining methods. this one generates tests and code as described in our Paper.
+5. **Execution**: if you use the LLM-backed config, CASCADE generates tests/code and executes them through the Maven/Docker executor.
+6. **Output**: the results are saved in the output folder, including the extracted methods, the analysed file with all generated artifacts and the final inconsistency predictions. (also a large log file)
+7. 
 ### 5.3 Output files
 
 Depending on the selected config, the example folder will contain files such as:
@@ -147,6 +149,21 @@ Depending on the selected config, the example folder will contain files such as:
 - `extracted.json`: extracted method-level context.
 - `analyzed.json`: analysis output and generated artifacts.
 - `inconsistent_functions.json`: functions labeled as inconsistent, together with file and test-case details.
+
+The basic output line for a function looks like this:\
+example: \
+INCO; pass; step 2 (C'+T'); (2,1,0);(3,0,0); p2p: 2, f2f: 0, p2f: 0, f2p: 1
+
+explanation:\
+INCO/NoInco; pass/fail/error/; stage of thispass/fail/error; (#num of passing tests, #failing tests, #error tests) for step1; (#num of pass tests, #fail, #error) for step2; explicit metrics for:
+1. tests that passed on stage one and passed on stage 2 (p2p)
+2. tests that failed on stage one but passed on stage 2 (f2p)
+3. tests that passed on stage one but failed on stage 2 (p2f)
+4. tests that failed on stage one and failed on stage 2 (f2f)\
+(erroring tests are counted as failing)
+
+
+
 
 
 ## 6 Expanding CASCADE
@@ -157,18 +174,20 @@ without changing the core pipeline orchestration.
 The easiest way to extend it is:
 
 1. inherit from the matching abstract base class,
-2. follow one existing implementation as a template,
-3. reference your class in the config file (`name` + `kwargs`).
+2. put the new class in the right subdirectory (follow one existing implementation as a template),
+3. reference your class by name in the config file (`name` + `kwargs`).
+4. let the pipline factory handle the rest via the run command
 
 Common extension points and examples:
 
 - **Analysis**: inherit from `src/cascade/analysis/Analysis.py` (example: `JavaTwoStepAnalysis.py`)
 - **FilterFunction**: inherit from `src/cascade/filters/FilterFunction.py` (example: `ContainsFilterFunction.py`, `CheckLengthFilterFunction.py`)
 - **Generators**: inherit from `src/cascade/generation/Generator.py` in `code/`, `test/`, or `doc/`
-  (example: `JavaCodeGenerator.py`, `GPT4JavaTestGenerator.py`)
+  (example: `code/JavaCodeGenerator.py`, `test/GPT4JavaTestGenerator.py`)
 - **Executor**: inherit from `src/cascade/analysis/executor/AnalysisExecutor.py`
-  (example: `MavenJavaExecutor.py`, `JavaExecutor.py`)
+  (example: `analysis/executor/MavenJavaExecutor.py`, `analysis/executor/JavaExecutor.py`)
 
+the absolute base pipeline is Extraction → (Filter) → Analysis, but you can also add custom generation steps that are not directly tied to the analysis step, for example to generate documentation updates or code snippets without executing them.
 
 If your custom classes are outside `src/cascade`, pass their location with CLI `--module-path`.
 `PipelineFactory` loads classes dynamically from the names in your config file.

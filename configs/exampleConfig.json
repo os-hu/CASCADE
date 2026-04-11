@@ -5,7 +5,7 @@
    "Analysis"      : { "name": "JavaTwoStepAnalysis",  "kwargs" : {}},
    "Executor"      : { "name": "MavenJavaExecutor",   "kwargs" : {}},
    "FilterFunctions"  : [
-      { "name": "CheckLengthFilterFunction", "kwargs" : {"key":"code", "op":">", "val":0}},
+      { "name": "CheckLengthFilterFunction", "kwargs" : {"key":"code", "op":">", "val":3}},
       { "name": "CheckLengthFilterFunction", "kwargs" : {"key":"doc", "op":">", "val":12}}
    ]
 }

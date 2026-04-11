@@ -86,10 +86,10 @@ class JavaTwoStepAnalysis(Analysis):
 
                     print(
                         f"{time_now.strftime('%H:%M:%S')}  "
-                        f"Analyzing: {d['signature']['name']}. "
-                        f"{idx}/{len(data)} "
-                        f"time so far: {str(time_elapsed).split('.')[0]} "
-                        f"Estimated remaining: {str(time_remaining).split('.')[0]}"
+                        f"Analyzing method: {d['signature']['name']}. "
+                        f"{idx+1}/{len(data)}  "
+                        f"Time so far: {str(time_elapsed).split('.')[0]} "
+                        f"Estimated time remaining: {str(time_remaining).split('.')[0]}"
                     )
 
 
@@ -312,8 +312,8 @@ class JavaTwoStepAnalysis(Analysis):
             # end:  for d in data
 
             time_end = datetime.now()
-            time_total = str(datetime.now() - time_start).split('.')[0],
-            print(f"finished analysis ({time_total})")
+            time_total = str(datetime.now() - time_start).split('.')[0]
+            print(f"Finished analysis in {time_total}")
 
             self.executor.tear_down(data)
             #save final results

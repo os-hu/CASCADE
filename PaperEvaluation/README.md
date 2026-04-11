@@ -1,6 +1,6 @@
 
 ## 1  Overview
-This folder cotnains everythign needed to reproduce the reustls, tables and graphs for our 2026 FSE Paper: 
+This folder contains everything needed to reproduce the results, tables and graphs for our 2026 FSE Paper: 
 "Cascade: Detecting Inconsistencies between Code and Documentation with Automatic Test Generation"
 
 The code is organized so that you can either **re-run the complete benchmark end-to-end** (Section 3) or 
@@ -62,26 +62,21 @@ CASCADE and LLM-Baseline require an OpenAi API key in the environment
 
 you can execute the `prepare_experiments.sh` script to prepare all venvs and build CASCADE
 
-alternatively CASCADE can be build as a standalone tool by creating its venv:
    ```bash
-   python3 -m venv cascade.venv
+    bash ./prepare_experiments.sh
    ```
 
-  and then installing it:
-  
-  ```bash
-   ./cascade.venv/bin/pip install ..
-  ```
 
 **WARNING**
 if you have no available GPU, the C4RLLaMA baseline will probably not be able to run and you will also have to change line 35 in the file `PaperEvaluation\drivers\DocChecker\DocChecker\DocCheckerNet.py`
 
-from
+from: 
 
   ```python
    model_to_load.load_state_dict(torch.load(output_dir,map_location='cuda:0') )
   ```
-to
+to:
+
   ```python
    model_to_load.load_state_dict(torch.load(output_dir, map_location=torch.device('cpu')))
   ```
@@ -115,17 +110,24 @@ and put content in `/drivers/C4RLLaMA/weights`
    * iterate over every commit; for each commit:
      * clone the project repo, checkout the specific commit;
      * apply `file.patch` if present so the build succeeds;
-     * execute each `driver/<name>/driver.sh` (tool-specific wrapper);
+     * for each driver (CASCADE, DocChecker, C4RLLaMA, Baseline):
+       * copy everything in the respective folder into the current test folder.
+       * execute the driver.sh `driver/<name>/driver.sh` (tool-specific wrapper);
+       * these then usually call the tools via python with the correct venv and generate a results file
      * save this tool’s output to `result_<tool>.txt`.
    * clean up temporary artifacts.
 
-The results will be contained in the `java` folder. This folder follows the same structure as `dataset.zip` but under each sample now has several result and log files for the different tools.
+The results will be contained throughout the `java` folder. This folder follows the same structure as `dataset.zip` but under each sample now has several result and log files for the different tools.
 
 ### 3.4 Evaluate metrics
 
 This script `eval.py` goes through the folder `java` in which the results are situated. 
 Metrics (precision, recall, F1, *etc.*) are printed to stdout. 
 This script was also used to create all the graphics in the Paper.
+
+you will need matplotlib installed for it to run. it is contained in the cascade venv, so you can run it with 
+`./cascade.venv/bin/python3 eval.py` or install it in your global python environment with `pip install matplotlib` and then run `python3 eval.py`
+
 
 Some helpful command line arguments for `eval.py`:
 
@@ -158,17 +160,17 @@ python3 eval.py --plot \
 ```
 
 --plot : enter plot mode
-
+\
 --plot-points : specifies the labels for the x axis and the amount of consistent samples that should be included for each plot point.
-
+\
 --plot-series : specifies the series to be plotted. The format is <tool-prefix>:<label> where tool-prefix is the prefix of the tool as specified in the results files (e.g. c for cascade, b for baseline, d for docchecker) and label is the label that should be shown in the legend for this series.
-
+\
 --plot-metric : which metric to plot (e.g. Prec, Rec, F1, ...)
-
+\
 --plot-stat : which metric to plot (e.g. median, mean)
-
+\
 --seed : seed for random sampling
-
+\
 --plot-out : specifies the output file for the plot.
 
 
@@ -180,7 +182,7 @@ python3 eval.py --plot \
 
 If you only want to inspect the results reported in the paper:
 
-The results zip file is to large For Git and can only be obtained from Zenodo: ()
+The results zip file is to large For Git and can only be obtained from the Zenodo version of the repo.
 
 1. Unzip **`results.zip`** (contains one folder called `java`) next to to `eval.py` script. (Unpacked size is 1GB)
 2. Run the same commands as shown in 3.4 (`python3 eval.py c d b c4`).
@@ -204,5 +206,5 @@ This prints the results for RQ1 and RQ2. RQ3 has no disclosable results other th
 ---
 
 
-[1] Dau, Anh, et al. "Docchecker: Bootstrapping code large language model for detecting and resolving code-comment inconsistencies." Proceedings of the 18th Conference of the European Chapter of the Association for Computational Linguistics: System Demonstrations. 2024.
+[1] Dau, Anh, et al. "Docchecker: Bootstrapping code large language model for detecting and resolving code-comment inconsistencies." Proceedings of the 18th Conference of the European Chapter of the Association for Computational Linguistics: System Demonstrations. 2024.\
 [2] Rong, Guoping, et al. "Code comment inconsistency detection and rectification using a large language model." Proceedings of the IEEE/ACM 47th International Conference on Software Engineering. 2025.
