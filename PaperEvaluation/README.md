@@ -183,6 +183,8 @@ python3 eval.py --plot \
 If you only want to inspect the results reported in the paper:
 
 The results zip file is to large For Git and can only be obtained from the Zenodo version of the repo.
+https://zenodo.org/records/19483108
+
 
 1. Unzip **`results.zip`** (contains one folder called `java`) next to to `eval.py` script. (Unpacked size is 1GB)
 2. Run the same commands as shown in 3.4 (`python3 eval.py c d b c4`).
