@@ -6,19 +6,21 @@
     "CodeGenerator": {
         "name": "JavaCodeGenerator",
         "kwargs": {
-            "model": "local",
-            "base_url": "http://127.0.0.1:8104/v1",
+            "model": "Qwen/Qwen3.6-27B",
+            "base_url": "http://127.0.0.1:8107/v1",
             "api_key": "dummy",
-            "max_tokens": null
+            "max_tokens": null,
+            "temperature": 1.0
         }
     },
     "TestGenerator": {
         "name": "MultiStepJavaTestGenerator",
         "kwargs": {
-            "model": "local",
-            "base_url": "http://127.0.0.1:8104/v1",
+            "model": "Qwen/Qwen3.6-27B",
+            "base_url": "http://127.0.0.1:8107/v1",
             "api_key": "dummy",
-            "max_tokens": null
+            "max_tokens": null,
+            "temperature": 1.0
         }
     },
     "Analysis": {
