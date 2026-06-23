@@ -14,14 +14,15 @@ from cascade.utils.JavaUtils import build_context, check_syntax, repair_helper_f
 
 class GPT4JavaTestGenerator(Generator):
     """deprecated"""
-    def __init__(self, max_attempts=1, max_tokens=16000, temperature=0, delay=3, max_prompt_tokens=5000, model="gpt-4o-mini-2024-07-18", freq_penalty=0.0, dummy=False, ask_for_imports=False, import_prompt_finisher="Reply with the missing imports, leave out those you don't know the correct package of."):
+    def __init__(self, max_attempts=1, max_tokens=16000, temperature=0, delay=3, max_prompt_tokens=5000, model="gpt-4o-mini-2024-07-18", freq_penalty=0.0, dummy=False, ask_for_imports=False, import_prompt_finisher="Reply with the missing imports, leave out those you don't know the correct package of.", base_url=None, api_key=None, token_parameter="auto"):
         super().__init__()
         self.ask_for_imports = ask_for_imports
         self.model = model
         self.import_prompt_finisher = import_prompt_finisher
         self.max_prompt_tokens = max_prompt_tokens
         self.prompt_executor = OpenAICaller(max_attempts=max_attempts, model=model, max_tokens=max_tokens, temperature=temperature,
-                                            delay=delay, freq_penalty=freq_penalty, dummy=dummy)
+                                            delay=delay, freq_penalty=freq_penalty, dummy=dummy,
+                                            api_key=api_key, base_url=base_url, token_parameter=token_parameter)
 
         self.is_three = False
 

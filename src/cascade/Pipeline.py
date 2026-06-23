@@ -29,7 +29,10 @@ class Pipeline():
         These specific objects handle what the specific operations do and any things like temporary or
         intermediate saving, which type of analyses should be done and the generator that the analysis uses.
         """
-        if not os.path.exists(os.path.join(output_path, "analyzed.json")):
+        preanalyzed_path = os.path.join(output_path, "analyzed.json")
+        use_preanalyzed = os.environ.get("CASCADE_USE_PREANALYZED", "0") == "1"
+
+        if not use_preanalyzed or not os.path.exists(preanalyzed_path):
             print("Extraction started")
             data = self.extraction.extract(input_path, output_path)
             print("Extraction finished. Extracted: ", len(data))
@@ -39,9 +42,8 @@ class Pipeline():
             print("Filtering finished. Remaining: ", len(filtered_data))
 
         else:
-            print("Found analyzed results, will skip extraction and filtering")
-            # generated artifacts for the same dataset can be saved to avoid repeated generation of code and tests.
-            temp_data = load_json_from_path(os.path.join(output_path, "analyzed.json"))
+            print("Using benchmark target from analyzed.json")
+            temp_data = load_json_from_path(preanalyzed_path)
             filtered_data = []
             if temp_data:
                 filtered_data = temp_data

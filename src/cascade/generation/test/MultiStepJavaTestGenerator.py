@@ -19,14 +19,16 @@ class MultiStepJavaTestGenerator(Generator):
                  temperature=0,
                  max_prompt_tokens=8000,
                  freq_penalty=0.0, dummy=False,
-                 base_url=None, api_key=None #Base url if used with vllm,  for example: "http://127.0.0.1:8000/v1"
+                 base_url=None, api_key=None,
+                 token_parameter="auto"
                  ):
 
         super().__init__()
         self.prompt_executor = OpenAICaller(max_attempts=max_attempts, model=model,
                                             max_tokens=max_tokens, temperature=temperature,
                                             delay=delay, freq_penalty=freq_penalty, dummy=dummy,
-                                            api_key=api_key, base_url=base_url)
+                                            api_key=api_key, base_url=base_url,
+                                            token_parameter=token_parameter)
 
         self.model = model
         self.max_prompt_tokens = max_prompt_tokens

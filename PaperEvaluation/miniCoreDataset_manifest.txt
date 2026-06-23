@@ -1,0 +1,12 @@
+miniCoreDataset.zip: 5 mapped pairs / 10 cases
+
+1. False: FasterXML/jackson-core/aa54f0a1b25b84fbdc50af69e71fdd40fcb65be1/1
+   True:  FasterXML/jackson-core/e5cbda207aa2b9e69da0f63bb79df5d9d072872b/1
+2. False: FasterXML/jackson-core/ea603c35b85aac6af476c229b8f17a72efd31fef/1
+   True:  FasterXML/jackson-core/e9972871d6dcc24cfb56440c46e1f085a31b85ec/1
+3. False: FasterXML/jackson-databind/27350000ae015418bc04bbce1ca3431c02113e3e/1
+   True:  FasterXML/jackson-databind/3c2d40901088f38eca41896f5b7410729e85ef70/1
+4. False: JodaOrg/joda-time/411a924d87a60e9f6c88b46241da32736acbf1e4/1
+   True:  JodaOrg/joda-time/e433f2e9c8599de1e4f2e0d4d7312a875818b8d1/1
+5. False: apache/commons-csv/517bf0d58374d53d8fa92e4f0593ec8db8e6d8e7/1
+   True:  apache/commons-csv/fe102749181b7ba21600b12e3ec094e9bcf6250e/1

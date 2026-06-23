@@ -4,7 +4,7 @@ SECONDS=0
 
 rm -rf java
 rm -f dataset_mapping_dict.py
-unzip -oq coreDataset.zip
+unzip -oq miniCoreDataset.zip
 
 WORKING_DIR=$(pwd)
 

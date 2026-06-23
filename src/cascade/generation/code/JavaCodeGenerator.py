@@ -19,7 +19,8 @@ class JavaCodeGenerator(Generator):
                  model="gpt-4o-mini-2024-07-18",
                  freq_penalty=0.0,
                  dummy=False,
-                 base_url=None, api_key=None
+                 base_url=None, api_key=None,
+                 token_parameter="auto"
                  ):
         super().__init__()
         self.model = model
@@ -27,7 +28,8 @@ class JavaCodeGenerator(Generator):
         self.prompt_executor = OpenAICaller(max_attempts=max_attempts, model=model,
                                             max_tokens=max_tokens, temperature=temperature,
                                             delay=delay, freq_penalty=freq_penalty, dummy=dummy,
-                                            api_key=api_key, base_url=base_url)
+                                            api_key=api_key, base_url=base_url,
+                                            token_parameter=token_parameter)
 
 
     def build_prompt(self, context):

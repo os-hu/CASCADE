@@ -62,3 +62,19 @@ wheels/
 *.egg
 
 /tests/test_JavaExecution.py
+
+# Local setup / smoke-test artifacts
+cascade.venv/
+.tools/
+exampleTargetproject/output/
+
+# Benchmark output
+PaperEvaluation/java/
+PaperEvaluation/runs
+# Local benchmark run artifacts
+PaperEvaluation/benchmark_logs/
+PaperEvaluation/latest-benchmark.log
+PaperEvaluation/dataset_mapping_dict.py
+PaperEvaluation/venv-cascade
+PaperEvaluation/run_core_benchmark_local.sh
+PaperEvaluation/monitor_benchmark.sh
