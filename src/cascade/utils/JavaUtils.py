@@ -128,7 +128,7 @@ def repair_helper_functions(func, arguments, input_path, output_path, context):
 
 def get_file_content(input_path, output_path, context, path_to_file):
     if path_to_file in [context["test_file_path"], context["code_file_path"]]:
-        return  { "content" : "" , "error" : "path prohibited" }
+        return  { "content" : "" , "error" : "path prohibited — this file is intentionally off-limits. Do not retry with the same path. Use the other tools or write the test class with the information you already have." }
 
     path = os.path.join( input_path, path_to_file)
     if os.path.exists(path):

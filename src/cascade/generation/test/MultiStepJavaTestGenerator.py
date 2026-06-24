@@ -11,6 +11,79 @@ from cascade.utils.JavaUtils import build_context, check_syntax, repair_helper_f
     build_signature
 
 
+def _normalize_tool_calls(response_dict):
+    """
+    Promote native tool-call XML emitted in the content field to the OpenAI
+    tool_calls API format so the agentic loops can dispatch them uniformly.
+
+    Gemma-4 format:
+        <|tool_call>call:FUNC{key:<|"|>val<|"|>,...}<tool_call|>
+    Qwen format (injected via system prompt when tools are registered):
+        <tool_call>
+        <function=FUNC>
+        <parameter=KEY>VALUE</parameter>
+        </function>
+        </tool_call>
+
+    Strips the call XML from content and sets finish_reason to "tool_calls".
+    No-op when finish_reason is already "tool_calls" or content is empty.
+    """
+    choice = response_dict["choices"][0]
+    if choice["finish_reason"] == "tool_calls":
+        return response_dict
+    message = choice.get("message") or {}
+    content = message.get("content") or ""
+    if not content:
+        return response_dict
+
+    tool_calls = []
+
+    # Gemma-4: <|tool_call>call:FUNC{key:<|"|>val<|"|>,...}<tool_call|>
+    gemma_re = re.compile(r'<\|tool_call>call:(\w+)\{(.*?)\}<tool_call\|>', re.DOTALL)
+    for m in gemma_re.finditer(content):
+        func_name, args_raw = m.group(1), m.group(2)
+        args = {}
+        # String values wrapped in <|"|>...<|"|>
+        for am in re.finditer(r'(\w+):<\|"\|>(.*?)<\|"\|>', args_raw, re.DOTALL):
+            args[am.group(1)] = am.group(2)
+        # Boolean / numeric values not wrapped in quotes
+        for am in re.finditer(r'(\w+):(?!<\|"\|>)(true|false|-?\d+(?:\.\d+)?)', args_raw):
+            k = am.group(1)
+            if k not in args:
+                raw = am.group(2)
+                args[k] = (True if raw == "true" else False if raw == "false" else json.loads(raw))
+        tool_calls.append({
+            "id": f"call_{len(tool_calls)}",
+            "type": "function",
+            "function": {"name": func_name, "arguments": json.dumps(args)},
+        })
+    content = gemma_re.sub("", content).strip()
+
+    # Qwen: <tool_call>\n<function=FUNC>...\n</function>\n</tool_call>
+    qwen_re = re.compile(
+        r'<tool_call>\s*<function=(\w+)>(.*?)</function>\s*</tool_call>', re.DOTALL
+    )
+    for m in qwen_re.finditer(content):
+        func_name, params_raw = m.group(1), m.group(2)
+        args = {}
+        for pm in re.finditer(r'<parameter=(\w+)>\s*(.*?)\s*</parameter>', params_raw, re.DOTALL):
+            args[pm.group(1)] = pm.group(2)
+        tool_calls.append({
+            "id": f"call_{len(tool_calls)}",
+            "type": "function",
+            "function": {"name": func_name, "arguments": json.dumps(args)},
+        })
+    content = qwen_re.sub("", content).strip()
+
+    if not tool_calls:
+        return response_dict
+
+    response_dict["choices"][0]["finish_reason"] = "tool_calls"
+    response_dict["choices"][0]["message"]["tool_calls"] = tool_calls
+    response_dict["choices"][0]["message"]["content"] = content or None
+    return response_dict
+
+
 class MultiStepJavaTestGenerator(Generator):
     def __init__(self,
                  model="gpt-4o-mini-2024-07-18",
@@ -50,8 +123,8 @@ class MultiStepJavaTestGenerator(Generator):
             f"You are an expert Java developer. You will generate JUnit tests for a specific method in a provided test class.{test_framework_instruction} "
             "You can import anything from the project itself. Make sure to handle all exceptions properly, and ensure that all method signatures and calls are correct. "
             "The code should compile on its own without errors. "
-            "Do not use tool calls or <tool_call> tags of any kind. "
-            "Always return Java code wrapped in a ```java ... ``` code block."
+            "Use tools to look up constructors, method signatures, or imports you are unsure about before writing the test class. "
+            "Always return the final Java code wrapped in a ```java ... ``` code block."
             )
 
         #
@@ -137,12 +210,49 @@ class MultiStepJavaTestGenerator(Generator):
         context["test_list"] = test_list
 
         print("      Test generation Phase 2")
-        # now we have a list of testable properties, we want to generate a testclass filled with these.
+        tools = get_repair_helper_functions()
         prompt_step2 = self.build_prompt(context)
 
-        response_step2a = self.prompt_executor.execute(prompt_step2).model_dump()
+        response_step2a = self.prompt_executor.execute(prompt_step2, tools=tools).model_dump()
+        response_step2a = _normalize_tool_calls(response_step2a)
 
-        prompt_step2.append(response_step2a["choices"][0]["message"])
+        # Agentic lookup loop: let the model resolve types/imports before writing tests
+        for i in range(4):
+            if response_step2a["choices"][0]["finish_reason"] != "tool_calls":
+                break
+            prompt_step2.append(response_step2a["choices"][0]["message"])
+            for tc in response_step2a["choices"][0]["message"]["tool_calls"]:
+                func = tc["function"]["name"]
+                arguments = tc["function"]["arguments"]
+                results = repair_helper_functions(func, arguments, input_path, output_path, context)
+                prompt_step2.append({"role": "tool", "content": json.dumps(results), "tool_call_id": tc["id"]})
+            if i < 3:
+                response_step2a = self.prompt_executor.execute(prompt_step2, tools=tools).model_dump()
+            else:
+                # Final iteration: no tools and explicit instruction to stop calling
+                prompt_step2.append({"role": "user", "content": (
+                    "Tool lookups are complete. Do not call any more tools. "
+                    "Write the complete test class now inside a single ```java ... ``` code block."
+                )})
+                response_step2a = self.prompt_executor.execute(prompt_step2).model_dump()
+            response_step2a = _normalize_tool_calls(response_step2a)
+
+        # If the loop exhausted with the model still wanting tool calls, close it out cleanly
+        if response_step2a["choices"][0]["finish_reason"] == "tool_calls":
+            prompt_step2.append(response_step2a["choices"][0]["message"])
+            # Provide synthetic tool results to satisfy the pending call(s)
+            for tc in response_step2a["choices"][0]["message"]["tool_calls"]:
+                prompt_step2.append({"role": "tool",
+                                     "content": json.dumps({"error": "tool calls are no longer available"}),
+                                     "tool_call_id": tc["id"]})
+            prompt_step2.append({"role": "user", "content": (
+                "Tool calls are done. Write the complete test class now "
+                "inside a single ```java ... ``` code block."
+            )})
+            response_step2a = self.prompt_executor.execute(prompt_step2).model_dump()
+            response_step2a = _normalize_tool_calls(response_step2a)
+        else:
+            prompt_step2.append(response_step2a["choices"][0]["message"])
 
         prompt_step2.append({"role": "user", "content": (
             "Make sure that this class compiles without errors. "
@@ -158,10 +268,9 @@ class MultiStepJavaTestGenerator(Generator):
 
         new_tests = self.extract_tests(response_step2b["choices"][0]["message"]["content"], context, response_step2b, output_path)
 
-        # this is a fallback if the second reply did not include a code block
+        # fallback: if the compile-check reply had no code block, try the Phase 2a response
         if new_tests == "":
             new_tests = self.extract_tests(response_step2a["choices"][0]["message"]["content"], context, response_step2b, output_path)
-        # prompt_step2.append({"role": "assistant", "content": f"```java\n{new_tests}\n```"})
 
         if new_tests == "":
             with open(results_path, "w") as f:
@@ -205,7 +314,7 @@ class MultiStepJavaTestGenerator(Generator):
 
 
     def extract_tests(self, new_tests, context, response, output_path):
-        code_blocks = re.findall(r"```java(.*?)\n\s*```", new_tests, flags=re.DOTALL)
+        code_blocks = re.findall(r"```java(.*?)\n\s*```", new_tests or "", flags=re.DOTALL)
         new_tests = ""
 
         if code_blocks:
@@ -236,7 +345,7 @@ class MultiStepJavaTestGenerator(Generator):
         prompt = (f"During the compilation of my test class some errors occurred.\nErrors:\n```\n{errors}\n```\n\nTest Class:\n```java\n{context[key]}\n```\n"
                   "Dont change the content of the tests, but make sure that the class compiles without errors. " 
                   "Check if all necessary imports are present and if all exceptions are properly caught. "
-                  f"If you need to add imports, use the following directory structure:\n```\n{tree}\n```\n\nNow fix the class so that it compiles without errors, and respond with the entire fixed class."
+                  f"If you need to add imports, use the following directory structure:\n```\n{tree}\n```\n\nNow fix the class so that it compiles without errors, and respond with the entire fixed class inside a single ```java ... ``` code block."
                   )
 
         promptlist = []
@@ -244,10 +353,11 @@ class MultiStepJavaTestGenerator(Generator):
         promptlist.append({"role": "user", "content": prompt})
 
         res = self.prompt_executor.execute(promptlist, tools=tools).model_dump()
+        res = _normalize_tool_calls(res)
         response_history.append(copy.deepcopy(promptlist))
         response_history.append(res)
-        # we allow three tool usages before we force a generation
-        steps = 3
+        # we allow four tool usages before we force a generation
+        steps = 4
         for i in range(steps):
             if res["choices"][0]["finish_reason"] == "tool_calls":
                 promptlist.append(res['choices'][0]['message'])
@@ -265,12 +375,34 @@ class MultiStepJavaTestGenerator(Generator):
                 if i < steps - 1:
                     res = self.prompt_executor.execute(promptlist, tools=tools).model_dump()
                 else:
+                    promptlist.append({"role": "user", "content": (
+                        "Tool lookups are complete. Do not call any more tools. "
+                        "Write the complete fixed test class now inside a single ```java ... ``` code block."
+                    )})
                     res = self.prompt_executor.execute(promptlist).model_dump()
+                res = _normalize_tool_calls(res)
                 response_history.append(copy.deepcopy(promptlist))
                 response_history.append(res)
 
-        promptlist.append(res['choices'][0]['message'])
-        new_tests = res["choices"][0]["message"]["content"]
+        # If still stuck in tool_calls, close it out with synthetic results
+        if res["choices"][0]["finish_reason"] == "tool_calls":
+            promptlist.append(res['choices'][0]['message'])
+            for tool_call in res["choices"][0]["message"]["tool_calls"]:
+                promptlist.append({"role": "tool",
+                                   "content": json.dumps({"error": "tool calls are no longer available"}),
+                                   "tool_call_id": tool_call["id"]})
+            promptlist.append({"role": "user", "content": (
+                "Tool calls are done. Write the complete fixed test class now "
+                "inside a single ```java ... ``` code block."
+            )})
+            res = self.prompt_executor.execute(promptlist).model_dump()
+            res = _normalize_tool_calls(res)
+            response_history.append(copy.deepcopy(promptlist))
+            response_history.append(res)
+
+        if res["choices"][0]["finish_reason"] != "tool_calls":
+            promptlist.append(res['choices'][0]['message'])
+        new_tests = res["choices"][0]["message"]["content"] or ""
 
         new_tests = self.extract_tests(new_tests, context, res, output_path)
 
@@ -293,6 +425,11 @@ class MultiStepJavaTestGenerator(Generator):
 
         json_blocks = re.findall(r"```json\s*(.*?)\s*```", response_text, flags=re.DOTALL)
 
+        # Fallback: model output bare JSON array without fences (seen with Qwen3)
+        if not json_blocks:
+            bare = re.search(r'(\[.*\])', response_text, flags=re.DOTALL)
+            if bare:
+                json_blocks = [bare.group(1)]
 
         if not json_blocks:
             log_json_error("Error extracting JSON block from response")
