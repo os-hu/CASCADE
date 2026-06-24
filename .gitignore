@@ -62,3 +62,22 @@ wheels/
 *.egg
 
 /tests/test_JavaExecution.py
+
+# Local benchmark run artifacts (not in upstream)
+PaperEvaluation/java/
+PaperEvaluation/runs
+PaperEvaluation/benchmark_logs/
+PaperEvaluation/latest-benchmark.log
+PaperEvaluation/*.log
+PaperEvaluation/dataset_mapping_dict.py
+PaperEvaluation/venv-cascade
+PaperEvaluation/*_CASCADE.txt
+# Local-only scripts (re-derived per machine, not upstream)
+PaperEvaluation/run_mini.sh
+PaperEvaluation/run_mini2.sh
+PaperEvaluation/run_nano.sh
+PaperEvaluation/launch_benchmark_server.sh
+PaperEvaluation/monitor_benchmark.sh
+PaperEvaluation/run_core_benchmark_local.sh
+# Local model/port/temp knob - not tracked
+PaperEvaluation/drivers/CASCADE/dataset_config.json

@@ -1,0 +1,12 @@
+mini2CoreDataset.zip: 5 mapped pairs / 10 cases
+
+1. (easy) False: apache/commons-csv/883511fa42166b3c8b860abe4a0bead8591c15e6/1
+          True:  apache/commons-csv/4f61bd1aeefb2845cb3e7ead1975bad02735b406/1
+2. (easy) False: apache/commons-cli/b88c9ba0b2c8a8a21862d405bf24098f7037dbed/1
+          True:  apache/commons-cli/3d57a495145916d1cd183cced771935c06da786a/1
+3. (medium) False: apache/commons-lang/782e48d8e0d201c5c6d745cf4ebd8f11225e8c5e/1
+            True:  apache/commons-lang/80057a6f04dbfc89ad446f794e7c9cba4b95fe1c/1
+4. (medium) False: apache/commons-math/260a4392a8a257cbb34fe3564301659589c05240/1
+            True:  apache/commons-math/435384cf132ab161bfedce0a3be96bccfb11f0b6/1
+5. (hard) False: jhy/jsoup/6e14804768c3553c0670ea08135675d67d51d811/1
+          True:  jhy/jsoup/2bef2e7ce9b8089a9e0ae3cf82f7625a5b93ed09/1

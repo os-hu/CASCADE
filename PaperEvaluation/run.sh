@@ -2,7 +2,9 @@
 
 SECONDS=0
 
-unzip dataset.zip
+rm -rf java
+rm -f dataset_mapping_dict.py
+unzip -oq dataset.zip
 
 WORKING_DIR=$(pwd)
 
@@ -20,7 +22,8 @@ do
 	echo "At repository: $repo ---------------------"
 	cd "$repo"
 	# clone this repo 
-	git clone https://github.com/$repo ./repository
+	git clone --quiet https://github.com/$repo ./repository
+	(cd repository; git config advice.detachedHead false)
 	
 	for commit in *
 	do
@@ -33,7 +36,7 @@ do
 		echo "    At commit: $commit -------"
 		
 		# checkout specific commit
-		(cd repository; git checkout $commit)
+		(cd repository; git checkout --quiet $commit)
 		cd "$commit"
 		cp -r "../repository" "./backup"
 		
@@ -70,9 +73,13 @@ do
 				
 				bash driver.sh
 
-				mv "result.txt" "../result_$driver.txt"
-				mv "log.txt" "../log_$driver.txt"
-				mv "errors.txt" "../errors_$driver.txt"	
+				if [[ -f "result.txt" ]]; then
+					mv "result.txt" "../result_$driver.txt"
+				else
+					printf 'NoInco; error; missing result.txt; ; ; ; ; ' > "../result_$driver.txt"
+				fi
+				if [[ -f "log.txt" ]]; then mv "log.txt" "../log_$driver.txt"; else : > "../log_$driver.txt"; fi
+				if [[ -f "errors.txt" ]]; then mv "errors.txt" "../errors_$driver.txt"; else : > "../errors_$driver.txt"; fi
 
 				cp "analyzed.json" "../analyzed.json"
 				#  -----------

@@ -1,0 +1,6 @@
+nanoCoreDataset.zip: 2 mapped pairs / 4 cases
+
+1. False: FasterXML/jackson-core/aa54f0a1b25b84fbdc50af69e71fdd40fcb65be1/1
+   True:  FasterXML/jackson-core/e5cbda207aa2b9e69da0f63bb79df5d9d072872b/1
+2. False: FasterXML/jackson-core/ea603c35b85aac6af476c229b8f17a72efd31fef/1
+   True:  FasterXML/jackson-core/e9972871d6dcc24cfb56440c46e1f085a31b85ec/1
