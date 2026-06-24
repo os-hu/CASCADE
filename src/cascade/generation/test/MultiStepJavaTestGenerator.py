@@ -47,7 +47,8 @@ class MultiStepJavaTestGenerator(Generator):
         system_prompt = (
             f"You are an expert Java developer. You will generate JUnit tests for a specific method in a provided test class.{test_framework_instruction} "
             "You can import anything from the project itself. Make sure to handle all exceptions properly, and ensure that all method signatures and calls are correct. "
-            "The code should compile on its own without errors."
+            "The code should compile on its own without errors. "
+            "Always return Java code wrapped in a ```java ... ``` code block."
             )
 
         #
@@ -61,7 +62,7 @@ class MultiStepJavaTestGenerator(Generator):
         test_header = (
             "Make changes or add classes to the imports if necessary. Every object you use has to be properly instantiated, every method has to be imported. "
             "Handle any checked exceptions using try-catch or throws, do not forget type parameters. Match method signatures exactly when overriding or implementing methods. "
-            f"Respond with the filled Test Class:\n"
+            "Respond with ONLY the complete filled Test Class in a single ```java ... ``` code block. No explanation.\n"
             )
 
         test_level_prompt = test_header + "\n```java\n" + self.build_tests(context) + "\n```"
@@ -102,7 +103,7 @@ class MultiStepJavaTestGenerator(Generator):
         prompt_step1.append(response_step1a["choices"][0]["message"])
 
         # now the goal is to convert this text into a usable format and extract the testable properties
-        prompt_json_list = {"role": "user", "content": f"Now turn this into a JSON array of unit tests we should write for test driven development. Each entry in the array should have: \"test_name\": a descriptive test method name starting with 'test' and \"test_description\": a detailed description for the developer of what this tests should do and which specific behavior from the documentation it tests. In particular, I want testable statements of the 'if this then that' type.\nFocus on those tests that follow directly from the documentation, e.g. no performance based ones."}
+        prompt_json_list = {"role": "user", "content": "Now turn this into a JSON array of unit tests we should write for test driven development. Each entry in the array should have: \"test_name\": a descriptive test method name starting with 'test' and \"test_description\": a detailed description for the developer of what this tests should do and which specific behavior from the documentation it tests. In particular, I want testable statements of the 'if this then that' type.\nFocus on those tests that follow directly from the documentation, e.g. no performance based ones.\nRespond with a single ```json ... ``` code block containing the array, nothing else."}
 
         # possible alterations to later filter out unnecessary tests
         # To ensure the correctness of the `uniqueIterable` method, we can derive several testable behavior specifications based on the provided documentation.
@@ -140,7 +141,13 @@ class MultiStepJavaTestGenerator(Generator):
 
         prompt_step2.append(response_step2a["choices"][0]["message"])
 
-        prompt_step2.append({"role": "user", "content": "Make sure that this class compiles without errors. Check if everything that is used is imported correctly and all exceptions are properly caught. Reply with the correct class only"})
+        prompt_step2.append({"role": "user", "content": (
+            "Make sure that this class compiles without errors. "
+            "Check all imports are present and all checked exceptions are caught or declared. "
+            "For JUnit assertEquals with numeric types, add explicit casts to avoid overload ambiguity "
+            "(e.g. assertEquals((long) expected, (long) actual)). "
+            "Even if no changes are needed, reply with the entire class verbatim inside a single ```java ... ``` code block."
+        )})
 
         response_step2b = self.prompt_executor.execute(prompt_step2).model_dump()
         chat_history.append(copy.deepcopy(prompt_step2))
@@ -226,7 +233,7 @@ class MultiStepJavaTestGenerator(Generator):
         prompt = (f"During the compilation of my test class some errors occurred.\nErrors:\n```\n{errors}\n```\n\nTest Class:\n```java\n{context[key]}\n```\n"
                   "Dont change the content of the tests, but make sure that the class compiles without errors. " 
                   "Check if all necessary imports are present and if all exceptions are properly caught. "
-                  f"If you need to add imports, use the following directory structure:\n```\n{tree}\n```\n\nNow fix the class so that it compiles without errors, and respond with the entire fixed class."
+                  f"If you need to add imports, use the following directory structure:\n```\n{tree}\n```\n\nNow fix the class so that it compiles without errors, and respond with the entire fixed class inside a single ```java ... ``` code block."
                   )
 
         promptlist = []
@@ -283,6 +290,10 @@ class MultiStepJavaTestGenerator(Generator):
 
         json_blocks = re.findall(r"```json\s*(.*?)\s*```", response_text, flags=re.DOTALL)
 
+        if not json_blocks:
+            bare = re.search(r'(\[.*\])', response_text, flags=re.DOTALL)
+            if bare:
+                json_blocks = [bare.group(1)]
 
         if not json_blocks:
             log_json_error("Error extracting JSON block from response")
