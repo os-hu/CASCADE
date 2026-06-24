@@ -16,7 +16,7 @@ class OpenAICaller(LLMCaller):
         freq_penalty=0.0,
         base_url=None,          # ← optional
         api_key=None,           # ← optional
-        timeout=60.0,
+        timeout=86400.0,
     ):
         self.max_attempts = max_attempts
         self.max_tokens = max_tokens
