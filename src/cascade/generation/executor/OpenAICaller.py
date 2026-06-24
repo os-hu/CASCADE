@@ -47,14 +47,16 @@ class OpenAICaller(LLMCaller):
         attempt = 0
         while attempt < self.max_attempts:
             try:
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=prompt,
-                    max_completion_tokens=self.max_tokens,   #temporary fix for gpt5
-                    #temperature=self.temperature,
-                    frequency_penalty=self.freq_penalty,
+                request_kwargs = {
+                    "model": self.model,
+                    "messages": prompt,
+                    "frequency_penalty": self.freq_penalty,
                     **kwargs,
-                )
+                }
+                if self.max_tokens is not None:
+                    request_kwargs["max_completion_tokens"] = self.max_tokens
+
+                response = self.client.chat.completions.create(**request_kwargs)
                 return response
 
             except Exception as e:
