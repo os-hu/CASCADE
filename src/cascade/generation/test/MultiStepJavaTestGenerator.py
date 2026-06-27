@@ -8,7 +8,7 @@ import subprocess
 from cascade.generation.Generator import Generator
 from cascade.generation.executor.OpenAICaller import OpenAICaller
 from cascade.utils.JavaUtils import build_context, check_syntax, repair_helper_functions, get_repair_helper_functions, \
-    build_signature
+    build_signature, build_api_context
 
 
 class MultiStepJavaTestGenerator(Generator):
@@ -32,6 +32,29 @@ class MultiStepJavaTestGenerator(Generator):
         self.max_prompt_tokens = max_prompt_tokens
 
         self.is_junit3 = False
+
+    def _fit_api_context(self, context, base_text):
+        """
+        Return the richest API-context block (with surrounding newlines) that keeps
+        base_text + block within self.max_prompt_tokens. Sheds the heavy in-class sibling
+        list first (the bulkiest part), then the whole block, so the cheap critical sections
+        (how to construct the receiver, importable packages) survive longest. Returns "" if
+        no API context is available or none fits.
+        """
+        try:
+            import tiktoken
+            enc = tiktoken.get_encoding("o200k_base")
+            count = lambda s: len(enc.encode(s))
+        except Exception:
+            count = lambda s: len(s) // 4  # rough fallback if tiktoken is unavailable
+
+        for api in (context.get("api_context", ""), context.get("api_context_light", ""), ""):
+            if not api:
+                return ""
+            block = "\n\n" + api + "\n\n"
+            if count(base_text + block) <= self.max_prompt_tokens:
+                return block
+        return ""
 
     def build_prompt(self, context):
         # enc = tiktoken.encoding_for_model(self.model)   # this could be used to ensure the prompt is not too long.
@@ -67,7 +90,10 @@ class MultiStepJavaTestGenerator(Generator):
 
         test_level_prompt = test_header + "\n```java\n" + self.build_tests(context) + "\n```"
 
-        prompt = class_level_prompt + test_level_prompt
+        # Inject the static API context between the class skeleton and the test stubs,
+        # under a token budget that drops the heavy sibling list first (see _fit_api_context).
+        api_block = self._fit_api_context(context, class_level_prompt + test_level_prompt)
+        prompt = class_level_prompt + api_block + test_level_prompt
 
         promptlist = []
         promptlist.append({"role": "system", "content": system_prompt})
@@ -79,14 +105,23 @@ class MultiStepJavaTestGenerator(Generator):
         results_path = os.path.join(output_path, "results.txt")
         errors_path = os.path.join(output_path, "errors.txt")
 
+        # Precompute the API context once for both phases: full, plus a lighter variant
+        # without siblings so _fit_api_context can step down under budget without recomputing.
+        context["api_context"] = build_api_context(context, output_path)
+        context["api_context_light"] = build_api_context(context, output_path, include_siblings=False)
+
         chat_history = []
         print("      Test generation Phase 1")
         # first given the method documentation and signature, we want to extract possible testcases or properties.
+        step1_user = (
+            f"Give a complete description of the behavior that we should test when we want to asure that the code matches its documentation from the following Java method:\n```java\n{build_signature(context, doc=True)}\n```\n\nMake sure you consider the entire functionality exactly as described in the documentation, and cover all edge cases but make no assumptions that are not stated in the documentation."
+        )
+        step1_user += self._fit_api_context(context, step1_user)
         prompt_step1 = [
             {"role": "system",
              "content": "You are an expert Java developer and requirements engineer. You will be given a method signature and its documentation. Your task is to extract behavior specifications from the documentation that can be turned into unit tests to ensure the code is bug free and faithful to its documentation."},
             {"role": "user",
-             "content": f"Give a complete description of the behavior that we should test when we want to asure that the code matches its documentation from the following Java method:\n```java\n{build_signature(context, doc=True)}\n```\n\nMake sure you consider the entire functionality exactly as described in the documentation, and cover all edge cases but make no assumptions that are not stated in the documentation."}
+             "content": step1_user}
         ]
 
         chat_history.append(copy.deepcopy(prompt_step1))

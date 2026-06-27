@@ -1,6 +1,7 @@
 import os
 import json
 import ast
+import re
 import subprocess
 
 
@@ -39,6 +40,138 @@ def build_signature(method_context, doc=False):
     return doc_string + (" ".join(ctsig["modifier"]) + " " + ('<' + ', '.join(ctsig["generics"]) + '> ' if ctsig["generics"] else '') +
                  ctsig["returns"] + " " + ctsig["name"] + "(" + ", ".join(ctsig["params"]) + ")" +
                          (" throws " + ", ".join(ctsig["exceptions"]) if ctsig.get("exceptions") else ""))
+
+# Bounded cache for the parsed project index. Each extracted.json can be hundreds of MB
+# once parsed, so we keep only the most-recently-used one (cleared before inserting).
+_EXTRACTED_CACHE = {}
+
+
+def _load_extracted(output_path):
+    """Load (and cache) extracted.json from output_path. Returns None if absent/unreadable."""
+    idx_path = os.path.join(output_path, "extracted.json")
+    if not os.path.exists(idx_path):
+        return None
+    try:
+        mtime = os.path.getmtime(idx_path)
+    except OSError:
+        mtime = None
+    key = (idx_path, mtime)
+    if key in _EXTRACTED_CACHE:
+        return _EXTRACTED_CACHE[key]
+    try:
+        with open(idx_path) as f:
+            data = json.load(f)
+    except Exception:
+        data = None
+    _EXTRACTED_CACHE.clear()  # bound memory: hold at most one parsed index at a time
+    _EXTRACTED_CACHE[key] = data
+    return data
+
+
+def build_api_context(context, output_path,
+                      include_siblings=True,
+                      max_constructors=4, max_subclasses=3, max_factories=3,
+                      max_siblings=15, max_packages=25, max_chars=2500):
+    """
+    Build a compact, static "how to use this API" block so the model writes tests that
+    compile against types that actually exist, instead of guessing cross-module ones.
+
+    Sourced from the parent class already in `context` (constructors, sibling signatures)
+    plus the project index (`extracted.json` in `output_path`) when present, which adds the
+    cross-class facts: subclasses/factories for an abstract receiver and the project's package
+    set (so the model knows what it may import).
+
+    `include_siblings=False` drops the sibling section, the bulkiest part, so callers can shed
+    weight first; the cheap critical sections survive. Returns "" when nothing useful exists.
+    """
+    parent = context.get("parent", {}) or {}
+    receiver = parent.get("name")
+    sections = []
+
+    def _clean(s):
+        # drop block/line comments and collapse whitespace so constructor strings stay compact
+        s = re.sub(r"/\*.*?\*/", " ", s, flags=re.DOTALL)
+        s = re.sub(r"//[^\n]*", " ", s)
+        return " ".join(s.split())
+
+    # --- how to obtain the receiver: constructors come straight from context ---
+    construct = []
+    for c in (parent.get("constructors") or [])[:max_constructors]:
+        c = _clean(c)
+        if c:
+            construct.append(c)
+
+    # load the project index once (graceful: missing/unreadable -> skip index-derived parts)
+    data = _load_extracted(output_path)
+
+    kind = parent.get("kind") or ""
+    is_abstract = "interface" in kind or any("abstract" in m for m in parent.get("modifiers", []))
+
+    packages = set()
+    if data:
+        subclasses, producers = [], []
+        for d in data:
+            dp = d.get("parent", {}) or {}
+            pkg = d.get("package")
+            if pkg:
+                packages.add(pkg)
+            if is_abstract and receiver:
+                concrete = "interface" not in (dp.get("kind") or "") \
+                    and not any("abstract" in m for m in dp.get("modifiers", []))
+                if concrete and (receiver in (dp.get("extends") or [])
+                                 or receiver in (dp.get("implements") or [])):
+                    if dp.get("name"):
+                        subclasses.append(dp["name"])
+            # public methods that return the receiver type -> how to produce one. Includes
+            # instance-method factories (e.g. JsonFactory.createParser), which are the common
+            # idiom, not just static ones.
+            if receiver and dp.get("name"):
+                sig = d.get("signature", {}) or {}
+                mods = sig.get("modifier", [])
+                if sig.get("returns") == receiver and any("public" in m for m in mods):
+                    is_static = any("static" in m for m in mods)
+                    is_factory = "factory" in dp["name"].lower()  # *Factory: common producer idiom
+                    rendered = f'{dp["name"]}.{sig["name"]}({", ".join(sig.get("params", []))})'
+                    producers.append((is_static, is_factory, rendered))
+        if is_abstract:
+            for s in sorted(set(subclasses))[:max_subclasses]:
+                construct.append(f"concrete subclass: {s}")
+            # rank: factory-named classes first, then static (directly callable), then by name
+            for is_static, _, fct in sorted(set(producers), key=lambda x: (not x[1], not x[0], x[2]))[:max_factories]:
+                construct.append(("factory: " if is_static else "produced by (call on an instance): ") + fct)
+
+    if construct:
+        sections.append(f"How to obtain a {receiver} instance:\n  - " + "\n  - ".join(construct))
+
+    # --- in-class sibling methods (signatures only; already present in context) ---
+    # This is the bulkiest section and the first to be dropped under budget pressure.
+    if include_siblings:
+        siblings = []
+        for other in (parent.get("other_methods") or [])[:max_siblings]:
+            try:
+                siblings.append(build_signature(other, doc=False).strip())
+            except Exception:
+                continue
+        if siblings:
+            sections.append(f"Other methods available on {receiver} (signatures):\n  " + "\n  ".join(siblings))
+
+    # --- available-type guidance (the import-universe / cross-module fix) ---
+    if packages:
+        pkgs = sorted(packages)[:max_packages]
+        sections.append(
+            "This project only provides types in these packages: " + ", ".join(pkgs) + ".\n"
+            "Only import types from these project packages or the standard JDK. Do NOT import "
+            "types from other modules/libraries that are not part of this project."
+        )
+
+    if not sections:
+        return ""
+    block = ("API context (static facts about the available code; "
+             "use only these APIs, do not invent any):\n\n" + "\n\n".join(sections))
+    if len(block) > max_chars:
+        block = block[:max_chars].rstrip() + "\n... (truncated)"
+    return block
+
 
 def check_syntax(code, type, output_path):
     """

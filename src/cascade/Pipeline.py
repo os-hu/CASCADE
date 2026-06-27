@@ -39,7 +39,13 @@ class Pipeline():
             print("Filtering finished. Remaining: ", len(filtered_data))
 
         else:
-            print("Found analyzed results, will skip extraction and filtering")
+            print("Found analyzed results, will skip filtering")
+            # Still extract (idempotent) so extracted.json exists for the static API context;
+            # never let it abort the analysis.
+            try:
+                self.extraction.extract(input_path, output_path)
+            except Exception as e:
+                print("Extraction for API context failed, continuing without it:", e)
             # generated artifacts for the same dataset can be saved to avoid repeated generation of code and tests.
             temp_data = load_json_from_path(os.path.join(output_path, "analyzed.json"))
             filtered_data = []
