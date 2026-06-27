@@ -267,10 +267,17 @@ class MultiStepJavaTestGenerator(Generator):
         system_prompt = f"You are an expert Java developer. You will fix compilation errors in a provided test class and return the entire repaired class. Use tools to find out more about classes instead of making assumptions. Tool calls remaining: {steps}."
 
         prompt = (f"During the compilation of my test class some errors occurred.\nErrors:\n```\n{errors}\n```\n\nTest Class:\n```java\n{context[key]}\n```\n"
-                  "Dont change the content of the tests, but make sure that the class compiles without errors. " 
+                  "Dont change the content of the tests, but make sure that the class compiles without errors. "
                   "Check if all necessary imports are present and if all exceptions are properly caught. "
                   f"If you need to add imports, use the following directory structure:\n```\n{tree}\n```\n\nNow fix the class so that it compiles without errors, and respond with the entire fixed class inside a single ```java ... ``` code block."
                   )
+
+        # Append the static API context once, to the initial prompt only, so repair fixes
+        # imports against APIs that actually exist instead of reintroducing non-existent
+        # cross-module types. context is a fresh copy here, so build it rather than reuse.
+        context["api_context"] = build_api_context(context, output_path)
+        context["api_context_light"] = build_api_context(context, output_path, include_siblings=False)
+        prompt += self._fit_api_context(context, prompt)
 
         promptlist = []
         promptlist.append({"role": "system", "content": system_prompt})
