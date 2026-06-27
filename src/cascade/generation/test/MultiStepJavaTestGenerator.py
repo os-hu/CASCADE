@@ -228,7 +228,8 @@ class MultiStepJavaTestGenerator(Generator):
 
         tree = subprocess.check_output(["tree", "-P", "*.java", "--charset=ascii", input_path]).decode("utf-8")
 
-        system_prompt = "You are an expert Java developer. You will fix compilation errors in a provided test class and return the entire repaired class. Use tools to find out more about classes instead of making assumptions."
+        steps = 3
+        system_prompt = f"You are an expert Java developer. You will fix compilation errors in a provided test class and return the entire repaired class. Use tools to find out more about classes instead of making assumptions. Tool calls remaining: {steps}."
 
         prompt = (f"During the compilation of my test class some errors occurred.\nErrors:\n```\n{errors}\n```\n\nTest Class:\n```java\n{context[key]}\n```\n"
                   "Dont change the content of the tests, but make sure that the class compiles without errors. " 
@@ -244,7 +245,6 @@ class MultiStepJavaTestGenerator(Generator):
         response_history.append(copy.deepcopy(promptlist))
         response_history.append(res)
         # we allow three tool usages before we force a generation
-        steps = 3
         for i in range(steps):
             if res["choices"][0]["finish_reason"] == "tool_calls":
                 promptlist.append(res['choices'][0]['message'])
@@ -260,8 +260,10 @@ class MultiStepJavaTestGenerator(Generator):
                     promptlist.append({"role": "tool", "content": json.dumps(results), "tool_call_id": tool_call["id"]})
 
                 if i < steps - 1:
+                    promptlist.append({"role": "user", "content": f"Tool calls remaining: {steps - i - 1}."})
                     res = self.prompt_executor.execute(promptlist, tools=tools).model_dump()
                 else:
+                    promptlist.append({"role": "user", "content": "Tool calls remaining: 0. No tools are available now. Do not output tool-call syntax. Return the entire fixed class inside a single ```java ... ``` code block."})
                     res = self.prompt_executor.execute(promptlist).model_dump()
                 response_history.append(copy.deepcopy(promptlist))
                 response_history.append(res)

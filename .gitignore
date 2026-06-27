@@ -81,3 +81,4 @@ PaperEvaluation/monitor_benchmark.sh
 PaperEvaluation/run_core_benchmark_local.sh
 # Local model/port/temp knob - not tracked
 PaperEvaluation/drivers/CASCADE/dataset_config.json
+PaperEvaluation/gemma4.config.json
