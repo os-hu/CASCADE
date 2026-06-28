@@ -1,0 +1,32 @@
+mini3CoreDataset.zip: 6 mapped pairs / 12 cases
+Purpose: cases that STRESS feasibility / cross-class API usage — i.e. ones where the
+static API-usage context (Phase 1/2 build_api_context) can plausibly change the COMPILE
+outcome. Selected to actually exercise the API-feasibility fix, which mini/mini2+ did not.
+Each pair shares one method across a consistent (False) and inconsistent (True) commit, so
+both feasibility-rate AND specificity are measurable. Primary metric here is feasibility
+(% reaching an evaluable C+T'), not recall.
+
+1. (import-hallucination: cross-MODULE) jackson-core JsonParser.readValueAsTree()
+   - the canonical databind blow-up; model reaches for com.fasterxml.jackson.databind.*
+   False: FasterXML/jackson-core/ea603c35b85aac6af476c229b8f17a72efd31fef/1
+   True:  FasterXML/jackson-core/e9972871d6dcc24cfb56440c46e1f085a31b85ec/1
+2. (builder method-chain) joda-time PeriodFormatterBuilder.appendSeparatorIfFieldsBefore(String)
+   - model guesses a wrong builder->toFormatter chain
+   False: JodaOrg/joda-time/411a924d87a60e9f6c88b46241da32736acbf1e4/1
+   True:  JodaOrg/joda-time/e433f2e9c8599de1e4f2e0d4d7312a875818b8d1/1
+3. (private ctor / factory + test-infra; KNOWN-detectable INCO) guava CacheBuilder.expireAfterAccess(long,TimeUnit)
+   - carried from mini2+ as anchor; catching ISE test exists, dies to all-or-nothing compile
+   False: google/guava/8a71f2bb66fa64b9d2e1f776d559fd6c74007b6d/1
+   True:  google/guava/fb5e365bc100d21b22ed93b49a8dea4589d85f29/1
+4. (heavy domain collaborator graph) jsprit SearchStrategy.run(VehicleRoutingProblem, Collection<...>)
+   - must construct a VehicleRoutingProblem + solutions to call it at all
+   False: graphhopper/jsprit/05dc00814e3f71a8661e2586594b842d583f533c/1
+   True:  graphhopper/jsprit/fa8d97b7e9e340cde8b61c84d8f5bafd8d2580bc/1
+5. (cross-class node construction; fluent) jsoup Element.appendChild(Node)
+   - needs a Node/Element built from Tag; returns the receiver for chaining
+   False: jhy/jsoup/deaf9f6a51b928dcad619fd8300ee3926345d1ea/1
+   True:  jhy/jsoup/fd12d272397fc04da34beac8c8f6e3faae81583f/1
+6. (IO stream setup) commons-compress IOUtils.copy(InputStream, OutputStream)
+   - must wire up real In/OutputStreams to exercise the copy
+   False: apache/commons-compress/6dff447e7de687566f9edf6197ed92be07ff4547/1
+   True:  apache/commons-compress/83a60efd851940e42480f35c9961cc5005ff19fb/1

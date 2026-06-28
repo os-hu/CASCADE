@@ -69,24 +69,40 @@ def _load_extracted(output_path):
 
 
 def build_api_context(context, output_path,
-                      include_siblings=True,
+                      include_siblings=True, include_return_api=True,
                       max_constructors=4, max_subclasses=3, max_factories=3,
-                      max_siblings=15, max_packages=25, max_chars=2500):
+                      max_siblings=15, max_return_methods=12, max_packages=25, max_chars=3500):
     """
     Build a compact, static "how to use this API" block so the model writes tests that
     compile against types that actually exist, instead of guessing cross-module ones.
 
     Sourced from the parent class already in `context` (constructors, sibling signatures)
     plus the project index (`extracted.json` in `output_path`) when present, which adds the
-    cross-class facts: subclasses/factories for an abstract receiver and the project's package
-    set (so the model knows what it may import).
+    cross-class facts: subclasses/factories for an abstract receiver, the method surface of the
+    return/parameter types (so the model doesn't invent methods on them), and the project's
+    package set.
 
-    `include_siblings=False` drops the sibling section, the bulkiest part, so callers can shed
-    weight first; the cheap critical sections survive. Returns "" when nothing useful exists.
+    `include_siblings=False` drops the receiver's sibling list, the bulkiest and lowest-value
+    section, so callers can shed weight first; the return-type surface and construction facts
+    survive. Returns "" when nothing useful exists.
     """
     parent = context.get("parent", {}) or {}
     receiver = parent.get("name")
     sections = []
+
+    sig0 = context.get("signature", {}) or {}
+    # Types the method returns / takes: the model needs their real method surface, not just the
+    # receiver's. Filtering candidates against the project index below drops JDK types and
+    # external annotations, leaving in-project types.
+    _common = {"String", "Object", "Integer", "Long", "Short", "Byte", "Boolean", "Double", "Float",
+               "Character", "Number", "Void", "List", "Map", "Set", "Collection", "Iterable",
+               "Iterator", "Optional", "Exception", "IOException", "RuntimeException", "Throwable",
+               "Class", "T", "E", "K", "V"}
+    related_types = set()
+    for _t in [sig0.get("returns", "")] + list(sig0.get("params", []) or []):
+        for _m in re.findall(r"[A-Z][A-Za-z0-9_]+", _t or ""):
+            if _m != receiver and _m not in _common:
+                related_types.add(_m)
 
     def _clean(s):
         # drop block/line comments and collapse whitespace so constructor strings stay compact
@@ -110,6 +126,7 @@ def build_api_context(context, output_path,
     packages = set()
     if data:
         subclasses, producers = [], []
+        type_methods = {}
         for d in data:
             dp = d.get("parent", {}) or {}
             pkg = d.get("package")
@@ -133,6 +150,15 @@ def build_api_context(context, output_path,
                     is_factory = "factory" in dp["name"].lower()  # *Factory: common producer idiom
                     rendered = f'{dp["name"]}.{sig["name"]}({", ".join(sig.get("params", []))})'
                     producers.append((is_static, is_factory, rendered))
+            # public method surface of the method's return/parameter types, when they are
+            # project classes (so the model calls real methods on them, not invented ones)
+            if include_return_api and dp.get("name") in related_types:
+                msig = d.get("signature", {}) or {}
+                if any("public" in m for m in msig.get("modifier", [])):
+                    try:
+                        type_methods.setdefault(dp["name"], []).append(build_signature(d).strip())
+                    except Exception:
+                        pass
         if is_abstract:
             for s in sorted(set(subclasses))[:max_subclasses]:
                 construct.append(f"concrete subclass: {s}")
@@ -154,6 +180,20 @@ def build_api_context(context, output_path,
                 continue
         if siblings:
             sections.append(f"Other methods available on {receiver} (signatures):\n  " + "\n  ".join(siblings))
+
+    # --- method surface of the return/parameter types; kept in the light variant (high value) ---
+    if include_return_api and data:
+        for tname in sorted(type_methods):
+            meths, seen = [], set()
+            for s in type_methods[tname]:
+                if s and s not in seen:
+                    seen.add(s)
+                    meths.append(s)
+            meths = meths[:max_return_methods]
+            if meths:
+                sections.append(
+                    f"Methods available on {tname} (a project type used/returned by the method "
+                    f"under test; call only these, do not invent others):\n  " + "\n  ".join(meths))
 
     # --- available-type guidance (the import-universe / cross-module fix) ---
     if packages:

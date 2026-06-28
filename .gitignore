@@ -75,10 +75,16 @@ PaperEvaluation/*_CASCADE.txt
 # Local-only scripts (re-derived per machine, not upstream)
 PaperEvaluation/run_mini.sh
 PaperEvaluation/run_mini2.sh
+PaperEvaluation/run_mini2plus.sh
+PaperEvaluation/mini2plusCoreDataset.zip
+PaperEvaluation/run_mini3.sh
+PaperEvaluation/mini3CoreDataset.zip
 PaperEvaluation/run_nano.sh
 PaperEvaluation/launch_benchmark_server.sh
+PaperEvaluation/launch_qwen_server.sh
 PaperEvaluation/monitor_benchmark.sh
 PaperEvaluation/run_core_benchmark_local.sh
 # Local model/port/temp knob - not tracked
 PaperEvaluation/drivers/CASCADE/dataset_config.json
 PaperEvaluation/gemma4.config.json
+PaperEvaluation/qwen36.config.json
