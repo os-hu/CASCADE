@@ -60,7 +60,7 @@ import logging
 import os
 from typing import Optional
 
-from .Reflector import InconsistencyType, ReflectionResult, Reflector
+from ..reflection.Reflector import InconsistencyType, ReflectionResult, Reflector
 
 logger = logging.getLogger(__name__)
 
