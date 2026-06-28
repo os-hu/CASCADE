@@ -80,3 +80,4 @@ PaperEvaluation/run_core_benchmark_local.sh
 PaperEvaluation/monitor_benchmark.sh
 PaperEvaluation/drivers/CASCADE/dataset_config.json
 configs/mainConfig.json
+exampleTargetproject/repository/log.txt
