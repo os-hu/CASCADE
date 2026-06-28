@@ -68,14 +68,14 @@ def _edit_distance_ratio(original: str, synthesized: str) -> float:
 def _diff_density(diff_lines: list, original: str) -> float:
     """
     Fraction of original lines that were changed.
+    Uses max(removed, added) so a 1-line swap counts as 1 change, not 2.
     Used to distinguish a localised fix from a total rewrite.
     """
     original_line_count = len(original.splitlines()) or 1
-    changed_count = sum(
-        1 for l in diff_lines
-        if (l.startswith("-") and not l.startswith("---"))
-        or (l.startswith("+") and not l.startswith("+++"))
-    )
+    removed = sum(1 for l in diff_lines if l.startswith("-") and not l.startswith("---"))
+    added   = sum(1 for l in diff_lines if l.startswith("+") and not l.startswith("+++"))
+    # A swap of N lines removes N and adds N — count it as N changed lines, not 2N.
+    changed_count = max(removed, added)
     return min(changed_count / original_line_count, 1.0)
 
 

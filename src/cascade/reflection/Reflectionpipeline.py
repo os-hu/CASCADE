@@ -70,14 +70,18 @@ logger = logging.getLogger(__name__)
 def _load_reflector(name: str, kwargs: dict) -> Reflector:
     """
     Mirrors PipelineFactory's dynamic class loading convention.
-    Looks in `reflection` package first; falls back to absolute import.
+    Tries cascade.reflection.<name>, reflection.<name>, then bare import.
     """
-    try:
-        module = importlib.import_module(f"cascade.reflection.{name}")
-    except ModuleNotFoundError:
-        module = importlib.import_module(name)
-    cls = getattr(module, name)
-    return cls(**kwargs)
+    for candidate in (f"cascade.reflection.{name}", f"reflection.{name}", name):
+        try:
+            module = importlib.import_module(candidate)
+            cls = getattr(module, name)
+            return cls(**kwargs)
+        except (ModuleNotFoundError, AttributeError):
+            continue
+    raise ImportError(
+        f"Cannot find Reflector class '{name}' in cascade.reflection, reflection, or sys.path."
+    )
 
 
 class ReflectionPipeline:

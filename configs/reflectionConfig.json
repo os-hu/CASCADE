@@ -1,0 +1,67 @@
+{
+  "_comment": [
+    "Full CASCADE config that wires in ReflectionAnalysis as the analysis step.",
+    "ReflectionAnalysis wraps JavaTwoStepAnalysis and runs reflection in-pipeline.",
+    "Place this file alongside the existing configs/ folder.",
+    "Run with:",
+    "  CASCADE run -i <project-root> -o <output> -c configs/reflectionConfig.json",
+    "  --module-path ./  (so PipelineFactory can find the reflection package)"
+  ],
+
+  "extraction": {
+    "name": "JavaMethodExtractor",
+    "kwargs": {}
+  },
+
+  "filters": [
+    {
+      "name": "ContainsFilterFunction",
+      "kwargs": { "key": "doc",  "min_length": 10 }
+    },
+    {
+      "name": "ContainsFilterFunction",
+      "kwargs": { "key": "code", "min_length": 5 }
+    }
+  ],
+
+  "analysis": {
+    "name": "ReflectionAnalysis",
+    "kwargs": {
+      "inner_analysis": {
+        "name": "JavaTwoStepAnalysis",
+        "kwargs": {
+          "code_generator": {
+            "name": "JavaCodeGenerator",
+            "kwargs": { "model": "gpt-4.1-mini", "temperature": 0.2 }
+          },
+          "test_generator": {
+            "name": "MultiStepJavaTestGenerator",
+            "kwargs": { "model": "gpt-4.1-mini", "temperature": 0.4 }
+          }
+        }
+      },
+      "reflector": {
+        "name": "ChainedReflector",
+        "kwargs": {
+          "escalation_threshold": 0.65,
+          "diff_kwargs": {
+            "min_diff_lines": 1,
+            "confidence_floor": 0.30,
+            "confidence_ceiling": 0.95
+          },
+          "llm_kwargs": {
+            "model": "gpt-4.1-mini",
+            "temperature": 0.0,
+            "require_synthesized_doc": false,
+            "confidence_boost_on_doc_delta": 0.1
+          }
+        }
+      },
+      "only_flagged": true,
+      "input_key_code":       "code",
+      "input_key_synth_code": "synthesized_code",
+      "input_key_doc":        "doc",
+      "input_key_synth_doc":  "synthesized_doc"
+    }
+  }
+}
