@@ -62,6 +62,17 @@ from typing import Optional
 
 from ..reflection.Reflector import InconsistencyType, ReflectionResult, Reflector
 
+from cascade.analysis.Analysis import Analysis
+from cascade.analysis.executor.Execution import Execution
+from cascade.analysis.executor.ExecutionResults import ExecutionResults
+
+from cascade.generation.Generation import Generation
+from cascade.utils.Utils import save_dicts_list_to_json, load_json_from_path
+from cascade.utils.JavaUtils import build_signature
+
+from cascade.utils.DockerizedWrapper import DockerizedWrapper
+import xml.etree.ElementTree as ET
+
 logger = logging.getLogger(__name__)
 
 
@@ -111,7 +122,7 @@ def _build_reflector(cfg: dict) -> Reflector:
 # ReflectionAnalysis
 # ---------------------------------------------------------------------------
 
-class ReflectionAnalysis:
+class ReflectionAnalysis(Analysis):
     """
     Wraps any CASCADE Analysis and appends a reflection pass on flagged items.
 
