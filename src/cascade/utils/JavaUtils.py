@@ -86,6 +86,9 @@ def build_api_context(context, output_path,
     section, so callers can shed weight first; the return-type surface and construction facts
     survive. Returns "" when nothing useful exists.
     """
+    # Ablation toggle: when set, emit no API context (for context on/off A/B experiments).
+    if os.environ.get("CASCADE_DISABLE_API_CONTEXT") == "1":
+        return ""
     parent = context.get("parent", {}) or {}
     receiver = parent.get("name")
     sections = []

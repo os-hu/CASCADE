@@ -114,12 +114,12 @@ class MultiStepJavaTestGenerator(Generator):
         print("      Test generation Phase 1")
         # first given the method documentation and signature, we want to extract possible testcases or properties.
         step1_user = (
-            f"Give a complete description of the behavior that we should test when we want to asure that the code matches its documentation from the following Java method:\n```java\n{build_signature(context, doc=True)}\n```\n\nMake sure you consider the entire functionality exactly as described in the documentation, and cover all edge cases but make no assumptions that are not stated in the documentation."
+            f"Give a complete description of the behavior that we should test when we want to asure that the code matches its documentation from the following Java method:\n```java\n{build_signature(context, doc=True)}\n```\n\nMake sure you consider the entire functionality exactly as described in the documentation, and cover all edge cases but make no assumptions that are not stated in the documentation. If a documented behavior, condition, or exception seems unusual or unlikely, still specify a test for it exactly as written — do not skip it as an impossible precondition or treat it as a typo to fix."
         )
         step1_user += self._fit_api_context(context, step1_user)
         prompt_step1 = [
             {"role": "system",
-             "content": "You are an expert Java developer and requirements engineer. You will be given a method signature and its documentation. Your task is to extract behavior specifications from the documentation that can be turned into unit tests to ensure the code is bug free and faithful to its documentation."},
+             "content": "You are an expert Java developer and requirements engineer. You will be given a method signature and its documentation. The documentation is the specification to test against: extract, from the documentation alone, behavior specifications that can be turned into unit tests checking whether the code does what the documentation says. Treat every statement — including examples and stated exceptions — as the literal contract, even if it looks mistaken, contradicts the method name, or differs from how a similar API usually behaves. Do not correct, complete, or second-guess the documentation: it may or may not match the code, and that is precisely what running these tests will reveal — it is not yours to decide. Apply this uniformly to all parts of the documentation."},
             {"role": "user",
              "content": step1_user}
         ]
