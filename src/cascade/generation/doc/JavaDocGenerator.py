@@ -1,3 +1,4 @@
+import argparse
 import json
 import re
 import uuid
@@ -313,8 +314,29 @@ class JavaDocGenerator(Generator):
 
 
 if __name__ == "__main__":
-    import sys
-    input_path  = sys.argv[1] if len(sys.argv) > 1 else "."
-    output_path = sys.argv[2] if len(sys.argv) > 2 else "./output"
-    gen = JavaDocGenerator()
-    gen.generate(None, input_path, output_path)
+    parser = argparse.ArgumentParser(
+        description="Generate a JSON documentation catalogue for a Java project."
+    )
+    parser.add_argument("--input",    required=True, help="Input directory or single .java file")
+    parser.add_argument("--output",   required=True, help="Output directory (receives javadoc.json)")
+    parser.add_argument("--model",    default="Qwen/Qwen3-Coder-30B-A3B-Instruct")
+    parser.add_argument("--base-url", default=None,  help="vLLM base URL (optional)")
+    args = parser.parse_args()
+
+    caller = OpenAICaller(
+        model=args.model,
+        base_url=args.base_url,
+        max_tokens=16000,
+        temperature=0,
+        max_attempts=3,
+        delay=5,
+    )
+
+    generator = JavaDocGenerator(caller=caller)
+
+    out = generator.generate(
+        context=None,
+        input_path=args.input,
+        output_path=args.output,
+    )
+    print(f"\nDone → {out}" if out else "\nNo files processed.")
