@@ -90,3 +90,9 @@ PaperEvaluation/run_core_benchmark_local.sh
 PaperEvaluation/drivers/CASCADE/dataset_config.json
 PaperEvaluation/gemma4.config.json
 PaperEvaluation/qwen36.config.json
+exampleTargetproject/output/analyzed.json
+exampleTargetproject/output/effective-pom.xml
+exampleTargetproject/output/extracted.json
+exampleTargetproject/output/inconsistent_functions.json
+exampleTargetproject/output/log.txt
+exampleTargetproject/repository/log.txt
