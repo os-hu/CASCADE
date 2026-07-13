@@ -2402,3 +2402,9 @@ PaperEvaluation/drivers/C4RLLaMA/weights/checkpoint-9900/scheduler.pt
 PaperEvaluation/drivers/C4RLLaMA/weights/checkpoint-9900/trainer_state.json
 PaperEvaluation/smaller-benchmark-run-drivers/runs
 PaperEvaluation/drivers/DocChecker/pretrained_model/pytorch_model.bin
+PaperEvaluation/apache-2-dataset.zip
+PaperEvaluation/apache-3-dataset.zip
+PaperEvaluation/apache-4-dataset.zip
+PaperEvaluation/run_apache-2.sh
+PaperEvaluation/run_apache-3.sh
+PaperEvaluation/run_apache-4.sh
