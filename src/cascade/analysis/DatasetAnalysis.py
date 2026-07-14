@@ -17,6 +17,27 @@ from cascade.utils.Utils import load_json_from_path, save_dicts_list_to_json
 from cascade.utils.DockerizedWrapper import DockerizedWrapper
 import xml.etree.ElementTree as ET
 
+
+def record_compiler_event(context, execution_results, phase, repair_attempt=None):
+    """Persist one structured compiler outcome for benchmark reporting."""
+    event = {
+        "phase": phase,
+        "repair_attempt": repair_attempt,
+        "execution_result_available": execution_results is not None,
+        "had_compiler_error": False,
+        "compiler_errors": None,
+        "compiler_error_matches": [],
+        "test_results": [0, 0, 0],
+    }
+    if execution_results is not None:
+        event["had_compiler_error"] = bool(execution_results.comp_errors)
+        event["compiler_errors"] = execution_results.comp_errors
+        event["compiler_error_matches"] = list(execution_results.comp_error_matches or [])
+        event["test_results"] = list(execution_results.results_numbers or (0, 0, 0))
+    context.setdefault("compiler_events", []).append(event)
+    return event
+
+
 class DatasetAnalysis(Analysis):
     def __init__(self, generator: Generation, executor: Execution, regenerate=False, reexecute=False, image="maven" , debug=0, step_size=1, max_repair_tries=3):
         super().__init__(generator, executor)
@@ -90,10 +111,12 @@ class DatasetAnalysis(Analysis):
 
             d["results"] = {}
             d["results"]["(code, new_tests)"] = [[],[],[]]
+            d["compiler_events"] = []
 
             d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
             d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
             exec_results: ExecutionResults = self.executor.execute("code", "new_tests", d, input_path, output_path)
+            record_compiler_event(d, exec_results, "phase1_initial")
 
             res1 = exec_results.results
             comp_errors = exec_results.comp_errors
@@ -138,6 +161,7 @@ class DatasetAnalysis(Analysis):
                         f.write(f"execute repaired tests (trial {current_repair_tries})\n")
 
                     exec_results: ExecutionResults = self.executor.execute("code", "new_tests", d, input_path, output_path)
+                    record_compiler_event(d, exec_results, "phase1_repair", current_repair_tries)
                     res1 = exec_results.results
                     comp_errors = exec_results.comp_errors
 
@@ -199,6 +223,7 @@ class DatasetAnalysis(Analysis):
                 d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
 
                 exec_results: ExecutionResults = self.executor.execute("new_code", "new_tests", d, input_path, output_path)
+                record_compiler_event(d, exec_results, "phase2")
 
                 with open(os.path.join(output_path, "log.txt"), "a") as f:
                     f.write("Results after step 2\n")

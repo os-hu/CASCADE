@@ -64,6 +64,8 @@ wheels/
 /tests/test_JavaExecution.py
 
 # Local benchmark run artifacts (not in upstream)
+PaperEvaluation/evalRuns/
+PaperEvaluation/evaluationConfig.json
 PaperEvaluation/java/
 PaperEvaluation/runs
 PaperEvaluation/benchmark_logs/
