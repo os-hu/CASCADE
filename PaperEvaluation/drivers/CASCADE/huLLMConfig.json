@@ -3,15 +3,14 @@
    "CodeGenerator": { "name": "JavaCodeGenerator", "kwargs" : {
        "model": "llm3",
        "base_url": "https://llm3-compute.cms.hu-berlin.de/v1",
-       "api_key": "required-but-not-used",
-       "extra_body": {"chat_template_kwargs": {"enable_thinking": true}}
+       "api_key": "required-but-not-used"
    }},
    "TestGenerator": { "name": "RoundTripJavaTestGenerator", "kwargs" : {
        "model": "llm3",
        "base_url": "https://llm3-compute.cms.hu-berlin.de/v1",
        "api_key": "required-but-not-used",
        "max_roundtrips": 2,
-       "extra_body": {"chat_template_kwargs": {"enable_thinking": true}}
+       "extra_body": {"chat_template_kwargs": {"enable_thinking": true, "thinking_budget": 2048}}
    }},
    "Analysis"      : { "name": "DatasetAnalysis",  "kwargs" : {}},
    "Executor"      : { "name": "MavenJavaExecutor",   "kwargs" : {}},
