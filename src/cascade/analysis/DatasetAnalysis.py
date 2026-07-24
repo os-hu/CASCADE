@@ -18,7 +18,7 @@ from cascade.utils.DockerizedWrapper import DockerizedWrapper
 import xml.etree.ElementTree as ET
 
 
-def record_compiler_event(context, execution_results, phase, repair_attempt=None):
+def record_compiler_event(context, execution_results, phase, repair_attempt=None, test_source=None):
     """Persist one structured compiler outcome for benchmark reporting."""
     event = {
         "phase": phase,
@@ -28,12 +28,15 @@ def record_compiler_event(context, execution_results, phase, repair_attempt=None
         "compiler_errors": None,
         "compiler_error_matches": [],
         "test_results": [0, 0, 0],
+        "test_source_present": bool(isinstance(test_source, str) and test_source.strip()),
+        "tests_discovered": 0,
     }
     if execution_results is not None:
         event["had_compiler_error"] = bool(execution_results.comp_errors)
         event["compiler_errors"] = execution_results.comp_errors
         event["compiler_error_matches"] = list(execution_results.comp_error_matches or [])
         event["test_results"] = list(execution_results.results_numbers or (0, 0, 0))
+        event["tests_discovered"] = sum(event["test_results"])
     context.setdefault("compiler_events", []).append(event)
     return event
 
@@ -116,7 +119,7 @@ class DatasetAnalysis(Analysis):
             d["new_tests"] = d["new_tests"].replace(test_class_real_name, test_class_unique_name)
             d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
             exec_results: ExecutionResults = self.executor.execute("code", "new_tests", d, input_path, output_path)
-            record_compiler_event(d, exec_results, "phase1_initial")
+            record_compiler_event(d, exec_results, "phase1_initial", test_source=d.get("new_tests"))
 
             res1 = exec_results.results
             comp_errors = exec_results.comp_errors
@@ -161,7 +164,9 @@ class DatasetAnalysis(Analysis):
                         f.write(f"execute repaired tests (trial {current_repair_tries})\n")
 
                     exec_results: ExecutionResults = self.executor.execute("code", "new_tests", d, input_path, output_path)
-                    record_compiler_event(d, exec_results, "phase1_repair", current_repair_tries)
+                    record_compiler_event(
+                        d, exec_results, "phase1_repair", current_repair_tries, test_source=d.get("new_tests")
+                    )
                     res1 = exec_results.results
                     comp_errors = exec_results.comp_errors
 
@@ -223,7 +228,7 @@ class DatasetAnalysis(Analysis):
                 d["test_file_path"] = d["test_file_path"].replace(test_class_real_name, test_class_unique_name)
 
                 exec_results: ExecutionResults = self.executor.execute("new_code", "new_tests", d, input_path, output_path)
-                record_compiler_event(d, exec_results, "phase2")
+                record_compiler_event(d, exec_results, "phase2", test_source=d.get("new_tests"))
 
                 with open(os.path.join(output_path, "log.txt"), "a") as f:
                     f.write("Results after step 2\n")

@@ -17,6 +17,7 @@ class OpenAICaller(LLMCaller):
         base_url=None,          # ← optional
         api_key=None,           # ← optional
         timeout=86400.0,
+        extra_body=None,        # ← e.g. {"chat_template_kwargs": {"enable_thinking": True}}
     ):
         self.max_attempts = max_attempts
         self.max_tokens = max_tokens
@@ -24,6 +25,7 @@ class OpenAICaller(LLMCaller):
         self.delay = delay
         self.freq_penalty = freq_penalty
         self.model = model
+        self.extra_body = extra_body
 
         if dummy:
             self.client = None
@@ -45,6 +47,11 @@ class OpenAICaller(LLMCaller):
 
     def execute(self, prompt, **kwargs):
         attempt = 0
+
+        if self.extra_body is not None:
+            kwargs.setdefault("extra_body", self.extra_body)
+
+
         while attempt < self.max_attempts:
             try:
                 request_kwargs = {

@@ -118,7 +118,10 @@ def build_api_context(context, output_path,
     for c in (parent.get("constructors") or [])[:max_constructors]:
         c = _clean(c)
         if c:
-            construct.append(c)
+            # JavaExtraction stores the complete constructor, including its body.
+            # The model only needs the callable surface; bodies waste the prompt
+            # budget and can leak unrelated implementation details.
+            construct.append(c.split("{", 1)[0].strip())
 
     # load the project index once (graceful: missing/unreadable -> skip index-derived parts)
     data = _load_extracted(output_path)
@@ -200,11 +203,17 @@ def build_api_context(context, output_path,
 
     # --- available-type guidance (the import-universe / cross-module fix) ---
     if packages:
-        pkgs = sorted(packages)[:max_packages]
+        # Keep the target package even when the project has more than max_packages.
+        current_package = context.get("package")
+        ordered_packages = sorted(packages)
+        if current_package in packages:
+            ordered_packages.remove(current_package)
+            ordered_packages.insert(0, current_package)
+        pkgs = ordered_packages[:max_packages]
         sections.append(
-            "This project only provides types in these packages: " + ", ".join(pkgs) + ".\n"
-            "Only import types from these project packages or the standard JDK. Do NOT import "
-            "types from other modules/libraries that are not part of this project."
+            "Known project packages include: " + ", ".join(pkgs) + ".\n"
+            "Prefer types from these packages or the standard JDK. Do not invent project "
+            "packages or import types from unavailable modules."
         )
 
     if not sections:
