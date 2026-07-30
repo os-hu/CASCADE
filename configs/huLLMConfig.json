@@ -9,7 +9,7 @@
        "model": "llm3",
        "base_url": "https://llm3-compute.cms.hu-berlin.de/v1",
        "api_key": "required-but-not-used",
-       "max_roundtrips": 0
+       "max_roundtrips": 2
        
    }},
    "Analysis"      : { "name": "DatasetAnalysis",  "kwargs" : {}},

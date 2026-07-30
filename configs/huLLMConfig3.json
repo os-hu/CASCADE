@@ -5,7 +5,7 @@
        "base_url": "https://llm3-compute.cms.hu-berlin.de/v1",
        "api_key": "required-but-not-used"
    }},
-   "TestGenerator": { "name": "MultiStepJavaTestGeneratorOG", "kwargs" : {
+   "TestGenerator": { "name": "MultiStepJavaTestGenerator", "kwargs" : {
        "model": "llm3",
        "base_url": "https://llm3-compute.cms.hu-berlin.de/v1",
        "api_key": "required-but-not-used"

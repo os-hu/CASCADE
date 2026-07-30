@@ -176,8 +176,3 @@ class JavaCodeGenerator(Generator):
         new_code = self.extract_code(new_code, context, res, output_path)
 
         return new_code, repair_response
-
-
-
-
-

@@ -72,5 +72,3 @@ class OpenAICaller(LLMCaller):
                 time.sleep(self.delay)
 
         raise Exception("Generation failed. because of repeated errors.")
-
-
