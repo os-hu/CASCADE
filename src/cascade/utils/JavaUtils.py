@@ -70,6 +70,7 @@ def _load_extracted(output_path):
 
 def build_api_context(context, output_path,
                       include_siblings=True, include_return_api=True,
+                      include_packages=True,
                       max_constructors=4, max_subclasses=3, max_factories=3,
                       max_siblings=15, max_return_methods=12, max_packages=25, max_chars=3500):
     """
@@ -202,7 +203,7 @@ def build_api_context(context, output_path,
                     f"under test; call only these, do not invent others):\n  " + "\n  ".join(meths))
 
     # --- available-type guidance (the import-universe / cross-module fix) ---
-    if packages:
+    if include_packages and packages:
         # Keep the target package even when the project has more than max_packages.
         current_package = context.get("package")
         ordered_packages = sorted(packages)

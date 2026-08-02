@@ -2,7 +2,7 @@ import re
 
 from cascade.generation.Generator import Generator
 from cascade.generation.executor.OpenAICaller import OpenAICaller
-from cascade.utils.JavaUtils import build_context, build_signature, repair_helper_functions, get_repair_helper_functions
+from cascade.utils.JavaUtils import build_api_context, build_context, build_signature, repair_helper_functions, get_repair_helper_functions
 
 import os
 import copy
@@ -31,7 +31,7 @@ class JavaCodeGenerator(Generator):
                                             api_key=api_key, base_url=base_url, extra_body=extra_body)
 
 
-    def build_prompt(self, context):
+    def build_prompt(self, context, output_path=None):
         #enc = tiktoken.encoding_for_model(self.model)
         enc = tiktoken.get_encoding("o200k_base")
 
@@ -51,6 +51,14 @@ class JavaCodeGenerator(Generator):
         prompt_finisher =  " {\n    // write the function body for this method. Take the Documentation as literal as possible.\n    }\n}\n```\nNow respond with the working implemented method."
 
         prompt = prompt_start +  build_context(context, doc=True)  + prompt_finisher
+
+        if output_path:
+            api_context = build_api_context(
+                context, output_path, include_siblings=False, include_packages=False,
+                max_constructors=0, max_subclasses=0, max_factories=0)
+            contextual_prompt = api_context + "\n\n" + prompt if api_context else prompt
+            if len(enc.encode(contextual_prompt)) <= self.max_prompt_tokens:
+                prompt = contextual_prompt
 
         if len(enc.encode(prompt)) > self.max_prompt_tokens:
             prompt = prompt_start + build_context(context, doc=True, no_fields=True) + prompt_finisher
@@ -75,7 +83,7 @@ class JavaCodeGenerator(Generator):
 
 
     def generate(self, context, input_path, output_path):
-        prompt = self.build_prompt(context)
+        prompt = self.build_prompt(context, output_path)
 
         if not prompt:
             return "", None

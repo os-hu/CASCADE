@@ -48,8 +48,8 @@ class RoundTripJavaTestGenerator(MultiStepJavaTestGenerator):
         results_path = os.path.join(output_path, "results.txt")
         errors_path = os.path.join(output_path, "errors.txt")
 
-        # built once here and reused by every prompt in this method (Phase 1, round-trip
-        # check, and Phase 2 via the inherited build_prompt) through self._fit_api_context,
+        # Built once here and reused by the round-trip check and Phase 2 through
+        # self._fit_api_context,
         # which falls back to "" on its own if no context was available to build.
         context["api_context"] = build_api_context(context, output_path)
         context["api_context_light"] = build_api_context(context, output_path, include_siblings=False)
@@ -60,7 +60,6 @@ class RoundTripJavaTestGenerator(MultiStepJavaTestGenerator):
         step1_user = (
             f"Give a complete description of the behavior that we should test when we want to asure that the code matches its documentation from the following Java method:\n```java\n{build_signature(context, doc=True)}\n```\n\nMake sure you consider the entire functionality exactly as described in the documentation, and cover all edge cases but make no assumptions that are not stated in the documentation. If a documented behavior, condition, or exception seems unusual or unlikely, still specify a test for it exactly as written — do not skip it as an impossible precondition or treat it as a typo to fix."
         )
-        step1_user += self._fit_api_context(context, step1_user)
         prompt_step1 = [
             {"role": "system",
              "content": "You are an expert Java developer and requirements engineer. You will be given a method signature and its documentation. The documentation is the specification to test against: extract, from the documentation alone, behavior specifications that can be turned into unit tests checking whether the code does what the documentation says. Treat every statement — including examples and stated exceptions — as the literal contract, even if it looks mistaken, contradicts the method name, or differs from how a similar API usually behaves. Do not correct, complete, or second-guess the documentation: it may or may not match the code, and that is precisely what running these tests will reveal — it is not yours to decide. Apply this uniformly to all parts of the documentation."},
@@ -153,8 +152,8 @@ class RoundTripJavaTestGenerator(MultiStepJavaTestGenerator):
 
         Step A and Step B only reason over text descriptions and are kept free of the API
         context to keep them focused and cheap. Step C regenerates test ideas, so it is given
-        the same API context as Phase 1 (via self._fit_api_context, already set up on
-        'context' by 'generate') so that revised tests don't invent behavior around methods
+        API context via self._fit_api_context (already set up on 'context' by 'generate')
+        so that revised tests don't invent behavior around methods
         that don't actually exist. If no API context is available, this is a no-op.
 
         :param context: the method context, used only to look up 'api_context'/'api_context_light'.
